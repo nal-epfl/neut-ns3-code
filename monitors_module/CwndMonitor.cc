@@ -54,6 +54,7 @@ void CwndMonitor::RecordCwndChange(string context, uint32_t oldval, uint32_t new
 }
 
 void CwndMonitor::RecordPacingRate(string context, DataRate oldval, DataRate newval) {
+    cout << "pacing rate: " << newval << endl;
     pacingRateChanges.push_back({oldval, newval, Simulator::Now()});
 }
 

@@ -148,7 +148,7 @@ int run_neut_test_wehe(int argc, char **argv) {
     internetStackHelper.Install(dstNodes);
 
     string defaultDataRate = "10Gbps";
-    string defaultDataRate2 = "300Mbps";
+    string defaultDataRate2 = "350Mbps";
     string defaultLinkDelay = "5ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("DataRate", StringValue(defaultDataRate));
@@ -158,20 +158,17 @@ int run_neut_test_wehe(int argc, char **argv) {
 
     NetDeviceContainer channels_r1_dsts[nbDsts];
     string dataRates[] = {defaultDataRate2, defaultDataRate2, defaultDataRate2, defaultDataRate2, defaultDataRate};
-    if(scenario == 2) {
-        dataRates[2] = "42Mbps"; dataRates[3] = "58Mbps";
-    }
-    else if(scenario == 3) {
+    if(scenario == 3) {
         dataRates[0] = "240Mbps"; dataRates[1] = "220Mbps";
         dataRates[2] = "220Mbps"; dataRates[3] = "230Mbps";
-//        dataRates[2] = "220Mbps"; dataRates[3] = "220Mbps";
-//        dataRates[0] = "200Mbps"; dataRates[1] = "230Mbps";
     }
     else if(scenario == 4) {
         dataRates[0] = "235Mbps"; dataRates[1] = "230Mbps";
         dataRates[2] = "220Mbps"; dataRates[3] = "250Mbps";
-//        dataRates[2] = "230Mbps"; dataRates[3] = "220Mbps";
-//        dataRates[0] = "210Mbps"; dataRates[1] = "230Mbps";
+    }
+    else if(scenario == 5) {
+        dataRates[0] = "235Mbps"; dataRates[1] = "225Mbps";
+        dataRates[2] = "220Mbps"; dataRates[3] = "240Mbps";
     }
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
     for(int i = 0; i < nbDsts; i++) {
@@ -305,7 +302,7 @@ int run_neut_test_wehe(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
+//    PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
     for(int i = 0; i < nbWeheApp; i++)
         bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
 

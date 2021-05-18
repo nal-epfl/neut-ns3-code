@@ -36,7 +36,7 @@ def run_weheCS_tcp_experiment(app_name, link_rate, tcp_protocol, is_neutral=1, p
     # prepare the wehe trace
     project_data_path = get_ns3_path() + "/scratch/wehe_p_tomography/data"
     generate_weheCS_trace(project_data_path, app_name, 'weheCS_trace')
-    duration = 15 #get_weheCS_duration(project_data_path + '/weheCS_trace')
+    duration = 50 #get_weheCS_duration(project_data_path + '/weheCS_trace')
 
     # run the ns3 simulation
     result_folder_name = '/5_2021/wehe_tests/' + app_name + '/link_' + link_rate + '/' + case + '/' + tcp_protocol
@@ -111,65 +111,14 @@ def run_TCP_test_experiment_policing(link_rate, tcp_protocol, case, duration, po
 
 if __name__ == '__main__':
 
-    #
-    # exp_batch = 'back_traffic_9/without_time_pacing_and_with_flow_control/exp_batch_1'
-    # app_name, link_rate, scenario = 'Very_Long_Netflix_12122018', '850Mbps', 1
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_7', seed=7, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_7', seed=7, scenario=scenario)
-    #
-    #
-    # exp_batch = 'back_traffic_9/without_time_pacing_and_with_flow_control/exp_batch_1'
-    # app_name, link_rate, scenario = 'Very_Long_Netflix_12122018', '900Mbps', 1
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_7', seed=7, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_7', seed=7, scenario=scenario)
+    app_name = 'Very_Long_Netflix_12122018'
+    results_folder = 'back_traffic_8/without_time_pacing_and_with_flow_control'
+    link_rates = ['700Mbps', '750Mbps', '1000Mbps']
 
-
-    # exp_batch = 'back_traffic_9/without_time_pacing_and_with_flow_control/exp_batch_2'
-    # app_name, link_rate, scenario = 'Very_Long_Netflix_12122018', '850Mbps', 3
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_7', seed=7, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_7', seed=7, scenario=scenario)
-    #
-    #
-    # exp_batch = 'back_traffic_9/without_time_pacing_and_with_flow_control/exp_batch_2'
-    # app_name, link_rate, scenario = 'Very_Long_Netflix_12122018', '900Mbps', 3
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_7', seed=7, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_7', seed=7, scenario=scenario)
-
-
-    exp_batch = 'back_traffic_8/without_time_pacing_and_with_flow_control/exp_batch_4'
-    app_name, link_rate, scenario = 'Very_Long_Netflix_12122018', '1000Mbps', 4
-    run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=1, case=exp_batch + '/neutral/seed_7', seed=7, scenario=scenario)
-    # run_weheCS_tcp_experiment(app_name, link_rate, "TcpCubic", is_neutral=0, policing_rate=3.7, burst_length=0.03,
-    #                           case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_7', seed=7, scenario=scenario)
-
-
-    # exp_description = ('The topology of this experiment is as follow:\n'
-    #                    + '             +___ d1\n'
-    #                    + '             +___ d2\n'
-    #                    + ' s1 --- r1 __+___ d3\n'
-    #                    + '             +___ d4\n'
-    #                    + '             +___ d5\n'
-    #                    + 'We have 4 ' + app_name + ' Clinet-Server Wehe traces (2 control + 2 original)\n'
-    #                    + 'With one path sending CAIDA background traffic (UDP + multiple TCP)\n'
-    #                    + 'The bottleneck has a bandwidth of ' + link_rate + '\n'
-    #                    + 'All links have a propagation delay of 10ms\n')
-    # generate_README(exp_batch, exp_description, app_name, link_rate)
+    for link_rate in link_rates:
+        for scenario in [1, 3, 4, 5]:
+            print('Now in case with link_rate = ' + link_rate + ' and scenario = ' + str(scenario))
+            exp_batch = results_folder + '/exp_batch_' + str(scenario)
+            run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
+            run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=0, policing_rate=3.7, burst_length=0.03,
+                                        case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
