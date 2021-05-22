@@ -115,8 +115,8 @@ if __name__ == '__main__':
     results_folder = 'back_traffic_8/without_time_pacing_and_with_flow_control'
     link_rates = ['700Mbps', '750Mbps', '1000Mbps']
 
-    for link_rate in link_rates:
-        for scenario in [1, 3, 4, 5]:
+    for link_rate in ['800Mbps', '900Mbps', '1000Mbps']: #link_rates:
+        for scenario in [6]:
             print('Now in case with link_rate = ' + link_rate + ' and scenario = ' + str(scenario))
             exp_batch = results_folder + '/exp_batch_' + str(scenario)
             run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)

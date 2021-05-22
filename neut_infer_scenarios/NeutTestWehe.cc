@@ -148,7 +148,7 @@ int run_neut_test_wehe(int argc, char **argv) {
     internetStackHelper.Install(dstNodes);
 
     string defaultDataRate = "10Gbps";
-    string defaultDataRate2 = "350Mbps";
+    string defaultDataRate2 = "1000Mbps";
     string defaultLinkDelay = "5ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("DataRate", StringValue(defaultDataRate));
@@ -169,6 +169,10 @@ int run_neut_test_wehe(int argc, char **argv) {
     else if(scenario == 5) {
         dataRates[0] = "235Mbps"; dataRates[1] = "225Mbps";
         dataRates[2] = "220Mbps"; dataRates[3] = "240Mbps";
+    }
+    else if(scenario == 6) {
+        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
+        dataRates[2] = "220Mbps"; dataRates[3] = "230Mbps";
     }
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
     for(int i = 0; i < nbDsts; i++) {
@@ -293,8 +297,8 @@ int run_neut_test_wehe(int argc, char **argv) {
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
     AsciiTraceHelper ascii;
 //    p2p.EnableAsciiAll(ascii.CreateFileStream(resultsPath + "/tracing.tr"));
-//    p2pRouters.EnablePcapAll(resultsPath + "/router-link");
-    p2pRouters.EnablePcap(resultsPath + "/router-link", 0, 1);
+    p2pRouters.EnablePcapAll(resultsPath + "/pcap_files");
+//    p2pRouters.EnablePcap(resultsPath + "/router-link", 0, 1);
 #endif
 
     uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
@@ -313,12 +317,12 @@ int run_neut_test_wehe(int argc, char **argv) {
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 
-//    vector<PacketMonitor*> pathPktsMonitorsUp;
-//    for(int i = 0; i < nbWeheApp; i++) {
-//        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
-//        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i], 49153+i);
-//        pathPktsMonitorsUp.push_back(pathMonitor);
-//    }
+    vector<PacketMonitor*> pathPktsMonitorsUp;
+    for(int i = 0; i < nbWeheApp; i++) {
+        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
+        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i], 49153+i);
+        pathPktsMonitorsUp.push_back(pathMonitor);
+    }
 #endif
 
     std::set_terminate(CleanTerminate);
@@ -335,8 +339,8 @@ int run_neut_test_wehe(int argc, char **argv) {
 #if PACKET_MONITOR_FLAG
     bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
     for(int i = 0; i < nbWeheApp; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-//        pathPktsMonitorsUp[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
+        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        pathPktsMonitorsUp[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
 //        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 #endif
