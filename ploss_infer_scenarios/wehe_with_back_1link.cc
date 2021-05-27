@@ -207,8 +207,8 @@ int run_wehe_with_back_on_1link(int argc, char **argv) {
 
 
 #if PACKET_MONITOR_FLAG
-    bottleneckPktMonitorUp->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_up.csv");
-    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
+    bottleneckPktMonitorUp->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_up.csv");
+    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
 #endif
 
 //#if CWND_MONITOR

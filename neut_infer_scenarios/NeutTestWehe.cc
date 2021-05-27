@@ -52,9 +52,9 @@ vector<PacketMonitor*> pathPktsMonitorsDown;
 vector<CwndMonitor*> cwndMonitors;
 void CleanTerminate () {
     cerr << "terminate handler called\n";
-    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
+    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(int i = 0; i < nbWeheApp; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 
     for(int i = 0; i < nbWeheApp; i++) {
@@ -136,6 +136,7 @@ int run_neut_test_wehe(int argc, char **argv) {
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue (1));
 //    Config::SetDefault("ns3::TcpSocketBase::Sack", BooleanValue (true));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue (MilliSeconds(200)));
+    Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue (TcpClassicRecovery::GetTypeId()));
 
 
     /*** Create the trident topology ***/
@@ -158,21 +159,29 @@ int run_neut_test_wehe(int argc, char **argv) {
 
     NetDeviceContainer channels_r1_dsts[nbDsts];
     string dataRates[] = {defaultDataRate2, defaultDataRate2, defaultDataRate2, defaultDataRate2, defaultDataRate};
-    if(scenario == 3) {
-        dataRates[0] = "240Mbps"; dataRates[1] = "220Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "230Mbps";
+    if(scenario == 2) {
+        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
+        dataRates[2] = "350Mbps"; dataRates[3] = "350Mbps";
+    }
+    else if(scenario == 3) {
+        dataRates[0] = "270Mbps"; dataRates[1] = "210Mbps";
+        dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
     }
     else if(scenario == 4) {
-        dataRates[0] = "235Mbps"; dataRates[1] = "230Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "250Mbps";
+        dataRates[0] = "300Mbps"; dataRates[1] = "240Mbps";
+        dataRates[2] = "240Mbps"; dataRates[3] = "240Mbps";
     }
-    else if(scenario == 5) {
-        dataRates[0] = "235Mbps"; dataRates[1] = "225Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "240Mbps";
+    else if(scenario == 5) { // not needed
+        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
+        dataRates[2] = "240Mbps"; dataRates[3] = "240Mbps";
     }
     else if(scenario == 6) {
-        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "230Mbps";
+//        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
+        dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
+    }
+    else if(scenario == 7) {
+        dataRates[0] = "255Mbps"; dataRates[1] = "210Mbps";
+        dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
     }
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
     for(int i = 0; i < nbDsts; i++) {
@@ -285,13 +294,13 @@ int run_neut_test_wehe(int argc, char **argv) {
     // scenario 2 where we send a CAIDA traffic on each link
     // Scenario new1 Traffic on all paths
     MultipleReplayClients* back1 = new MultipleReplayClients(dstNodes.Get(0), routers.Get(0));
-    back1->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_2/chicago_2010_back_traffic_1min_link1", 929, 1);
+    back1->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link1", 899, 1);
     MultipleReplayClients* back2 = new MultipleReplayClients(dstNodes.Get(1), routers.Get(0));
-    back2->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_2/chicago_2010_back_traffic_1min_link2", 913, 1);
+    back2->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link2", 773, 1);
     MultipleReplayClients* back3 = new MultipleReplayClients(dstNodes.Get(2), routers.Get(0));
-    back3->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_2/chicago_2010_back_traffic_1min_link3", 773, 1);
+    back3->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link3", 945, 1);
     MultipleReplayClients* back4 = new MultipleReplayClients(dstNodes.Get(3), routers.Get(0));
-    back4->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_2/chicago_2010_back_traffic_1min_link4", 939, 1);
+    back4->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link4", 781, 1);
 
 
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
@@ -317,12 +326,12 @@ int run_neut_test_wehe(int argc, char **argv) {
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 
-    vector<PacketMonitor*> pathPktsMonitorsUp;
-    for(int i = 0; i < nbWeheApp; i++) {
-        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
-        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i], 49153+i);
-        pathPktsMonitorsUp.push_back(pathMonitor);
-    }
+//    vector<PacketMonitor*> pathPktsMonitorsUp;
+//    for(int i = 0; i < nbWeheApp; i++) {
+//        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
+//        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i], 49153+i);
+//        pathPktsMonitorsUp.push_back(pathMonitor);
+//    }
 #endif
 
     std::set_terminate(CleanTerminate);
@@ -337,10 +346,10 @@ int run_neut_test_wehe(int argc, char **argv) {
 
 
 #if PACKET_MONITOR_FLAG
-    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
+    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(int i = 0; i < nbWeheApp; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-        pathPktsMonitorsUp[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
+        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+//        pathPktsMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
 //        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 #endif

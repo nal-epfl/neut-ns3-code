@@ -367,9 +367,9 @@ int run_TcpCwnd_test(int argc, char **argv) {
 
 
 #if PACKET_MONITOR_FLAG
-    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
+    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(int i = 0; i < nbTcpFlows; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 #endif
 

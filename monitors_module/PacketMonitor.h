@@ -79,8 +79,8 @@ public:
     void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t dstPort);
 
     void SaveRecordedPacketsToCSV(const string& filename);
-    void SaveRecordedPacketsCompact(const string& filename);
-    void SaveRecordedPacketsFor1Path(const string &filename);
+    void SaveRecordedPacketsCompactByIP(const string& filename);
+    void SaveRecordedPacketsCompact(const string &filename);
     void DisplayStats();
 
 };

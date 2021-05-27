@@ -25,7 +25,7 @@ private:
 public:
     MultipleReplayClients(Ptr<Node> client, Ptr<Node> server);
 
-    void RunAllTraces(string tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows);
+    void RunAllTraces(string tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t tos=0);
     void RunSpecificTraces(vector<string> tcpTracesPath, vector<string> udpTracesPath, uint8_t tos);
 
 

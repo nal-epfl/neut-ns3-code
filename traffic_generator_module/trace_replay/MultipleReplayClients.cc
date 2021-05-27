@@ -12,15 +12,15 @@ uint32_t MultipleReplayClients::SOCKET_COUNT = 0;
 
 MultipleReplayClients::MultipleReplayClients(Ptr<Node> client, Ptr<Node> server) : _client(client), _server(server) {}
 
-void MultipleReplayClients::RunAllTraces(string tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows) {
+void MultipleReplayClients::RunAllTraces(string tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t tos) {
     for(uint32_t i = 0; i < nbUDPFlows; i++) {
         string tracePath = tracesPath + "/UDP/trace_" + to_string(i) + ".csv";
-        RunSingleTrace(tracePath, "ns3::UdpSocketFactory", 0);
+        RunSingleTrace(tracePath, "ns3::UdpSocketFactory", tos);
     }
     for(uint32_t i = 0; i < nbTCPFlows; i++) {
         string tracePath = tracesPath + "/TCP/trace_" + to_string(i) + ".csv";
 //        uint8_t tos = (i >=800 && i < 1100) ? 4 : 0;
-        RunSingleTrace(tracePath, "ns3::TcpSocketFactory", 0);
+        RunSingleTrace(tracePath, "ns3::TcpSocketFactory", tos);
     }
 }
 

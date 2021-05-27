@@ -262,9 +262,9 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
 
 #if PACKET_MONITOR_FLAG
-    bottleneckPktMonitorUp->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_up.csv");
+    bottleneckPktMonitorUp->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_up.csv");
     for(int i = 0; i < nbPaths-1; i++) {
-        pathPktsMonitorsUp[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
+        pathPktsMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
     }
 
 //    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");

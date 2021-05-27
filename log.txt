@@ -1,0 +1,2 @@
+Waf: Entering directory `/home/nal/Desktop/experiments2/ns-allinone-3.33/ns-3.33/build'
+Interrupted 

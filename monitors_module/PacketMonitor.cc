@@ -109,23 +109,25 @@ void PacketMonitor::SaveRecordedPacketsToCSV(const string& filename) {
     outfile.close();
 }
 
-void PacketMonitor::SaveRecordedPacketsCompact(const string& filename) {
+void PacketMonitor::SaveRecordedPacketsCompactByIP(const string& filename) {
     ofstream outfile;
     outfile.open(filename);
-    outfile << "SourceIP,DestinationIP,PayloadSize,SentTime,IsReceived" << endl;
+    outfile << "SourceIP,DestinationIP,PayloadSize,SentTime,IsReceived,ReceiveTime" << endl;
     for (auto& packetKeyEventPair: _recordedPackets) {
         PacketKey key = packetKeyEventPair.first;
         PacketMonitorEvent* event = packetKeyEventPair.second;
 
         outfile << key.GetSrcIp() << "," << key.GetDstIp() << "," << key.GetSize();
         outfile << ",";
-        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds() << "," << event->IsReceived();
+        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds();
+        outfile << ",";
+        outfile << event->IsReceived() << "," << (event->GetReceivedTime() - _startTime).GetNanoSeconds();
         outfile << endl;
     }
     outfile.close();
 }
 
-void PacketMonitor::SaveRecordedPacketsFor1Path(const string& filename) {
+void PacketMonitor::SaveRecordedPacketsCompact(const string& filename) {
     ofstream outfile;
     outfile.open(filename);
     outfile << "SourcePort,DestinationPort,PayloadSize,SentTime,IsReceived,ReceiveTime" << endl;
@@ -135,7 +137,9 @@ void PacketMonitor::SaveRecordedPacketsFor1Path(const string& filename) {
 
         outfile << key.GetSrcPort() << "," << key.GetDstPort() << "," << key.GetSize();
         outfile << ",";
-        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds() << "," << event->IsReceived() << "," << (event->GetReceivedTime() - _startTime).GetNanoSeconds();
+        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds();
+        outfile << ",";
+        outfile << event->IsReceived() << "," << (event->GetReceivedTime() - _startTime).GetNanoSeconds();
         outfile << endl;
     }
     outfile.close();

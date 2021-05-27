@@ -267,9 +267,9 @@ int run_NWeheCS_w_CAIDA(int argc, char **argv) {
 //        pathPktsMonitorsUp[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
 //    }
 
-    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
+    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(int i = 0; i < nbWeheCS; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 #endif
 

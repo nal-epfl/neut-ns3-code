@@ -35,6 +35,7 @@ CwndMonitor::CwndMonitor(Ptr<Socket> socket, string outputFolderPath) {
 void CwndMonitor::ConnectTraceSource() {
     if (_socket != 0) {
         _socket->TraceConnect("CongestionWindow", "", MakeCallback(&CwndMonitor::RecordCwndChange, this));
+        _socket->TraceConnect("CongestionWindowInflated", "", MakeCallback(&CwndMonitor::RecordCwndInfChange, this));
         _socket->TraceConnect("PacingRate", "", MakeCallback(&CwndMonitor::RecordPacingRate, this));
         _socket->TraceConnect("CongState", "", MakeCallback(&CwndMonitor::RecordCongStateChange, this));
         _socket->TraceConnect("RTO", "", MakeCallback(&CwndMonitor::RecordRTO, this));
@@ -50,6 +51,10 @@ void CwndMonitor::ConnectTraceSource() {
 }
 
 void CwndMonitor::RecordCwndChange(string context, uint32_t oldval, uint32_t newval) {
+    cwndChanges.push_back({oldval, newval, Simulator::Now()});
+}
+
+void CwndMonitor::RecordCwndInfChange(string context, uint32_t oldval, uint32_t newval) {
     cwndChanges.push_back({oldval, newval, Simulator::Now()});
 }
 
@@ -78,6 +83,15 @@ void CwndMonitor::SaveCwndChanges() {
     ofstream outfile;
     outfile.open(_outputFolderPath + "/cwnd_changes.csv");
     for(auto cwndChange : cwndChanges) {
+        outfile << cwndChange.oldVal << "," << cwndChange.newVal << "," << GetDisplayTime(cwndChange.time) << endl;
+    }
+    outfile.close();
+}
+
+void CwndMonitor::SaveCwndInfChanges() {
+    ofstream outfile;
+    outfile.open(_outputFolderPath + "/cwnd_inflated_changes.csv");
+    for(auto cwndChange : cwndInfChanges) {
         outfile << cwndChange.oldVal << "," << cwndChange.newVal << "," << GetDisplayTime(cwndChange.time) << endl;
     }
     outfile.close();
