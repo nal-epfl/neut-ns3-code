@@ -74,8 +74,6 @@ void TCPWeheServer::StopApplication() {
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
-        _cwndMonitor->SaveCwndInfChanges();
-        _cwndMonitor->SavePacingRateChanges();
         _cwndMonitor->SaveRtoChanges();
         _cwndMonitor->SaveRttChanges();
         _cwndMonitor->SaveCongStateChanges();

@@ -35,8 +35,8 @@ CwndMonitor::CwndMonitor(Ptr<Socket> socket, string outputFolderPath) {
 void CwndMonitor::ConnectTraceSource() {
     if (_socket != 0) {
         _socket->TraceConnect("CongestionWindow", "", MakeCallback(&CwndMonitor::RecordCwndChange, this));
-        _socket->TraceConnect("CongestionWindowInflated", "", MakeCallback(&CwndMonitor::RecordCwndInfChange, this));
-        _socket->TraceConnect("PacingRate", "", MakeCallback(&CwndMonitor::RecordPacingRate, this));
+//        _socket->TraceConnect("CongestionWindowInflated", "", MakeCallback(&CwndMonitor::RecordCwndInfChange, this));
+//        _socket->TraceConnect("PacingRate", "", MakeCallback(&CwndMonitor::RecordPacingRate, this));
         _socket->TraceConnect("CongState", "", MakeCallback(&CwndMonitor::RecordCongStateChange, this));
         _socket->TraceConnect("RTO", "", MakeCallback(&CwndMonitor::RecordRTO, this));
         _socket->TraceConnect("RTT", "", MakeCallback(&CwndMonitor::RecordRTT, this));
@@ -55,7 +55,7 @@ void CwndMonitor::RecordCwndChange(string context, uint32_t oldval, uint32_t new
 }
 
 void CwndMonitor::RecordCwndInfChange(string context, uint32_t oldval, uint32_t newval) {
-    cwndChanges.push_back({oldval, newval, Simulator::Now()});
+//    cwndInfChanges.push_back({oldval, newval, Simulator::Now()});
 }
 
 void CwndMonitor::RecordPacingRate(string context, DataRate oldval, DataRate newval) {
