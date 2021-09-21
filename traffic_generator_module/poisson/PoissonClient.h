@@ -12,7 +12,7 @@
 using namespace ns3;
 using namespace std;
 
-class PoissonUdpClient : public Application {
+class PoissonClient : public Application {
 
 private:
     virtual void StartApplication(void);
@@ -30,16 +30,19 @@ private:
 
     EventId _sendEvent;
 
+    string _protocol;
+
 protected:
     virtual void DoDispose(void);
 
 public:
     static TypeId GetTypeId(void);
 
-    PoissonUdpClient();
-    virtual ~PoissonUdpClient();
+    PoissonClient();
+    virtual ~PoissonClient();
 
     void SetRemote(Address ip, uint16_t port);
+    void SetProtocol(string protocol);
 };
 
 

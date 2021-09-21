@@ -12,16 +12,16 @@
 using namespace ns3;
 using namespace std;
 
-class PoissonUdpClientHelper {
+class PoissonClientHelper {
 
 private:
     ObjectFactory _factory;
 
 public:
-    PoissonUdpClientHelper();
+    PoissonClientHelper();
 
-    PoissonUdpClientHelper(Address ip, uint16_t port);
-    PoissonUdpClientHelper(Address addr);
+    PoissonClientHelper(Address ip, uint16_t port); // here you should set ip and port of the destination
+    PoissonClientHelper(Address addr); // this refers to InetSocketAddress(Address ip, uint16_t port) of the destination Socket
 
     void SetAttribute(std::string name, const AttributeValue &value);
 

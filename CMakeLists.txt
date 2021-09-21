@@ -22,10 +22,10 @@ include_directories(~/Desktop/experiments2/ns-allinone-3.33/ns-3.33/build)
 link_directories(~/Desktop/experiments2/ns-allinone-3.33/ns-3.33/build)
 
 set(SOURCE_FILES main.cc)
-set(PROJECT_ENV_FILES project_run_env/RunConfig.py loss_analysis/loss_analysis_funcs.py)
+set(PROJECT_ENV_FILES project_run_env/RunConfig.py loss_analysis/loss_analysis_funcs.py neut_infer_scenarios/NeutTestPoisson.cc)
 file(GLOB SCENARIOS_FILES ploss_infer_scenarios/* testing_scenarios/* neut_infer_scenarios/*)
 file(GLOB MONITOR_FILES monitors_module/*)
-file(GLOB TRAFFIC_GENERATOR_FILES traffic_generator_module/poisson_udp/* traffic_generator_module/trace_replay/* traffic_generator_module/ppb/* traffic_generator_module/utility/* traffic_generator_module/poisson_bursts/* traffic_generator_module/wehe_cs/*)
+file(GLOB TRAFFIC_GENERATOR_FILES traffic_generator_module/poisson/* traffic_generator_module/trace_replay/* traffic_generator_module/ppb/* traffic_generator_module/utility/* traffic_generator_module/poisson_bursts/* traffic_generator_module/wehe_cs/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROJECT_ENV_FILES} ${SCENARIOS_FILES} ${MONITOR_FILES} ${TRAFFIC_GENERATOR_FILES} ${TRAFFIC_DIFFERENTATION_FILES})
 

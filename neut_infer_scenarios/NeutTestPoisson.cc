@@ -1,5 +1,5 @@
 //
-// Created by nal on 22.05.21.
+// Created by nal on 09.07.21.
 //
 // Network topology
 //
@@ -35,38 +35,25 @@
 
 #include "../traffic_generator_module/wehe_cs/WeheCS.h"
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
+#include "../traffic_generator_module/poisson/PoissonClientHelper.h"
 
 using namespace ns3;
 using namespace std;
 using namespace std::chrono;
 
-NS_LOG_COMPONENT_DEFINE("NeutTestWehe");
+NS_LOG_COMPONENT_DEFINE("NeutTestPoisson");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
 
 /*****************************************************************************/
-// This function is to handle when ns3 fails to save current work
-uint32_t nbWeheApps = 4;
-string resultsPath;
-PacketMonitor* bottleneckPktMonitorDown;
-vector<PacketMonitor*> pathPktsMonitorsDown;
-void CleanTerminate () {
-    cerr << "terminate handler called\n";
-    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
-    for(uint32_t i = 0; i < nbWeheApps; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-    }
-}
-
-/*****************************************************************************/
-int run_neut_test_wehe(int argc, char **argv) {
+int run_neut_test_poisson(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
     LogComponentEnableAll(LOG_PREFIX_NODE);
-    LogComponentEnable ("NeutTestWehe", LOG_LEVEL_INFO);
+    LogComponentEnable ("NeutTestPoisson", LOG_LEVEL_INFO);
 //    LogComponentEnable ("TcpCubic", LOG_LEVEL_ALL);
-    NS_LOG_INFO("N Wehe applications with CAIDA background is running");
+    NS_LOG_INFO("N Poisson applications with CAIDA background is running");
 
     /*** Defining Inputs: Variables read from arguments ***/
     float duration = 120.; // for how long measurement traffic should run
@@ -100,12 +87,12 @@ int run_neut_test_wehe(int argc, char **argv) {
     Time simEndTime = warmupTime + Seconds(duration) + Seconds(5);
 
     /*** Input-Output parameters ***/
-    resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
+    string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
     string dataPath = (string)(getenv("PWD")) + "/data";
 
     /*** Topology Parameters ***/
-//    uint32_t nbWeheApps = 4;
-    uint32_t nbServers = nbWeheApps + 1; // the +1 is for the last path which carries only back traffic (could be eliminated)
+    uint32_t nbApps = 1;
+    uint32_t nbServers = nbApps + 1; // the +1 is for the last path which carries only back traffic (could be eliminated)
 
 
     /*** Traffic Parameters ***/
@@ -134,8 +121,8 @@ int run_neut_test_wehe(int argc, char **argv) {
     internetStackHelper.Install(routers);
     internetStackHelper.Install(serverNodes);
 
-    string defaultCommonDataRate = "10Gbps";
-    string defaultNonCommonDataRate = "1Gbps";
+    string defaultBackNonCommonDataRate = "10Gbps";
+    string defaultNonCommonDataRate = "10Gbps";
     string defaultLinkDelay = "5ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
@@ -143,7 +130,7 @@ int run_neut_test_wehe(int argc, char **argv) {
 
     NetDeviceContainer channels_r1_servers[nbServers];
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
-    string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate};
+    string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultBackNonCommonDataRate};
     /********** This part here is adjusted to enable congestion on the non-common links *****/
     if(scenario == 2) {
         dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
@@ -151,22 +138,6 @@ int run_neut_test_wehe(int argc, char **argv) {
     }
     else if(scenario == 3) {
         dataRates[0] = "270Mbps"; dataRates[1] = "210Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
-    }
-    else if(scenario == 4) {
-        dataRates[0] = "300Mbps"; dataRates[1] = "240Mbps";
-        dataRates[2] = "240Mbps"; dataRates[3] = "240Mbps";
-    }
-    else if(scenario == 5) { // not needed
-        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
-        dataRates[2] = "240Mbps"; dataRates[3] = "240Mbps";
-    }
-    else if(scenario == 6) {
-//        dataRates[0] = "350Mbps"; dataRates[1] = "350Mbps";
-        dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
-    }
-    else if(scenario == 7) {
-        dataRates[0] = "255Mbps"; dataRates[1] = "210Mbps";
         dataRates[2] = "220Mbps"; dataRates[3] = "210Mbps";
     }
 
@@ -228,29 +199,50 @@ int run_neut_test_wehe(int argc, char **argv) {
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
-    uint16_t dstPorts[nbWeheApps];
+    uint16_t dstPorts[nbApps];
     /*** Create Wehe Traffic ***/
     int trafficClass[] = {0, 0, 4, 8};
-    for(uint32_t i = 0; i < nbWeheApps; i++) {
-        WeheCS* weheCS = new WeheCS(routers.Get(0), serverNodes.Get(i), weheAppProtocol);
-        weheCS->SetTos(trafficClass[i]);
-        weheCS->SetResultsFolder(resultsPath);
-        weheCS->LoadTrace(dataPath + "/weheCS_trace");
-        if(isTCP == 1) weheCS->EnableCwndMonitor();
-        weheCS->StartApplication(warmupTime);
-        weheCS->StopApplication(simEndTime);
-        dstPorts[i] = weheCS->GetPort();
+    for(uint32_t i = 0; i < nbApps; i++) {
+//        WeheCS* weheCS = new WeheCS(routers.Get(0), serverNodes.Get(i), weheAppProtocol);
+//        weheCS->SetTos(trafficClass[i]);
+//        weheCS->SetResultsFolder(resultsPath);
+//        weheCS->LoadTrace(dataPath + "/weheCS_trace");
+//        if(isTCP == 1) weheCS->EnableCwndMonitor();
+//        weheCS->StartApplication(warmupTime);
+//        weheCS->StopApplication(simEndTime);
+//        dstPorts[i] = weheCS->GetPort();
+
+        // create the application at destination
+        uint32_t sinkPort = 3001 + i;
+        PacketSinkHelper sinkAppHelper(weheAppProtocol, InetSocketAddress(Ipv4Address::GetAny (), sinkPort));
+        ApplicationContainer sinkApp = sinkAppHelper.Install(routers.Get(0));
+        sinkApp.Start(warmupTime);
+        sinkApp.Stop(simEndTime);
+
+        // create the client sending poisson
+        InetSocketAddress sinkAddress = InetSocketAddress(addresses_r0_r1.GetAddress(0), sinkPort);
+//        sinkAddress.SetTos(trafficClass[i]); // used for policing to set the traffic type
+        PoissonClientHelper poissonClientHelper(sinkAddress);
+        poissonClientHelper.SetAttribute("Protocol", StringValue(weheAppProtocol));
+        poissonClientHelper.SetAttribute("Interval", StringValue("ns3::ExponentialRandomVariable[Mean=0.001]"));
+        ApplicationContainer poissonApp = poissonClientHelper.Install(serverNodes.Get(i));
+        poissonApp.Start(warmupTime);
+        poissonApp.Stop(simEndTime);
     }
 
     /*** Create Background Traffic ***/
-    MultipleReplayClients* back1 = new MultipleReplayClients(serverNodes.Get(0), routers.Get(0));
-    back1->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link1", 899, 1);
-    MultipleReplayClients* back2 = new MultipleReplayClients(serverNodes.Get(1), routers.Get(0));
-    back2->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link2", 773, 1, 4);
-    MultipleReplayClients* back3 = new MultipleReplayClients(serverNodes.Get(2), routers.Get(0));
-    back3->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link3", 945, 1);
-    MultipleReplayClients* back4 = new MultipleReplayClients(serverNodes.Get(3), routers.Get(0));
-    back4->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link4", 781, 1);
+//    MultipleReplayClients* back1 = new MultipleReplayClients(serverNodes.Get(0), routers.Get(0));
+//    back1->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link1", 899, 1);
+//    MultipleReplayClients* back2 = new MultipleReplayClients(serverNodes.Get(1), routers.Get(0));
+//    back2->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link2", 773, 1, 4);
+//    MultipleReplayClients* back3 = new MultipleReplayClients(serverNodes.Get(2), routers.Get(0));
+//    back3->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link3", 945, 1);
+//    MultipleReplayClients* back4 = new MultipleReplayClients(serverNodes.Get(3), routers.Get(0));
+//    back4->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link4", 781, 1);
+
+    // client is sender and server is receiver
+    MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(0), routers.Get(0));
+    back->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link1", 899, 1);
 
 
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
@@ -261,16 +253,16 @@ int run_neut_test_wehe(int argc, char **argv) {
 #endif
 
     uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
-    uint32_t dstIds[nbServers]; for(uint32_t i = 0; i < nbServers; i++) { dstIds[i] = serverNodes.Get(i)->GetId(); }
+    uint32_t serverIds[nbServers]; for(uint32_t i = 0; i < nbServers; i++) { serverIds[i] = serverNodes.Get(i)->GetId(); }
 
 #if PACKET_MONITOR_FLAG
-    bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    for(uint32_t i = 0; i < nbWeheApps; i++)
+    PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
+    for(uint32_t i = 0; i < nbApps; i++)
         bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
 
-//    vector<PacketMonitor*> pathPktsMonitorsDown;
-    for(uint32_t i = 0; i < nbWeheApps; i++) {
-        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), dstIds[i], routersIds[0],  "path" + to_string(i) + "Down");
+    vector<PacketMonitor*> pathPktsMonitorsDown;
+    for(uint32_t i = 0; i < nbApps; i++) {
+        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), serverIds[i], routersIds[0], "path" + to_string(i) + "Down");
         pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
@@ -283,9 +275,6 @@ int run_neut_test_wehe(int argc, char **argv) {
 //    }
 #endif
 
-    std::set_terminate(CleanTerminate);
-
-
     /*** Run simulation ***/
     NS_LOG_INFO("Run Simulation.");
     Simulator::Stop(simEndTime);
@@ -296,7 +285,7 @@ int run_neut_test_wehe(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
-    for(uint32_t i = 0; i < nbWeheApps; i++) {
+    for(uint32_t i = 0; i < nbApps; i++) {
         pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
 //        pathPktsMonitorsUp[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
 //        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
@@ -308,6 +297,7 @@ int run_neut_test_wehe(int argc, char **argv) {
 
     return 0;
 }
+
 
 
 

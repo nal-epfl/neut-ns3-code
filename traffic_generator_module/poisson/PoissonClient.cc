@@ -2,76 +2,80 @@
 // Created by Zeinab Shmeis on 03.06.20.
 //
 
-#include "PoissonUdpClient.h"
+#include "PoissonClient.h"
 
 NS_LOG_COMPONENT_DEFINE ("PoissonUdpClient");
 
-NS_OBJECT_ENSURE_REGISTERED (PoissonUdpClient);
+NS_OBJECT_ENSURE_REGISTERED (PoissonClient);
 
-TypeId PoissonUdpClient::GetTypeId(void) {
+TypeId PoissonClient::GetTypeId(void) {
 
     static TypeId tid = TypeId ("ns3::PoissonUdpClient")
             .SetParent<Application> ()
             .SetGroupName("Applications")
-            .AddConstructor<PoissonUdpClient> ()
+            .AddConstructor<PoissonClient> ()
             .AddAttribute ("Interval",
                            "A RandomVariableStream used to pick the time to wait between packets",
                            StringValue("ns3::ConstantRandomVariable[Constant=1.0]"),
-                           MakePointerAccessor (&PoissonUdpClient::_interval),
+                           MakePointerAccessor (&PoissonClient::_interval),
                            MakePointerChecker <RandomVariableStream>())
             .AddAttribute ("RemoteAddress",
                            "The destination Address of the outbound packets",
                            AddressValue (),
-                           MakeAddressAccessor (&PoissonUdpClient::_peerAddress),
+                           MakeAddressAccessor (&PoissonClient::_peerAddress),
                            MakeAddressChecker ())
             .AddAttribute ("RemotePort", "The destination port of the outbound packets",
                            UintegerValue (100),
-                           MakeUintegerAccessor (&PoissonUdpClient::_peerPort),
+                           MakeUintegerAccessor (&PoissonClient::_peerPort),
                            MakeUintegerChecker<uint16_t> ())
+            .AddAttribute ("Protocol", "protocol used by the socket: ns3::TcpSocketFactory or ns3::UdpSocketFactory",
+                           StringValue ("ns3::UdpSocketFactory"),
+                           MakeStringAccessor(&PoissonClient::_protocol),
+                           MakeStringChecker())
             .AddAttribute ("PacketSize",
                            "Size of packets generated. The minimum packet size is 12 bytes which is the size of the header carrying the sequence number and the time stamp.",
                            UintegerValue (1024),
-                           MakeUintegerAccessor (&PoissonUdpClient::_size),
+                           MakeUintegerAccessor (&PoissonClient::_size),
                            MakeUintegerChecker<uint32_t> (12,65507))
     ;
     return tid;
 }
 
-PoissonUdpClient::PoissonUdpClient() {
+PoissonClient::PoissonClient() {
     NS_LOG_FUNCTION (this);
     _sent = 0;
     _socket = 0;
     _sendEvent = EventId ();
 }
 
-PoissonUdpClient::~PoissonUdpClient() {
+PoissonClient::~PoissonClient() {
     NS_LOG_FUNCTION (this);
 }
 
-void PoissonUdpClient::SetRemote(Address ip, uint16_t port) {
+void PoissonClient::SetRemote(Address ip, uint16_t port) {
     NS_LOG_FUNCTION (this << ip << port);
     _peerAddress = ip;
     _peerPort = port;
 }
 
-void PoissonUdpClient::DoDispose(void) {
+void PoissonClient::DoDispose(void) {
     NS_LOG_FUNCTION (this);
     Application::DoDispose ();
 }
 
-void PoissonUdpClient::StartApplication(void) {
+void PoissonClient::StartApplication(void) {
     NS_LOG_FUNCTION (this);
 
     if (_socket == 0)     {
-        TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+        TypeId tid = TypeId::LookupByName (_protocol);
         _socket = Socket::CreateSocket (GetNode (), tid);
-        if (Ipv4Address::IsMatchingType(_peerAddress) == true) {
+        if (Ipv4Address::IsMatchingType (_peerAddress) == true) {
             if (_socket->Bind () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
             _socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(_peerAddress), _peerPort));
         }
-        else if (Ipv6Address::IsMatchingType(_peerAddress) == true) {
+        else if (Ipv6Address::IsMatchingType (_peerAddress) == true) {
             if (_socket->Bind6 () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
@@ -97,15 +101,15 @@ void PoissonUdpClient::StartApplication(void) {
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
-    _sendEvent = Simulator::Schedule (Seconds (0.0), &PoissonUdpClient::Send, this);
+    _sendEvent = Simulator::Schedule (Seconds (0.0), &PoissonClient::Send, this);
 }
 
-void PoissonUdpClient::StopApplication(void) {
+void PoissonClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
     Simulator::Cancel (_sendEvent);
 }
 
-void PoissonUdpClient::Send(void) {
+void PoissonClient::Send(void) {
     NS_LOG_FUNCTION(this);
     NS_ASSERT (_sendEvent.IsExpired());
 
@@ -138,5 +142,9 @@ void PoissonUdpClient::Send(void) {
 
     double interval = _interval->GetValue();
 //    cout << "sending to host " << _peerAddress << " after " << interval << endl;
-    _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonUdpClient::Send, this);
+    _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::Send, this);
+}
+
+void PoissonClient::SetProtocol(string protocol) {
+    _protocol = protocol;
 }
