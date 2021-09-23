@@ -224,12 +224,12 @@ int run_wehe_tomo_b2b_w_background(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorUp = new PacketMonitor(warmupTime, simEndTime - warmupTime, routersIds[0], routersIds[1], "bottleneckUp");
-    for(int i = 0; i < nbPaths-1; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddresses[i], 0);
+    for(int i = 0; i < nbPaths-1; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddresses[i]);
 
     vector<PacketMonitor*> pathPktsMonitorsUp;
     for(int i = 0; i < nbPaths-1; i++) {
         PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, simEndTime - warmupTime, srcIds[i], dstIds[i],  "path" + to_string(i) + "Up");
-        pathMonitor->AddAppKey(srcAddresses[i], dstAddresses[i], 0);
+        pathMonitor->AddAppKey(srcAddresses[i], dstAddresses[i]);
         pathPktsMonitorsUp.push_back(pathMonitor);
     }
 

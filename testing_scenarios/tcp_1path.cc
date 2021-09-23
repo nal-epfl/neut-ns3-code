@@ -149,10 +149,10 @@ int run_1path_tcp(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorUp = new PacketMonitor(simStartTime, Seconds(duration), routersIds[0], routersIds[1], "bottleneckUp");
-    bottleneckPktMonitorUp->AddAppKey(addresses_r0_r1.GetAddress(0), addresses_r0_r1.GetAddress(1), 0);
+    bottleneckPktMonitorUp->AddAppKey(addresses_r0_r1.GetAddress(0), addresses_r0_r1.GetAddress(1));
 
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(simStartTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    bottleneckPktMonitorDown->AddAppKey(addresses_r0_r1.GetAddress(1), addresses_r0_r1.GetAddress(0), 0);
+    bottleneckPktMonitorDown->AddAppKey(addresses_r0_r1.GetAddress(1), addresses_r0_r1.GetAddress(0));
 #endif
 
     /*** Run simulation ***/

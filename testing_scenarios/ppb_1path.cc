@@ -165,7 +165,7 @@ int run_1path_ppb_udp(int argc, char **argv) {
 #if PACKET_MONITOR_FLAG /*** Monitor the paths ***/
     PacketMonitor* pathPktMonitor = new PacketMonitor(transientPeriod, Seconds(duration), nodeContainer.Get(0)->GetId(), nodeContainer.Get(2)->GetId(), "path");
     pathPktMonitor->AddAppKey(nodeContainer.Get(0)->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal(),
-                              nodeContainer.Get(2)->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal(), 0);
+                              nodeContainer.Get(2)->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal());
 #endif
 
 #if LOSS_MONITOR_FLAG /*** Monitor the paths ***/

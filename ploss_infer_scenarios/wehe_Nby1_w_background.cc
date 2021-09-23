@@ -212,12 +212,12 @@ int run_wehe_Nby1_w_background(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorUp = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], routersIds[1], "bottleneckUp");
-    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddress, 0);
+    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddress);
 
     vector<PacketMonitor*> pathPktsMonitorsUp;
     for(int i = 0; i < nbSrcs-1; i++) {
         PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), srcIds[i], dstId,  "path" + to_string(i) + "Up");
-        pathMonitor->AddAppKey(srcAddresses[i], dstAddress, 0);
+        pathMonitor->AddAppKey(srcAddresses[i], dstAddress);
         pathPktsMonitorsUp.push_back(pathMonitor);
     }
 

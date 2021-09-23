@@ -199,7 +199,7 @@ int run_neut_test_poisson(int argc, char **argv) {
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
-    uint16_t dstPorts[nbApps];
+    uint16_t appPorts[nbApps];
     /*** Create Wehe Traffic ***/
     int trafficClass[] = {0, 0, 4, 8};
     for(uint32_t i = 0; i < nbApps; i++) {
@@ -258,12 +258,12 @@ int run_neut_test_poisson(int argc, char **argv) {
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
     for(uint32_t i = 0; i < nbApps; i++)
-        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
+        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0, appPorts[i]);
 
     vector<PacketMonitor*> pathPktsMonitorsDown;
     for(uint32_t i = 0; i < nbApps; i++) {
         PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), serverIds[i], routersIds[0], "path" + to_string(i) + "Down");
-        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
+        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0, appPorts[i]);
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 

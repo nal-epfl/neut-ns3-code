@@ -17,13 +17,15 @@ class AppKey {
 
 private:
     Ipv4Address _srcIp, _dstIp;
-    uint16_t _dstPort;
+    uint16_t _srcPort, _dstPort;
 
 public:
-    AppKey(const Ipv4Address &srcIp, const Ipv4Address &dstIp, uint16_t dstPort);
+    AppKey(const Ipv4Address &srcIp, const Ipv4Address &dstIp, uint16_t srcPort, uint16_t dstPort);
+    AppKey(const Ipv4Address &srcIp, const Ipv4Address &dstIp);
 
     [[nodiscard]] Ipv4Address GetSrcIp() const;
     [[nodiscard]] Ipv4Address GetDstIp() const;
+    [[nodiscard]] uint16_t GetSrcPort() const;
     [[nodiscard]] uint16_t GetDstPort() const;
 
     bool operator<(const AppKey &rhs) const;

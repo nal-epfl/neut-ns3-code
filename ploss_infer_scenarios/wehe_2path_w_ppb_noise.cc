@@ -186,7 +186,7 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 //    }
 
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorDown->AddAppKey(Ipv4Address(), srcAddresses[i], 0);
+    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorDown->AddAppKey(Ipv4Address(), srcAddresses[i]);
 
 //    vector<PacketMonitor*> pathPktsMonitorsDown;
 //    for(int i = 0; i < nbPaths; i++) {

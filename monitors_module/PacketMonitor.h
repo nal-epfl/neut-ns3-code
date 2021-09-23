@@ -76,7 +76,8 @@ private:
 public:
     PacketMonitor(const Time &startTime, const Time &duration, const uint32_t &txNodeId, const uint32_t &rxNodeId, const string &trafficId);
 
-    void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t dstPort);
+    void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t srcPort, uint16_t dstPort);
+    void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp);
 
     void SaveRecordedPacketsToCSV(const string& filename);
     void SaveRecordedPacketsCompactByIP(const string& filename);

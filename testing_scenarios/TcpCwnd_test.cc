@@ -226,14 +226,14 @@ int run_TcpCwnd_test(int argc, char **argv) {
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
-    uint16_t dstPorts[nbTcpFlows];
+    uint16_t sinkPorts[nbTcpFlows];
     Ptr<Socket> appSockets[nbTcpFlows];
     /*** Create Wehe Traffic ***/
     int trafficClass[] = {0, 0, 4, 8};
     for(int i = 0; i < nbTcpFlows; i++) {
         // Create a packet sink on r0 to receive packets
         uint16_t port = 3000 + (i+1);
-        dstPorts[i] = port;
+        sinkPorts[i] = port;
         PacketSinkHelper sink(weheAppProtocol, InetSocketAddress(Ipv4Address::GetAny (), port));
         ApplicationContainer sinkApp = sink.Install(routers.Get(0));
         sinkApp.Start(warmupTime);
@@ -337,12 +337,12 @@ int run_TcpCwnd_test(int argc, char **argv) {
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
 //    bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
     for(int i = 0; i < nbTcpFlows; i++)
-        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
+        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0, sinkPorts[i]);
 
     vector<PacketMonitor*> pathPktsMonitorsDown;
     for(int i = 0; i < nbTcpFlows; i++) {
         PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), dstIds[i], routersIds[0],  "path" + to_string(i) + "Down");
-        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), dstPorts[i]);
+        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0, sinkPorts[i]);
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 #endif

@@ -57,8 +57,12 @@ void PacketMonitor::Disconnect(uint32_t txNodeId, uint32_t rxNodeId) {
 //    Config::Disconnect("/NodeList/" + to_string(rxNodeId) + "/$ns3::Ipv4L3Protocol/Rx", MakeCallback(&PacketMonitor::RecordIpv4PacketReceived, this));
 }
 
-void PacketMonitor::AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t dstPort) {
-    _appsKey.insert(AppKey(srcIp, dstIp, dstPort));
+void PacketMonitor::AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t srcPort, uint16_t dstPort) {
+    _appsKey.insert(AppKey(srcIp, dstIp, srcPort, dstPort));
+}
+
+void PacketMonitor::AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp) {
+    _appsKey.insert(AppKey(srcIp, dstIp));
 }
 
 void PacketMonitor::RecordIpv4PacketSent(string context, Ptr<Packet const> packet, Ptr<Ipv4> ipv4, uint32_t interface) {

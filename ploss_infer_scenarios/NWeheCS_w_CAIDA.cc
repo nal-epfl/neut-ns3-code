@@ -242,12 +242,12 @@ int run_NWeheCS_w_CAIDA(int argc, char **argv) {
 
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, simEndTime-warmupTime, routersIds[1], routersIds[0], "bottleneckDown");
     for(int i = 0; i < nbWeheCS; i++)
-        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0);
+        bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0));
 
     vector<PacketMonitor*> pathPktsMonitorsDown;
     for(int i = 0; i < nbWeheCS; i++) {
         PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, simEndTime-warmupTime, dstIds[i], routersIds[0],  "path" + to_string(i) + "Down");
-        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0);
+        pathMonitor->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0));
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 #endif
