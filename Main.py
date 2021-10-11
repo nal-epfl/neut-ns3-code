@@ -116,18 +116,18 @@ if __name__ == '__main__':
     results_folder = 'back_traffic_6/without_time_pacing_and_with_flow_control'
     link_rates = ['800Mbps', '850Mbps', '1000Mbps']
 
-    # exp_batch = 'test_tcp_cubic'
-    # run_weheCS_tcp_experiment(app_name, "20Mbps", 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=3)
+    exp_batch = 'test_tcp_cubic'
+    run_weheCS_tcp_experiment(app_name, "20Mbps", 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=3)
 
-    for link_rate in ['900Mbps']: #link_rates:
-        for scenario in [4, 6, 7]:
-            print('Now in case with link_rate = ' + link_rate + ' and scenario = ' + str(scenario))
-            exp_batch = results_folder + '/exp_batch_' + str(scenario) + "_test_recovery_bug_2"
-            # run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
-            # run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=0, policing_rate=3.7, burst_length=0.03,
-            #                             case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
-            run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=0, policing_rate=200, burst_length=0.03,
-                                        case=exp_batch + '/shared_policer_200Mbps_0.03s/seed_3', seed=3, scenario=scenario)
+    # for link_rate in ['900Mbps']: #link_rates:
+    #     for scenario in [4, 6, 7]:
+    #         print('Now in case with link_rate = ' + link_rate + ' and scenario = ' + str(scenario))
+    #         exp_batch = results_folder + '/exp_batch_' + str(scenario) + "_test_recovery_bug_2"
+    #         # run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=1, case=exp_batch + '/neutral/seed_3', seed=3, scenario=scenario)
+    #         # run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=0, policing_rate=3.7, burst_length=0.03,
+    #         #                             case=exp_batch + '/perFlow_policer_3.7Mbps_0.03s/seed_3', seed=3, scenario=scenario)
+    #         run_weheCS_tcp_experiment(app_name, link_rate, 'TcpCubic', is_neutral=0, policing_rate=200, burst_length=0.03,
+    #                                     case=exp_batch + '/shared_policer_200Mbps_0.03s/seed_3', seed=3, scenario=scenario)
     #
     # for link_rate in ['1000Mbps']: #link_rates:
     #     for scenario in [1, 2, 3, 4, 6, 7]:

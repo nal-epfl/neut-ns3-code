@@ -9,6 +9,8 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 
+#include "../../monitors_module/CwndMonitor.h"
+
 using namespace ns3;
 using namespace std;
 
@@ -18,7 +20,11 @@ private:
     virtual void StartApplication(void);
     virtual void StopApplication(void);
 
+    void SchedualeSend(void);
     void Send(void);
+
+    static uint32_t APPS_COUNT;
+    uint32_t _appId;
 
     Ptr<RandomVariableStream> _interval; // interval between sending two packets
     uint32_t _size; // size of sent packets
@@ -31,6 +37,12 @@ private:
     EventId _sendEvent;
 
     string _protocol;
+    bool isTCP = false;
+
+    bool _enableCwndMonitor;
+    CwndMonitor* _cwndMonitor;
+    string _resultsFolder = "";
+
 
 protected:
     virtual void DoDispose(void);
@@ -42,7 +54,6 @@ public:
     virtual ~PoissonClient();
 
     void SetRemote(Address ip, uint16_t port);
-    void SetProtocol(string protocol);
 };
 
 

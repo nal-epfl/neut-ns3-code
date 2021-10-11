@@ -37,12 +37,23 @@ TypeId PoissonClient::GetTypeId(void) {
                            UintegerValue (1024),
                            MakeUintegerAccessor (&PoissonClient::_size),
                            MakeUintegerChecker<uint32_t> (12,65507))
+            .AddAttribute ("EnableCwndMonitor", "enable monitoring the cwnd for TCP applications",
+                           BooleanValue (false),
+                           MakeBooleanAccessor(&PoissonClient::_enableCwndMonitor),
+                           MakeBooleanChecker())
+            .AddAttribute ("ResultsFolder", "folder to which all results are saved",
+                           StringValue (""),
+                           MakeStringAccessor(&PoissonClient::_resultsFolder),
+                           MakeStringChecker())
     ;
     return tid;
 }
 
+uint32_t PoissonClient::APPS_COUNT = 0;
+
 PoissonClient::PoissonClient() {
     NS_LOG_FUNCTION (this);
+    _appId = ++APPS_COUNT;
     _sent = 0;
     _socket = 0;
     _sendEvent = EventId ();
@@ -68,6 +79,7 @@ void PoissonClient::StartApplication(void) {
 
     if (_socket == 0)     {
         TypeId tid = TypeId::LookupByName (_protocol);
+        isTCP = (_protocol == "ns3::TcpSocketFactory");
         _socket = Socket::CreateSocket (GetNode (), tid);
         if (Ipv4Address::IsMatchingType (_peerAddress) == true) {
             if (_socket->Bind () == -1) {
@@ -101,18 +113,28 @@ void PoissonClient::StartApplication(void) {
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
-    _sendEvent = Simulator::Schedule (Seconds (0.0), &PoissonClient::Send, this);
+
+    // part for monitoring the congestion window
+    if (isTCP && _enableCwndMonitor) {
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + to_string(_appId) + "/server/";
+        _cwndMonitor = new CwndMonitor(_socket, outputFolder);
+    }
+
+    _sendEvent = Simulator::Schedule (Seconds (0.0), &PoissonClient::SchedualeSend, this);
 }
 
 void PoissonClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
     Simulator::Cancel (_sendEvent);
+    if (isTCP && _enableCwndMonitor) {
+        _cwndMonitor->SaveCwndChanges();
+        _cwndMonitor->SaveRtoChanges();
+        _cwndMonitor->SaveRttChanges();
+        _cwndMonitor->SaveCongStateChanges();
+    }
 }
 
 void PoissonClient::Send(void) {
-    NS_LOG_FUNCTION(this);
-    NS_ASSERT (_sendEvent.IsExpired());
-
     SeqTsHeader seqTs;
     seqTs.SetSeq (_sent);
     Ptr<Packet> p = Create<Packet> (_size-(8+4)); // 8+4 : the size of the seqTs header
@@ -138,13 +160,15 @@ void PoissonClient::Send(void) {
         NS_LOG_INFO ("Error while sending " << _size << " bytes to "
                                             << peerAddressStringStream.str ());
     }
-
-
-    double interval = _interval->GetValue();
-//    cout << "sending to host " << _peerAddress << " after " << interval << endl;
-    _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::Send, this);
 }
 
-void PoissonClient::SetProtocol(string protocol) {
-    _protocol = protocol;
+
+void PoissonClient::SchedualeSend(void) {
+    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION(this);
+
+    Send();
+
+    double interval = _interval->GetValue();
+    _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::SchedualeSend, this);
 }
