@@ -162,7 +162,19 @@ void TraceReplayClient::Send(uint32_t payload_size) {
     NS_LOG_FUNCTION(this);
     NS_ASSERT (_sendEvent.IsExpired());
 
-    Ptr<Packet> p = Create<Packet> (payload_size);
+    Ptr<Packet> p;
+    if (payload_size > (8+4)) {
+        SeqTsHeader seqTs;
+        seqTs.SetSeq(_nbSentPkts);
+        p = Create<Packet>(payload_size - (8 + 4)); // 8+4 : the size of the seqTs header
+        p->AddHeader(seqTs);
+    }
+    else {
+        p = Create<Packet>(payload_size);
+    }
+
+//    cout << "timestamp: " << Simulator::Now().GetSeconds() << ", payload size: " << payload_size << endl;
+
 
     std::stringstream peerAddressStringStream;
     if (Ipv4Address::IsMatchingType (_peerAddress)) {
