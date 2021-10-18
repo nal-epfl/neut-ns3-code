@@ -196,6 +196,7 @@ void TraceReplayClient::Send(uint32_t payload_size) {
                                              << peerAddressStringStream.str ());
         cout << "Error while sending " << payload_size << " bytes to "
              << ns3::Now() << endl;
+        Simulator::Schedule(Seconds(0.0), &TraceReplayClient::Send, this, payload_size);
     }
 }
 

@@ -11,15 +11,15 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 ##########################################
-find_package(Matlab)
-if(NOT Matlab_FOUND)
-    message(FATAL_ERROR "Matlab Not found")
-endif()
+#find_package(Matlab)
+#if(NOT Matlab_FOUND)
+#    message(FATAL_ERROR "Matlab Not found")
+#endif()
 
 
 add_definitions(-DNS3_LOG_ENABLE)
-include_directories(~/Desktop/experiments2/ns-allinone-3.33/ns-3.33/build)
-link_directories(~/Desktop/experiments2/ns-allinone-3.33/ns-3.33/build)
+include_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
+link_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
 
 set(SOURCE_FILES main.cc)
 set(PROJECT_ENV_FILES project_run_env/RunConfig.py loss_analysis/loss_analysis_funcs.py neut_infer_scenarios/NeutTestPoisson.cc)
@@ -31,15 +31,15 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROJECT_ENV_FILES} ${SCENARIOS_
 
 set(NS3_EMU ON)
 target_link_libraries(${PROJECT_NAME}
-        libns3.33-core-debug
-        ns3.33-wave-debug
-        ns3.33-wifi-debug
-        ns3.33-netanim-debug
-        ns3.33-network-debug
-        ns3.33-internet-debug
-        ns3.33-mobility-debug
-        ns3.33-visualizer-debug
-        ns3.33-applications-debug
-        ns3.33-applications-debug
-        ns3.33-point-to-point-debug
+        libns3.35-core-debug
+        ns3.35-wave-debug
+        ns3.35-wifi-debug
+        ns3.35-netanim-debug
+        ns3.35-network-debug
+        ns3.35-internet-debug
+        ns3.35-mobility-debug
+        ns3.35-visualizer-debug
+        ns3.35-applications-debug
+        ns3.35-applications-debug
+        ns3.35-point-to-point-debug
         Boost::program_options)

@@ -159,6 +159,7 @@ void PoissonClient::Send(void) {
     else {
         NS_LOG_INFO ("Error while sending " << _size << " bytes to "
                                             << peerAddressStringStream.str ());
+        Simulator::Schedule(Seconds(0.0), &PoissonClient::Send, this);
     }
 }
 

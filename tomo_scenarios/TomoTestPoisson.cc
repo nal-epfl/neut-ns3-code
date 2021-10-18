@@ -211,7 +211,6 @@ int run_tomo_test_poisson(int argc, char **argv) {
             TraceReplayClientHelper replayClientHelper(sinkAddress);
             replayClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
             replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
-//            replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/poisson_trace_lambda_10ms_pktSize_1228"));
             if(isTCP == 1) {
                 replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
                 replayClientHelper.SetAttribute("CongAlgoFolder", StringValue(resultsPath));

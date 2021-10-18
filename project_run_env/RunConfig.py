@@ -3,7 +3,7 @@ import subprocess
 import numpy as np
 import time
 
-__ns3_path = os.popen('locate "ns-3.33" | grep /ns-3.33$').read().splitlines()[0]
+__ns3_path = os.popen('locate "ns-3.35" | grep /ns-3.35$').read().splitlines()[0]
 __project_path = __ns3_path + "/scratch/wehe_p_tomography"
 
 __duration = "20"
