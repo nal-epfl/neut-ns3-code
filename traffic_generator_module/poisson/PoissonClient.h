@@ -21,7 +21,8 @@ private:
     virtual void StopApplication(void);
 
     void SchedualeSend(void);
-    void Send(void);
+    bool Send(void);
+    void ResumeApp(Ptr<Socket> localSocket, uint32_t txSpace);
 
     static uint32_t APPS_COUNT;
     uint32_t _appId;

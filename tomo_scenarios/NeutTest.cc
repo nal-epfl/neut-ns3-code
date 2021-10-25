@@ -1,5 +1,5 @@
 //
-// Created by nal on 22.09.21.
+// Created by nal on 20.10.21.
 //
 // Network topology
 //
@@ -29,29 +29,24 @@
 
 #include "../monitors_module/PacketMonitor.h"
 
-#include "../traffic_differentiation_module/TokenBucket.h"
-
-#include "../traffic_generator_module/wehe_cs/WeheCS.h"
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
 #include "../traffic_generator_module/poisson/PoissonClientHelper.h"
 #include "../traffic_generator_module/trace_replay/TraceReplayClientHelper.h"
+#include "../traffic_differentiation_module/TokenBucket.h"
 
 using namespace ns3;
 using namespace std;
 using namespace std::chrono;
 
-NS_LOG_COMPONENT_DEFINE("TomoTestPoisson");
+NS_LOG_COMPONENT_DEFINE("NeutTest");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
 
-int run_tomo_test_poisson(int argc, char **argv) {
+int run_neut_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
-//    LogComponentEnableAll(LOG_PREFIX_NODE);
-//    LogComponentEnable ("NeutTestWehe", LOG_LEVEL_INFO);
-//    LogComponentEnable ("TcpCubic", LOG_LEVEL_ALL);
-    NS_LOG_INFO("N Poisson applications with CAIDA background is running");
+    NS_LOG_INFO("Four Probing applications with CAIDA background is running");
 
     /*** Defining Inputs: Variables read from arguments ***/
     float duration = 120.; // for how long measurement traffic should run
@@ -60,9 +55,12 @@ int run_tomo_test_poisson(int argc, char **argv) {
     int isTCP = 0; // 0 to run wehe app as UDP --- 1 to run it as TCP
     string tcpProtocol = "ns3::TcpCubic"; // in case of TCP the congestion control algorithm to use
     uint32_t scenario = 0; // This is used to enable running different scenarios (e.g., congesion on non-common link)
-    uint32_t pktSize = 256;
-    double lambda = 0.001;
-    string replayTrace = "";
+    uint32_t pktSize = 256; // size of probe packets
+    double lambda = 0.001; // rate for constand and lambda for poisson
+    string replayTrace = ""; // specific traffic to send along the measurement paths
+    int isNeutral = 1; // 1 to Run a neutral scenario  --- 0 to enable policing
+    double policingRate = 4; // the rate at which tokens in the token bucket are generated
+    double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
 
     CommandLine cmd;
     cmd.AddValue("duration", "the duration of the the simulation", duration);
@@ -74,6 +72,9 @@ int run_tomo_test_poisson(int argc, char **argv) {
     cmd.AddValue("pktSize", "pktSize", pktSize);
     cmd.AddValue("lambda", "lambda", lambda);
     cmd.AddValue("replayTrace", "file to replay by the Client", replayTrace);
+    cmd.AddValue("neutral", "to enable neutral bottleneck behaviour (0 means enable policing)", isNeutral);
+    cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
+    cmd.AddValue("policingBurstLength", "duration of burst (in sec)", burstLength);
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
 
@@ -91,7 +92,7 @@ int run_tomo_test_poisson(int argc, char **argv) {
     string dataPath = (string)(getenv("PWD")) + "/data";
 
     /*** Topology Parameters ***/
-    uint32_t nbApps = 2;
+    uint32_t nbApps = 4;
     uint32_t nbServers = nbApps + 1; // the +1 is for the last path which carries only back traffic (could be eliminated)
 
 
@@ -155,8 +156,21 @@ int run_tomo_test_poisson(int argc, char **argv) {
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
     string queueSize = to_string(int(0.025 * (DataRate(commonLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
-    cout << "queue size: " << queueSize << endl;
-    tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+    if(isNeutral == 0) {
+        cout << "we have policing with rate " << policingRate << "Mbps";
+
+        int burst = floor(policingRate * burstLength * 125000);// in byte
+        cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
+
+        TokenBucket policerForTos4(4, burst, to_string(policingRate) + "Mbps");
+        TokenBucket policerForTos8(8, burst, to_string(policingRate) + "Mbps");
+        tch.SetRootQueueDisc("ns3::CbPolicingQueueDisc", "MaxSize", StringValue(queueSize), "TokenBucket",
+                             TokenBucketValue(policerForTos4), "TokenBucket1", TokenBucketValue(policerForTos8));
+    }
+    else {
+        cout << "queue size: " << queueSize << endl;
+        tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+    }
     tch.Install(channel_r0_r1);
 
 
@@ -177,6 +191,7 @@ int run_tomo_test_poisson(int argc, char **argv) {
 
 
     uint16_t appPorts[nbApps];
+    int trafficClass[] = {0, 0, 4, 8};
     /*** Create Wehe Traffic ***/
     for(uint32_t i = 0; i < nbApps; i++) {
         // create the application at destination
@@ -188,7 +203,9 @@ int run_tomo_test_poisson(int argc, char **argv) {
 
         // create the client sending poisson
         InetSocketAddress sinkAddress = InetSocketAddress(addresses_r0_r1.GetAddress(0), sinkPort);
-        ApplicationContainer poissonApp;
+        sinkAddress.SetTos(trafficClass[i]); // used for policing to set the traffic type
+
+        ApplicationContainer app;
 
         if (scenario == 1 || scenario == 2) {
             PoissonClientHelper poissonClientHelper(sinkAddress);
@@ -205,7 +222,7 @@ int run_tomo_test_poisson(int argc, char **argv) {
                 poissonClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
                 poissonClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             }
-            poissonApp = poissonClientHelper.Install(serverNodes.Get(i));
+            app = poissonClientHelper.Install(serverNodes.Get(i));
         }
         else if (scenario == 3) {
             TraceReplayClientHelper replayClientHelper(sinkAddress);
@@ -215,12 +232,12 @@ int run_tomo_test_poisson(int argc, char **argv) {
                 replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
                 replayClientHelper.SetAttribute("CongAlgoFolder", StringValue(resultsPath));
             }
-            poissonApp = replayClientHelper.Install(serverNodes.Get(i));
+            app = replayClientHelper.Install(serverNodes.Get(i));
         }
 
 
-        poissonApp.Start(warmupTime);
-        poissonApp.Stop(warmupTime + Seconds(duration));
+        app.Start(warmupTime);
+        app.Stop(warmupTime + Seconds(duration));
 
         // for the packet monitoring
         appPorts[i] = sinkPort;
@@ -254,12 +271,6 @@ int run_tomo_test_poisson(int argc, char **argv) {
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 
-//    vector<PacketMonitor*> pathPktsMonitorsUp;
-//    for(int i = 0; i < nbWeheApp; i++) {
-//        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
-//        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i], 49153+i);
-//        pathPktsMonitorsUp.push_back(pathMonitor);
-//    }
 #endif
 
     /*** Run simulation ***/
@@ -273,10 +284,7 @@ int run_tomo_test_poisson(int argc, char **argv) {
 #if PACKET_MONITOR_FLAG
     bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(uint32_t i = 0; i < nbApps; i++) {
-//        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down_2.csv");
         pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-//        pathPktsMonitorsUp[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
-//        pathPktsMonitorsDown[i]->SaveRecordedPacketsToCSV(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 #endif
 
@@ -285,4 +293,5 @@ int run_tomo_test_poisson(int argc, char **argv) {
 
     return 0;
 }
+
 

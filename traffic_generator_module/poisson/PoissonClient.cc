@@ -4,13 +4,13 @@
 
 #include "PoissonClient.h"
 
-NS_LOG_COMPONENT_DEFINE ("PoissonUdpClient");
+NS_LOG_COMPONENT_DEFINE ("PoissonClient");
 
 NS_OBJECT_ENSURE_REGISTERED (PoissonClient);
 
 TypeId PoissonClient::GetTypeId(void) {
 
-    static TypeId tid = TypeId ("ns3::PoissonUdpClient")
+    static TypeId tid = TypeId ("ns3::PoissonClient")
             .SetParent<Application> ()
             .SetGroupName("Applications")
             .AddConstructor<PoissonClient> ()
@@ -114,6 +114,9 @@ void PoissonClient::StartApplication(void) {
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
 
+    // This is added to avoid socket overflow
+    _socket->SetSendCallback (MakeCallback (&PoissonClient::ResumeApp, this));
+
     // part for monitoring the congestion window
     if (isTCP && _enableCwndMonitor) {
         string outputFolder = _resultsFolder + "/cong_algo_info_" + to_string(_appId) + "/server/";
@@ -134,7 +137,7 @@ void PoissonClient::StopApplication(void) {
     }
 }
 
-void PoissonClient::Send(void) {
+bool PoissonClient::Send(void) {
     SeqTsHeader seqTs;
     seqTs.SetSeq (_sent);
     Ptr<Packet> p = Create<Packet> (_size-(8+4)); // 8+4 : the size of the seqTs header
@@ -154,13 +157,11 @@ void PoissonClient::Send(void) {
                                       << peerAddressStringStream.str () << " Uid: "
                                       << p->GetUid () << " Time: "
                                       << (Simulator::Now ()).GetSeconds ());
+        return true;
+    }
 
-    }
-    else {
-        NS_LOG_INFO ("Error while sending " << _size << " bytes to "
-                                            << peerAddressStringStream.str ());
-        Simulator::Schedule(Seconds(0.0), &PoissonClient::Send, this);
-    }
+    NS_LOG_INFO ("Error while sending " << _size << " bytes to " << peerAddressStringStream.str ());
+    return false;
 }
 
 
@@ -168,8 +169,13 @@ void PoissonClient::SchedualeSend(void) {
     NS_LOG_FUNCTION(this);
     NS_LOG_FUNCTION(this);
 
-    Send();
+    if (Send()) {
+        double interval = _interval->GetValue();
+        _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::SchedualeSend, this);
+    }
+}
 
-    double interval = _interval->GetValue();
-    _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::SchedualeSend, this);
+// This is just a wrap-up function
+void PoissonClient::ResumeApp(Ptr<Socket> localSocket, uint32_t txSpace) {
+    SchedualeSend();
 }
