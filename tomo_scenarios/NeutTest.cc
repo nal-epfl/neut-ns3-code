@@ -31,7 +31,7 @@
 
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
 #include "../traffic_generator_module/poisson/PoissonClientHelper.h"
-#include "../traffic_generator_module/trace_replay/TraceReplayClientHelper.h"
+#include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
 #include "../traffic_differentiation_module/TokenBucket.h"
 
 using namespace ns3;
@@ -225,7 +225,7 @@ int run_neut_test(int argc, char **argv) {
             app = poissonClientHelper.Install(serverNodes.Get(i));
         }
         else if (scenario == 3) {
-            TraceReplayClientHelper replayClientHelper(sinkAddress);
+            MeasurReplayClientHelper replayClientHelper(sinkAddress);
             replayClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
             replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
             if(isTCP == 1) {

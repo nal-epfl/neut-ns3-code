@@ -56,6 +56,7 @@ PoissonClient::PoissonClient() {
     _appId = ++APPS_COUNT;
     _sent = 0;
     _socket = 0;
+    _appPaused = false;
     _sendEvent = EventId ();
 }
 
@@ -111,8 +112,13 @@ void PoissonClient::StartApplication(void) {
         }
     }
 
+    // adjust socket buffers
+    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
+    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
+    Simulator::Schedule (Seconds (0.0), &PoissonClient::SchedualeSend, this);
 
     // This is added to avoid socket overflow
     _socket->SetSendCallback (MakeCallback (&PoissonClient::ResumeApp, this));
@@ -173,9 +179,15 @@ void PoissonClient::SchedualeSend(void) {
         double interval = _interval->GetValue();
         _sendEvent = Simulator::Schedule(Seconds(interval), &PoissonClient::SchedualeSend, this);
     }
+    else {
+        _appPaused = true;
+    }
 }
 
 // This is just a wrap-up function
 void PoissonClient::ResumeApp(Ptr<Socket> localSocket, uint32_t txSpace) {
-    SchedualeSend();
+    if (_appPaused) {
+        _appPaused = false;
+        SchedualeSend();
+    }
 }

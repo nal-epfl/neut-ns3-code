@@ -35,6 +35,7 @@ private:
     Address _peerAddress;
     uint16_t _peerPort;
 
+    bool _appPaused;
     EventId _sendEvent;
 
     string _protocol;

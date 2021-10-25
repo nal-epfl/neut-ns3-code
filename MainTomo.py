@@ -69,13 +69,13 @@ if __name__ == '__main__':
 
     # constant rate probing + poisson replay
     run_parallel_experiments([
-        ExperimentParameters(link_rate='200Mbps', duration=120, is_tcp=1, tcp_protocol='TcpCubic',
+        ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
                              exp_batch='back_traffic_long/infinite_tcp',
                              scenario=1, pkt_size=1228, p_lambda=0),
-        ExperimentParameters(link_rate='250Mbps', duration=120, is_tcp=1, tcp_protocol='TcpCubic',
+        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
                              exp_batch='back_traffic_long/infinite_tcp',
                              scenario=1, pkt_size=1228, p_lambda=0),
-        ExperimentParameters(link_rate='280Mbps', duration=120, is_tcp=1, tcp_protocol='TcpCubic',
+        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
                              exp_batch='back_traffic_long/infinite_tcp',
                              scenario=1, pkt_size=1228, p_lambda=0)
     ])

@@ -31,7 +31,7 @@
 
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
 #include "../traffic_generator_module/poisson/PoissonClientHelper.h"
-#include "../traffic_generator_module/trace_replay/TraceReplayClientHelper.h"
+#include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
 
 using namespace ns3;
 using namespace std;
@@ -98,8 +98,8 @@ int run_tomo_test(int argc, char **argv) {
     uint32_t mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue (tcpProtocol));
     Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (mss));
-    Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue (rcvBufSize));
-    Config::SetDefault("ns3::TcpSocket::SndBufSize", UintegerValue (sndBufSize));
+//    Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue (rcvBufSize));
+//    Config::SetDefault("ns3::TcpSocket::SndBufSize", UintegerValue (sndBufSize));
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue (1));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue (MilliSeconds(200)));
     Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue (TcpClassicRecovery::GetTypeId()));
@@ -202,7 +202,7 @@ int run_tomo_test(int argc, char **argv) {
             poissonApp = poissonClientHelper.Install(serverNodes.Get(i));
         }
         else if (scenario == 3) {
-            TraceReplayClientHelper replayClientHelper(sinkAddress);
+            MeasurReplayClientHelper replayClientHelper(sinkAddress);
             replayClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
             replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
             if(isTCP == 1) {
