@@ -31,8 +31,7 @@
 
 #include "../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 #include "../traffic_generator_module/ppb/PPBBidirectional.h"
-#include "../traffic_differentiation_module/TokenBucket.h"
-
+#include "../traffic_differentiation_module/CbQueueDisc.h"
 
 using namespace ns3;
 using namespace std;

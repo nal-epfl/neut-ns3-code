@@ -32,6 +32,8 @@
 #include "../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 #include "../traffic_generator_module/ppb/PPBBidirectional.h"
 
+#include "../traffic_differentiation_module/CbQueueDisc.h"
+
 
 using namespace ns3;
 using namespace std;
@@ -117,8 +119,22 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
     TrafficControlHelper tch;
 #if POLICING_FLAG
     string policingRate = "0.2Mb/s";
-    TokenBucket policerForTos4(4, 2000, policingRate);
-    tch.SetRootQueueDisc("ns3::CbPolicingQueueDisc", "MaxSize", StringValue ("1p"), "TokenBucket", TokenBucketValue(policerForTos4));
+    cout << "we have policing with rate " << policingRate;
+
+    double burstLength = 1; // in sec
+    int burst = 2000;
+    cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
+
+    uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue("1p"),
+                                           "TosMap", TosMapValue(TosMap{0, 4}));
+
+    TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 2, "ns3::QueueDiscClass");
+    tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue("1p"));
+    tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
+                           "Burst", UintegerValue (burst),
+                           "Mtu", UintegerValue (1500),
+                           "Rate", DataRateValue (DataRate (policingRate))),
+            "PeakRate", DataRateValue (DataRate ("0bps"));
 #else
     string queueSize = to_string(int(0.035 * (DataRate(btlkLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
     cout << "queue size: " << queueSize << endl;

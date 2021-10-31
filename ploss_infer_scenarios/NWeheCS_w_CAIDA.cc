@@ -30,7 +30,7 @@
 
 #include "../monitors_module/PacketMonitor.h"
 
-#include "../traffic_differentiation_module/TokenBucket.h"
+#include "../traffic_differentiation_module/CbQueueDisc.h"
 
 #include "../traffic_generator_module/wehe_cs/WeheCS.h"
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
@@ -94,6 +94,7 @@ int run_NWeheCS_w_CAIDA(int argc, char **argv) {
 
     uint32_t rcvBufSize = 2e9;
     uint32_t mss = 1500;
+    uint32_t mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue (tcpProtocol));
     Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (mss));
     Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue (rcvBufSize));
@@ -169,9 +170,16 @@ int run_NWeheCS_w_CAIDA(int argc, char **argv) {
         int burst = floor(policingRate * burstLength * 125000);// in byte
         cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
 
-        TokenBucket policerForTos4(4, burst, to_string(policingRate) + "Mbps");
-        tch.SetRootQueueDisc("ns3::CbPolicingQueueDisc", "MaxSize", StringValue(queueSize), "TokenBucket",
-                             TokenBucketValue(policerForTos4));
+        uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
+                                               "TosMap", TosMapValue(TosMap{0, 4}));
+
+        TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 2, "ns3::QueueDiscClass");
+        tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+        tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
+                               "Burst", UintegerValue (burst),
+                               "Mtu", UintegerValue (mtu),
+                               "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
+                               "PeakRate", DataRateValue (DataRate ("0bps")));
     }
     else {
         cout << "queue size: " << queueSize << endl;

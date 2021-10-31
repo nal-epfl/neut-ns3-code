@@ -138,8 +138,8 @@ void MeasurReplayClient::StartApplication(void) {
     _startTime = Simulator::Now();
 
     // adjust socket buffers
-    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
-    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+//    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
+//    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
 
     // part to change starts from here
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());

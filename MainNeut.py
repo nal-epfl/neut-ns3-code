@@ -42,6 +42,7 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
     else:
         result_folder_name = result_folder_name + '/udp'
     results_path = get_ns3_path() + '/scratch/wehe_p_tomography/results' + result_folder_name
+    print(results_path)
 
     os.system("mkdir -p " + results_path)
     # os.system(get_ns3_path() + "/waf --run \"wehe_p_tomography\" > log.out 2>&1 --command-template=\"%s" +
@@ -78,77 +79,126 @@ def run_parallel_experiments(experiments):
 
 if __name__ == '__main__':
 
-    # constant rate probing + poisson replay
     run_parallel_experiments([
-        ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-                             scenario=1, pkt_size=1228, p_lambda=0.0025,
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-                             scenario=1, pkt_size=1228, p_lambda=0.0025,
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-                             scenario=1, pkt_size=1228, p_lambda=0.0025,
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-
-        ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+        ExperimentParameters(link_rate="100Mbps", duration=20, is_tcp=0,
+                             exp_batch='test_policing',
                              scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-
+                             is_neutral=0, policing_rate=2, burst_length=0.03)
     ])
 
-    # badabing + wehe replay
-    run_parallel_experiments([
-        ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='badabing_probes',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='badabing_probes',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='badabing_probes',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
+    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
+    #                              exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
+    #                              scenario=3, replay_trace='Very_Long_WhatsApp_041120198_packetMeta_processed',
+    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
+    #     ])
+    #
+    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
+    #                              exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
+    #                              scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
+    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
+    #     ])
 
-        ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_WhatsApp_041120198_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-    ])
+    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
+    #                              exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
+    #                              scenario=3, replay_trace='badabing_probes',
+    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
+    #     ])
+    #
+    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
+    #                              exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                              scenario=1, pkt_size=1228, p_lambda=0.0025,
+    #                              is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ])
+    #
+    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                              exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                              scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
+    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
+    #     ])
 
-    # wehe replay
-    run_parallel_experiments([
-        ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-        ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-                             exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-                             scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-                             is_neutral=0, policing_rate=3, burst_length=0.03),
-    ])
+
+
+    # # constant rate probing + poisson replay
+    # run_parallel_experiments([
+    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #
+    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #
+    # ])
+
+    # # badabing + wehe replay
+    # run_parallel_experiments([
+    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='badabing_probes',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='badabing_probes',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='badabing_probes',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #
+    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_WhatsApp_041120198_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    # ])
+
+    # # wehe replay
+    # run_parallel_experiments([
+    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
+    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
+    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
+    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
+    # ])

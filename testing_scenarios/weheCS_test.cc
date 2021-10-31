@@ -18,8 +18,8 @@
 #include "ns3/file-helper.h"
 
 #include "../monitors_module/PacketMonitor.h"
-
 #include "../traffic_generator_module/wehe_cs/WeheCS.h"
+#include "../traffic_differentiation_module/CbQueueDisc.h"
 
 
 using namespace ns3;
@@ -29,7 +29,7 @@ NS_LOG_COMPONENT_DEFINE("WeheCSTest");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
-#define POLICING_FLAG 0
+#define POLICING_FLAG 1
 
 /*****************************************************************************/
 
@@ -75,6 +75,7 @@ int run_weheCS_test(int argc, char **argv) {
     string trafficProtocol = (weheProtocol == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
     cout << trafficProtocol << endl;
 
+    uint32_t mtu = 1500;
     if(weheProtocol == 1) {
         uint32_t rcvBufSize = 2e9;
         uint32_t mss = 1240; // (1228+8+4)
@@ -106,16 +107,22 @@ int run_weheCS_test(int argc, char **argv) {
     // Modify the traffic control layer module of the node 0 net device to implement policing
     TrafficControlHelper tch;
 #if POLICING_FLAG
-    double rate = 8;
-    string policingRate = to_string(rate) + "Mbps";
     cout << "we have policing with rate " << policingRate;
 
     double burstLength = 1; // in sec
-    int burst = floor(rate * burstLength * 125000);// in byte
+    int burst = floor(policingRate * burstLength * 125000);// in byte
     cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
 
-    TokenBucket policerForTos4(4, burst, policingRate);
-    tch.SetRootQueueDisc("ns3::CbPolicingQueueDisc", "MaxSize", StringValue (queueSize), "TokenBucket", TokenBucketValue(policerForTos4));
+    uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
+                                           "TosMap", TosMapValue(TosMap{0, 4}));
+
+    TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 2, "ns3::QueueDiscClass");
+    tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+    tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
+                           "Burst", UintegerValue (burst),
+                           "Mtu", UintegerValue (mtu),
+                           "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
+                           "PeakRate", DataRateValue (DataRate ("0bps")));
 #else
     cout << "queue size: " << queueSize << endl;
 //    tch.SetRootQueueDisc("ns3::RedQueueDisc", "MaxSize", StringValue(queueSize));

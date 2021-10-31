@@ -11,33 +11,42 @@
 #include "ns3/internet-module.h"
 #include "ns3/net-device-queue-interface.h"
 
-#include "TokenBucket.h"
-
 using namespace ns3;
 using namespace std;
 
-class CbPolicingQueueDisc : public QueueDisc {
+typedef vector<uint8_t> TosMap;
+
+class CbQueueDisc : public QueueDisc {
 
     private:
-        map<uint8_t, TokenBucket> diff_services_TB;
+        map<uint8_t, uint16_t> _tos2band;
+        uint16_t _nbBands, _nextBand;
         EventId _id;
 
         virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
         virtual Ptr<QueueDiscItem> DoDequeue (void);
+        virtual Ptr<const QueueDiscItem> DoPeek(void);
         virtual bool CheckConfig (void);
         virtual void InitializeParams (void);
+        uint16_t Classify (Ptr<QueueDiscItem> item);
+
 
     protected:
         virtual void DoDispose (void);
 
     public:
         static TypeId GetTypeId (void);
-        CbPolicingQueueDisc();
-        virtual ~CbPolicingQueueDisc();
+        CbQueueDisc();
+        virtual ~CbQueueDisc();
 
-        void AddTB (TokenBucket tb);
+        void SetTosMap (TosMap tosMap);
 
 };
 
+std::ostream &operator << (std::ostream &os, const TosMap &tosMap);
+
+std::istream &operator >> (std::istream &is, TosMap &tosMap);
+
+ATTRIBUTE_HELPER_HEADER(TosMap);
 
 #endif //NEUTRALITY_CBPOLICINGQUEUEDISC_H

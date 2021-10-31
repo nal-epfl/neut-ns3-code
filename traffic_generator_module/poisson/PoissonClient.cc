@@ -113,8 +113,8 @@ void PoissonClient::StartApplication(void) {
     }
 
     // adjust socket buffers
-    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
-    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+//    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
+//    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
