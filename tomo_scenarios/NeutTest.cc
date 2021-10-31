@@ -257,7 +257,7 @@ int run_neut_test(int argc, char **argv) {
 
     /*** Create Background Traffic ***/
     MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), routers.Get(0));
-    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 3173, 1, 4);
+    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 3173, 1, 0);
 //    back->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link2", 773, 1, 4);
 
 
