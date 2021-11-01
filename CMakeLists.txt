@@ -28,7 +28,8 @@ file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES traffic_generator_module/poisson/* traffic_generator_module/trace_replay/*
         traffic_generator_module/ppb/* traffic_generator_module/utility/* traffic_generator_module/poisson_bursts/*
         traffic_generator_module/wehe_cs/* traffic_generator_module/badabing/*
-        traffic_generator_module/measurement_replay/*)
+        traffic_generator_module/measurement_replay/*
+        traffic_generator_module/infinite_tcp/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROJECT_ENV_FILES} ${SCENARIOS_FILES} ${MONITOR_FILES} ${TRAFFIC_GENERATOR_FILES} ${TRAFFIC_DIFFERENTATION_FILES})
 

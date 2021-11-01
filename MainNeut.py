@@ -80,10 +80,18 @@ def run_parallel_experiments(experiments):
 if __name__ == '__main__':
 
     run_parallel_experiments([
-        ExperimentParameters(link_rate="100Mbps", duration=20, is_tcp=0,
-                             exp_batch='test_policing',
-                             scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-                             is_neutral=0, policing_rate=2, burst_length=0.03)
+        ExperimentParameters(link_rate="210Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long/infinite_tcp/neutral',
+                             scenario=4, pkt_size=1228,
+                             is_neutral=1),
+        ExperimentParameters(link_rate="250Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long/infinite_tcp/neutral',
+                             scenario=4, pkt_size=1228,
+                             is_neutral=1),
+        ExperimentParameters(link_rate="280Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long/infinite_tcp/neutral',
+                             scenario=4, pkt_size=1228,
+                             is_neutral=1)
     ])
 
     # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:

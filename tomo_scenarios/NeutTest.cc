@@ -32,6 +32,7 @@
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
 #include "../traffic_generator_module/poisson/PoissonClientHelper.h"
 #include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
+#include "../traffic_generator_module/infinite_tcp/InfiniteTCPClientHelper.h"
 
 #include "../traffic_differentiation_module/CbQueueDisc.h"
 
@@ -246,7 +247,13 @@ int run_neut_test(int argc, char **argv) {
             }
             app = replayClientHelper.Install(serverNodes.Get(i));
         }
-
+        else if (scenario == 4) {
+            InfiniteTCPClientHelper infiniteTcpClientHelper(sinkAddress);
+            infiniteTcpClientHelper.SetAttribute("PacketSize", UintegerValue(pktSize));
+            infiniteTcpClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
+            infiniteTcpClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+            app = infiniteTcpClientHelper.Install(serverNodes.Get(i));
+        }
 
         app.Start(warmupTime);
         app.Stop(warmupTime + Seconds(duration));
