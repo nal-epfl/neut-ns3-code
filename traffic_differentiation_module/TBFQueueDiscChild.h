@@ -40,6 +40,12 @@
 
 namespace ns3 {
 
+struct TBFEnqueueEvent {
+    uint32_t srcPort, dstPort, size;
+    bool isEnqueued;
+    double time; // in sec
+    uint32_t queueSize; // in Bytes
+};
 /**
  * \ingroup traffic-control
  *
@@ -163,6 +169,10 @@ private:
   TracedValue<uint32_t> m_ptokens; //!< Current number of tokens in second bucket
   Time m_timeCheckPoint;           //!< Time check-point
   EventId m_id;                    //!< EventId of the scheduled queue waking event when enough tokens are available
+
+  /* This part is for tracing TBF behaviour */
+  std::vector<TBFEnqueueEvent> _enquedEvents;
+  std::string _resultsFolder = "";
 
 };
 

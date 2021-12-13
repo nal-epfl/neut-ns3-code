@@ -7,8 +7,8 @@ app_name = 'Poisson_Probes'
 
 class ExperimentParameters:
     def __init__(self, link_rate, duration, is_tcp=0, tcp_protocol='TcpCubic', seed=3, scenario=0, exp_batch='',
-                 pkt_size=1228, p_lambda=0.001, replay_trace='empty', is_neutral=1, policing_rate=0.0,
-                 burst_length=0.0):
+                 pkt_size=1228, p_lambda=0.001, replay_trace='empty', is_neutral=0, policing_rate=0.0,
+                 burst_length=0.0, throttle_udp=0, case=0):
         self.link_rate = link_rate
         self.duration = duration
         self.is_tcp = is_tcp
@@ -22,6 +22,8 @@ class ExperimentParameters:
         self.is_neutral = is_neutral
         self.policing_rate = policing_rate
         self.burst_length = burst_length
+        self.throttle_udp = throttle_udp
+        self.case = case
 
 
 def run_probing_experiment_with_params(params):
@@ -29,14 +31,15 @@ def run_probing_experiment_with_params(params):
                            tcp_protocol=params.tcp_protocol, seed=params.seed, scenario=params.scenario,
                            exp_batch=params.exp_batch, pkt_size=params.pkt_size, p_lambda=params.p_lambda,
                            replay_trace=params.replay_trace, is_neutral=params.is_neutral,
-                           policing_rate=params.policing_rate, burst_length=params.burst_length)
+                           policing_rate=params.policing_rate, burst_length=params.burst_length,
+                           throttle_udp=params.throttle_udp, case=params.case)
 
 
 def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic', seed=3, scenario=0, exp_batch='',
-                           pkt_size=1228, p_lambda=0.001, replay_trace='empty', is_neutral=1, policing_rate=0.0,
-                           burst_length=0.0):
+                           pkt_size=1228, p_lambda=0.001, replay_trace='empty', is_neutral=0, policing_rate=0.0,
+                           burst_length=0.0, throttle_udp=0, case=0):
     # run the ns3 simulation
-    result_folder_name = '/10_2021/neut_with_loss/' + app_name + '/link_' + link_rate + '/' + exp_batch
+    result_folder_name = '/10_2021/neut_with_loss/' + app_name + '/link_' + link_rate + '/' + exp_batch + '/seed_' + str(seed)
     if is_tcp:
         result_folder_name = result_folder_name + '/' + tcp_protocol
     else:
@@ -61,6 +64,8 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
               " --neutral=" + str(is_neutral) +
               " --policingRate=" + str(policing_rate) +
               " --policingBurstLength=" + str(burst_length) +
+              " --throttleUdp=" + str(throttle_udp) +
+              " --case=" + str(case) +
               "\"")
 
 
@@ -79,134 +84,172 @@ def run_parallel_experiments(experiments):
 
 if __name__ == '__main__':
 
+    # run_parallel_experiments([
+    #     ExperimentParameters(link_rate="5Mbps", duration=50, is_tcp=1, tcp_protocol='TcpBbr',
+    #                          exp_batch='back_traffic_long_3/test_bbr',
+    #                          scenario=4, pkt_size=1228, seed=3,
+    #                          is_neutral=0, policing_rate=2, burst_length=0.03, case=0),
+    # ])
+
+
     run_parallel_experiments([
-        ExperimentParameters(link_rate="210Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp/neutral',
-                             scenario=4, pkt_size=1228,
-                             is_neutral=1),
-        ExperimentParameters(link_rate="250Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp/neutral',
-                             scenario=4, pkt_size=1228,
-                             is_neutral=1),
-        ExperimentParameters(link_rate="280Mbps", duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp/neutral',
-                             scenario=4, pkt_size=1228,
-                             is_neutral=1)
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=0),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=0),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=0),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=0),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=0)
     ])
 
-    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
-    #                              exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-    #                              scenario=3, replay_trace='Very_Long_WhatsApp_041120198_packetMeta_processed',
-    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
-    #     ])
-    #
-    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
-    #                              exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-    #                              scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
-    #     ])
-
-    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
-    #                              exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-    #                              scenario=3, replay_trace='badabing_probes',
-    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
-    #     ])
-    #
-    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(link_rate=link_rate, duration=590, is_tcp=0,
-    #                              exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                              scenario=1, pkt_size=1228, p_lambda=0.0025,
-    #                              is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ])
-    #
-    # for link_rate in ['210Mbps', '250Mbps', '280Mbps']:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                              exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                              scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-    #                              is_neutral=0, policing_rate=3, burst_length=0.03)
-    #     ])
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_differentRTT_p2_15ms/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=3),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_differentRTT_p2_15ms/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=3),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_differentRTT_p2_15ms/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=3),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_differentRTT_p2_15ms/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=3),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_differentRTT_p2_15ms/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=3)
+    ])
 
 
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p23_100Mbps/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=4),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p23_100Mbps/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=4),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p23_100Mbps/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=4),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p23_100Mbps/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=4),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p23_100Mbps/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=4)
+    ])
 
-    # # constant rate probing + poisson replay
-    # run_parallel_experiments([
-    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/constant_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=1, pkt_size=1228, p_lambda=0.0025,
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #
-    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='poisson_trace_lambda_2.5ms_pktSize_1228_10min',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #
-    # ])
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=5)
+    ])
 
-    # # badabing + wehe replay
-    # run_parallel_experiments([
-    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='badabing_probes',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='badabing_probes',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/badabing/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='badabing_probes',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #
-    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_WhatsApp_041120198_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/WhatsApp_04112019/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_WhatsApp_04112019_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    # ])
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=5),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_100Mbps/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=5)
+    ])
 
-    # # wehe replay
-    # run_parallel_experiments([
-    #     ExperimentParameters(link_rate='210Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=0,
-    #                          exp_batch='back_traffic_long/wehe/Skype_12122018/perPath_policer_3Mbps_0.03s',
-    #                          scenario=3, replay_trace='Very_Long_Skype_12122018_packetMeta_processed',
-    #                          is_neutral=0, policing_rate=3, burst_length=0.03),
-    # ])
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpBbr',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=6)
+    ])
+
+    run_parallel_experiments([
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/neutral',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=0, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/single_policer_40Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=1, policing_rate=40, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/single_noncommon_policer_20Mbps_0.03s_80p_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=3, policing_rate=20, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/independent_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=2, policing_rate=2.5, burst_length=0.03, case=6),
+        ExperimentParameters(link_rate="210Mbps", duration=300, is_tcp=1, tcp_protocol='TcpCubic',
+                             exp_batch='back_traffic_long_3/infinite_tcp_noncommon_congestion_p2_150Mbps_p3_100Mbps/independent_noncommon_policer_2.5Mbps_0.03s_5',
+                             scenario=4, pkt_size=1228, seed=3,
+                             is_neutral=4, policing_rate=2.5, burst_length=0.03, case=6)
+    ])

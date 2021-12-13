@@ -49,7 +49,7 @@ private:
 
     bool _enableCwndMonitor;
     CwndMonitor* _cwndMonitor;
-    string _congAlgoFolder;
+    string _resultsFolder;
 
     vector<TraceReplayItem> _traceItems;
     uint32_t _traceItemIdx;

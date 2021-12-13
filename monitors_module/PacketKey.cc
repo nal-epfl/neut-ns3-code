@@ -5,6 +5,7 @@
 #include "PacketKey.h"
 
 #include "ns3/applications-module.h"
+#include "ns3/ppp-header.h"
 
 #include <boost/functional/hash.hpp>
 
@@ -108,7 +109,7 @@ PacketKey* PacketKey::Packet2PacketKey(Ptr<const Packet> packet) {
 
     pktCopy->AddHeader(ipHeader);
 
-    return new PacketKey(srcIp, dstIp, id, srcPort, dstPort, pktSize, payloadHash);;
+    return new PacketKey(srcIp, dstIp, id, srcPort, dstPort, pktSize, payloadHash);
 }
 
 PacketKey* PacketKey::Packet2PacketKey(Ptr<const Packet> packet, const Ipv4Header& ipHeader) {

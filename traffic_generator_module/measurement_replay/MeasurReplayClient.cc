@@ -66,9 +66,9 @@ TypeId MeasurReplayClient::GetTypeId(void) {
                            BooleanValue(false),
                            MakeBooleanAccessor(&MeasurReplayClient::_enableCwndMonitor),
                            MakeBooleanChecker())
-            .AddAttribute ("CongAlgoFolder", "the folder path to save the congestion algorithm records to",
+            .AddAttribute ("ResultsFolder", "the folder path to save the congestion algorithm records to",
                            StringValue (""),
-                           MakeStringAccessor (&MeasurReplayClient::_congAlgoFolder),
+                           MakeStringAccessor (&MeasurReplayClient::_resultsFolder),
                            MakeStringChecker())
     ;
     return tid;
@@ -76,7 +76,7 @@ TypeId MeasurReplayClient::GetTypeId(void) {
 
 MeasurReplayClient::MeasurReplayClient() {
     NS_LOG_FUNCTION (this);
-    _clientId = CLIENTS_COUNT++;
+    _clientId = ++CLIENTS_COUNT;
     _traceItemIdx = 0;
     _socket = 0;
     _appPaused = false;
@@ -151,7 +151,8 @@ void MeasurReplayClient::StartApplication(void) {
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
-        _cwndMonitor = new CwndMonitor(_socket, _congAlgoFolder);
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + to_string(_clientId) + "/server/";
+        _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 
 }

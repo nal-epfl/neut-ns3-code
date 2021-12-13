@@ -43,6 +43,7 @@ public:
 
     friend ostream &operator<<(ostream &os, const PacketKey &event);
 
+    static PacketKey* QueueItem2PacketKey(Ptr<QueueDiscItem> item);
     static PacketKey* Packet2PacketKey(Ptr<const Packet> packet);
     static PacketKey *Packet2PacketKey(Ptr<const Packet> packet, const Ipv4Header& ipHeader);
 };

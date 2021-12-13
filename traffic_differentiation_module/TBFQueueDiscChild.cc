@@ -26,7 +26,12 @@
  * Implemented in ns-3 by: Surya Seetharaman <suryaseetharaman.9@gmail.com>
  *                         Stefano Avallone <stavallo@unina.it>
  */
-
+#include <iostream>
+#include <fstream>
+#include "../monitors_module/PacketKey.h"
+#include <ns3/ipv4-header.h>
+#include <ns3/internet-module.h>
+#include "ns3/string.h"
 #include "ns3/log.h"
 #include "ns3/enum.h"
 #include "ns3/simulator.h"
@@ -85,6 +90,10 @@ TypeId TbfQueueDiscChild::GetTypeId (void)
                      "Number of Second Bucket Tokens in bytes",
                      MakeTraceSourceAccessor (&TbfQueueDiscChild::m_ptokens),
                      "ns3::TracedValueCallback::Uint32")
+    .AddAttribute ("ResultsFolder", "folder to which all results are saved",
+                     StringValue (""),
+                     MakeStringAccessor(&TbfQueueDiscChild::_resultsFolder),
+                     MakeStringChecker())
   ;
 
   return tid;
@@ -106,6 +115,14 @@ TbfQueueDiscChild::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
   QueueDisc::DoDispose ();
+
+  std::ofstream outfile;
+  outfile.open(_resultsFolder);
+  for (TBFEnqueueEvent event : _enquedEvents) {
+      outfile << event.srcPort << "," << event.dstPort << "," << event.size << "," << event.isEnqueued
+                << "," <<  event.time << "," << event.queueSize << std::endl;
+  }
+  outfile.close();
 }
 
 void
@@ -183,7 +200,13 @@ TbfQueueDiscChild::DoEnqueue (Ptr<QueueDiscItem> item)
 {
   NS_LOG_FUNCTION (this << item);
 
-  bool retval = GetQueueDiscClass (0)->GetQueueDisc ()->Enqueue (item);
+    uint32_t queueSize = GetNBytes();
+
+    bool retval = GetQueueDiscClass (0)->GetQueueDisc ()->Enqueue (item);
+
+    UdpHeader h; // works for udp and tcp
+    item->GetPacket()->PeekHeader(h);
+    _enquedEvents.push_back({h.GetSourcePort(), h.GetDestinationPort(), item->GetSize(), retval, (Simulator::Now()).GetSeconds(), queueSize});
 
   // If Queue::Enqueue fails, QueueDisc::Drop is called by the child queue
   // disc because QueueDisc::AddQueueDiscClass sets the drop callback

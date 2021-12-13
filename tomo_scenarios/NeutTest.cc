@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <random>
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -45,10 +46,45 @@ NS_LOG_COMPONENT_DEFINE("NeutTest");
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
 
+void runRandomControlAndThrottledTraffic(MultipleReplayClients* replayClient,string tracesPath, uint32_t nbTCPFlows, double throttledProb, uint8_t thottledTos, bool splitUdp) {
+    vector<string> udpTracesPathNeutral, udpTracesPathThrottled;
+    if (splitUdp) {
+        udpTracesPathNeutral.push_back(tracesPath + "/UDP/trace_tos0.csv");
+        udpTracesPathThrottled.push_back(tracesPath + "/UDP/trace_tos4.csv");
+    }
+    else {
+        udpTracesPathNeutral.push_back(tracesPath + "/UDP/trace_0.csv");
+    }
+
+    vector<string> tcpTracesPathNeutral, tcpTracesPathThrottled;
+
+    random_device rd;
+    mt19937 mt(rd());
+    uniform_real_distribution<double> dist(0.0, 1.0);
+
+    uint32_t countTCP4 = 0;
+    for(uint32_t i = 0; i < nbTCPFlows; i++) {
+        string tracePath = tracesPath + "/TCP/trace_" + to_string(i) + ".csv";
+        if (dist(mt) < throttledProb) {
+            countTCP4++;
+            tcpTracesPathThrottled.push_back(tracePath);
+        }
+        else {
+            tcpTracesPathNeutral.push_back(tracePath);
+        };
+    }
+    cout << "we have " << countTCP4 << " tcp flows being throttled" << endl;
+    replayClient->RunSpecificTraces(tcpTracesPathNeutral, udpTracesPathNeutral, 0);
+    replayClient->RunSpecificTraces(tcpTracesPathThrottled, udpTracesPathThrottled, thottledTos);
+}
+
 int run_neut_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
     NS_LOG_INFO("Four Probing applications with CAIDA background is running");
+
+//    LogComponentEnable("InfiniteTCPClient", LOG_LEVEL_ALL);
+//    LogComponentEnable("TcpSocketBase", LOG_LEVEL_ALL);
 
     /*** Defining Inputs: Variables read from arguments ***/
     float duration = 120.; // for how long measurement traffic should run
@@ -60,9 +96,11 @@ int run_neut_test(int argc, char **argv) {
     uint32_t pktSize = 256; // size of probe packets
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = ""; // specific traffic to send along the measurement paths
-    int isNeutral = 1; // 1 to Run a neutral scenario  --- 0 to enable policing
+    int isNeutral = 0; // 0 to Run a neutral scenario  --- 1 to enable shared policing -- 2 to enable perPath policers
     double policingRate = 4; // the rate at which tokens in the token bucket are generated
     double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
+    int throttleUdp = 0; // 0 -> do not throttle, 1 -> otherwise
+    int theCase = 0;
 
     CommandLine cmd;
     cmd.AddValue("duration", "the duration of the the simulation", duration);
@@ -74,9 +112,12 @@ int run_neut_test(int argc, char **argv) {
     cmd.AddValue("pktSize", "pktSize", pktSize);
     cmd.AddValue("lambda", "lambda", lambda);
     cmd.AddValue("replayTrace", "file to replay by the Client", replayTrace);
-    cmd.AddValue("neutral", "to enable neutral bottleneck behaviour (0 means enable policing)", isNeutral);
+    cmd.AddValue("neutral", "to enable neutral bottleneck behaviour (0 means neutral)", isNeutral);
     cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "duration of burst (in sec)", burstLength);
+    cmd.AddValue("throttleUdp", "0 to throttle udp traffic, 1 otherwise", throttleUdp);
+    cmd.AddValue("case", "", theCase);
+
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
 
@@ -101,8 +142,8 @@ int run_neut_test(int argc, char **argv) {
     /*** Traffic Parameters ***/
     string appProtocol = (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
 
-    uint32_t rcvBufSize = 2e9;
-    uint32_t sndBufSize = 2e9;
+    uint32_t rcvBufSize = 131072;//2e9;
+    uint32_t sndBufSize = 131072;//2e9;
     uint32_t mss = 1228;
     uint32_t mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue (tcpProtocol));
@@ -130,20 +171,65 @@ int run_neut_test(int argc, char **argv) {
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
 
+
+
     NetDeviceContainer channels_r1_servers[nbServers];
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
-    string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate};
+    string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate, defaultCommonDataRate};
+
+    if(theCase == 3) {
+        delays[2] = "15ms";
+    }
+    else if(theCase == 4) {
+        dataRates[2] = "100Mbps";
+        dataRates[3] = "100Mbps";
+    }
+    else if(theCase == 5) {
+        dataRates[2] = "100Mbps";
+    }
+    else if(theCase == 6) {
+        dataRates[2] = "150Mbps";
+        dataRates[3] = "100Mbps";
+    }
 
     for(uint32_t i = 0; i < nbServers; i++) {
         p2p.SetDeviceAttribute("DataRate", StringValue(dataRates[i]));
         p2p.SetChannelAttribute("Delay", StringValue(delays[i]));
         channels_r1_servers[i] = p2p.Install(serverNodes.Get(i), routers.Get(1));
 
+        string queueSize = to_string(0.02 * (DataRate(defaultNonCommonDataRate).GetBitRate() * 0.125)) + "B"; // RTT * link_rate
+
         // set the queues to fifo queueing discipline
         TrafficControlHelper tch;
-        string queueSize = to_string(int(0.025 * (DataRate(dataRates[i]).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
         tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
         tch.Install(channels_r1_servers[i]);
+
+        // For the independent policers on non-common links
+        if ((isNeutral == 3 || isNeutral == 4) && (i == 2 || i == 3)) {
+            uint8_t linkTos = (isNeutral == 4 && i == 3) ? 8 : 4;
+
+            int burst = floor(policingRate * burstLength * 125000);// in byte
+            string subQueueSize = to_string(int(0.02 * ((DataRate(defaultNonCommonDataRate).GetBitRate() - policingRate * 1e6) * 0.125))) + "B";
+
+            TrafficControlHelper policerTch;
+            uint16_t handle2 = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
+                                                           "TosMap", TosMapValue(TosMap{0, linkTos}));
+            TrafficControlHelper::ClassIdList cid2 = policerTch.AddQueueDiscClasses (handle2, 2, "ns3::QueueDiscClass");
+            policerTch.AddChildQueueDisc (handle2, cid2[0], "ns3::FifoQueueDisc",
+                                          "MaxSize", StringValue(subQueueSize));
+            policerTch.AddChildQueueDisc (handle2, cid2[1], "ns3::TbfQueueDiscChild",
+                                          "MaxSize", StringValue(to_string(burst) + "B"),
+                                          "Burst", UintegerValue (burst),
+                                          "Mtu", UintegerValue (mtu),
+                                          "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
+                                          "PeakRate", DataRateValue (DataRate ("0bps")),
+                                          "ResultsFolder", StringValue(resultsPath + "/enqueued_events_policer4_path" + to_string(i) + ".csv"));
+
+            const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
+            tch.Uninstall(netDevice);
+            policerTch.Install(netDevice);
+
+        }
     }
 
     // Parameters for the common channel
@@ -157,34 +243,41 @@ int run_neut_test(int argc, char **argv) {
 
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
-    string queueSize = to_string(int(0.025 * (DataRate(commonLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
-    if(isNeutral == 0) {
-        cout << "we have policing with rate " << policingRate << "Mbps";
-
-        int burst = floor(policingRate * burstLength * 125000);// in byte
-        cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
-
-        uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
-                                               "TosMap", TosMapValue(TosMap{0, 4, 8}));
-
-        TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 3, "ns3::QueueDiscClass");
-        tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-        tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
-                               "Burst", UintegerValue (burst),
-                               "Mtu", UintegerValue (mtu),
-                               "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
-                               "PeakRate", DataRateValue (DataRate ("0bps")));
-        tch.AddChildQueueDisc (handle, cid[2], "ns3::TbfQueueDiscChild",
-                               "Burst", UintegerValue (burst),
-                               "Mtu", UintegerValue (mtu),
-                               "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
-                               "PeakRate", DataRateValue (DataRate ("0bps")));
-    }
-    else {
-        cout << "queue size: " << queueSize << endl;
-        tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-    }
+    string queueSize = to_string(int(0.02 * (DataRate(commonLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
+//    if(queueSize.compare("0B") == 0) {queueSize == "1300B";}
+    tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
+
+    if(isNeutral == 1 || isNeutral == 2) {
+        int burst = floor(policingRate * burstLength * 125000); // in byte
+        string subQueueSize = to_string(int(0.02 * ((DataRate(commonLinkRate).GetBitRate() - isNeutral * policingRate * 1e6) * 0.125))) + "B";
+
+        TrafficControlHelper policerTch;
+        uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
+                                                            "TosMap", TosMapValue(TosMap{0, 4, 8}));
+
+        TrafficControlHelper::ClassIdList cid = policerTch.AddQueueDiscClasses (handle, 3, "ns3::QueueDiscClass");
+        policerTch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(subQueueSize));
+        policerTch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
+                                       "MaxSize", StringValue(to_string(burst) + "B"),
+                                       "Burst", UintegerValue (burst),
+                                       "Mtu", UintegerValue (mtu),
+                                       "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
+                                       "PeakRate", DataRateValue (DataRate ("0bps")),
+                                       "ResultsFolder", StringValue(resultsPath + "/enqueued_events_policer4.csv"));
+        policerTch.AddChildQueueDisc (handle, cid[2], "ns3::TbfQueueDiscChild",
+                                       "MaxSize", StringValue(to_string(burst) + "B"),
+                                       "Burst", UintegerValue (burst),
+                                       "Mtu", UintegerValue (mtu),
+                                       "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
+                                       "PeakRate", DataRateValue (DataRate ("0bps")),
+                                       "ResultsFolder", StringValue(resultsPath + "/enqueued_events_policer8.csv"));
+
+        const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
+        tch.Uninstall(netDevice);
+        policerTch.Install(netDevice);
+    }
+
 
 
     Ipv4AddressHelper ipv4;
@@ -199,12 +292,12 @@ int run_neut_test(int argc, char **argv) {
         dstAddresses[i] = addresses_dsts_r0[i].GetAddress(0);
     }
 
-
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
     uint16_t appPorts[nbApps];
-    int trafficClass[] = {0, 0, 4, 8};
+    int trafficClass[] = {0, 0, 4, 4};
+    if (isNeutral == 2 || isNeutral == 4) { trafficClass[3] = 8; }
     /*** Create Wehe Traffic ***/
     for(uint32_t i = 0; i < nbApps; i++) {
         // create the application at destination
@@ -243,7 +336,7 @@ int run_neut_test(int argc, char **argv) {
             replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
             if(isTCP == 1) {
                 replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
-                replayClientHelper.SetAttribute("CongAlgoFolder", StringValue(resultsPath));
+                replayClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             }
             app = replayClientHelper.Install(serverNodes.Get(i));
         }
@@ -263,9 +356,28 @@ int run_neut_test(int argc, char **argv) {
     }
 
     /*** Create Background Traffic ***/
-    MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), routers.Get(0));
-    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 3173, 1, 0);
-//    back->RunAllTraces(dataPath + "/chicago_2010_links_back_traffic_0/chicago_2010_back_traffic_1min_link2", 773, 1, 4);
+//    MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), routers.Get(0));
+////    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 3173, 1, 0);
+//    // adjust them so that some of them can be throttled
+//    double throttledProb = (isNeutral == 1) ? 0.4 : 0;
+//    string tracesPath = dataPath + "/chicago_2010_back_traffic_5min_control_cbp";
+//    runRandomControlAndThrottledTraffic(back, tracesPath, 3281, throttledProb, 4);
+
+
+
+    /*** Create Cross Traffic On Paths 3 & 4 ***/
+    bool splitUdp = (throttleUdp == 1);
+
+    MultipleReplayClients* backP2 = new MultipleReplayClients(serverNodes.Get(2), routers.Get(0));
+    double throttledProbP2 = (isNeutral == 1 || isNeutral == 3) ? 0.4 : 0;
+    string tracesPathP2 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link0";
+    runRandomControlAndThrottledTraffic(backP2, tracesPathP2, 1668, throttledProbP2, 4, splitUdp);
+
+    MultipleReplayClients* backP3 = new MultipleReplayClients(serverNodes.Get(3), routers.Get(0));
+    double throttledProbP3 = (isNeutral == 1 || isNeutral == 3) ? 0.4 : 0;
+    string tracesPathP3 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link1";
+    runRandomControlAndThrottledTraffic(backP3, tracesPathP3, 1649, throttledProbP3, 4, splitUdp);
+
 
 
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
@@ -290,6 +402,13 @@ int run_neut_test(int argc, char **argv) {
         pathPktsMonitorsDown.push_back(pathMonitor);
     }
 
+    vector<PacketMonitor*> pathPktsMonitorsUp;
+    for(uint32_t i = 0; i < nbApps; i++) {
+        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], dstIds[i],  "path" + to_string(i) + "Up");
+        pathMonitor->AddAppKey(addresses_r0_r1.GetAddress(0), dstAddresses[i],  appPorts[i], 0);
+        pathPktsMonitorsUp.push_back(pathMonitor);
+    }
+
 #endif
 
     /*** Run simulation ***/
@@ -304,6 +423,7 @@ int run_neut_test(int argc, char **argv) {
     bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(uint32_t i = 0; i < nbApps; i++) {
         pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        pathPktsMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
     }
 #endif
 
