@@ -22,7 +22,7 @@ class ExperimentParameters:
 
 def run_probing_experiment_with_params(params):
     run_probing_experiment(params.link_rate, params.duration, params.is_tcp, params.tcp_protocol, params.seed,
-                           params.scenario, params.exp_batch, params.pkt_size, params.p_lambda, params.replay_trace)
+                           params.app_type, params.exp_batch, params.pkt_size, params.p_lambda, params.replay_trace)
 
 
 def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic', seed=3, scenario=0, exp_batch='',

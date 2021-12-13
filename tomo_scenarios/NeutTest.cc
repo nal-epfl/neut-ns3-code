@@ -92,15 +92,15 @@ int run_neut_test(int argc, char **argv) {
     string commonLinkRate = "180Mbps"; // the transmission rate of the common link
     int isTCP = 0; // 0 to run wehe app as UDP --- 1 to run it as TCP
     string tcpProtocol = "ns3::TcpCubic"; // in case of TCP the congestion control algorithm to use
-    uint32_t scenario = 0; // This is used to enable running different scenarios (e.g., congesion on non-common link)
+    uint32_t appType = 0; // the type of measurement application
     uint32_t pktSize = 256; // size of probe packets
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = ""; // specific traffic to send along the measurement paths
-    int isNeutral = 0; // 0 to Run a neutral scenario  --- 1 to enable shared policing -- 2 to enable perPath policers
+    int isNeutral = 0; // 0 to Run a neutral appType  --- 1 to enable shared policing -- 2 to enable perPath policers
     double policingRate = 4; // the rate at which tokens in the token bucket are generated
     double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
     int throttleUdp = 0; // 0 -> do not throttle, 1 -> otherwise
-    int theCase = 0;
+    int scenario = 0; // This is used to enable running different scenarios (e.g., congesion on non-common link)
 
     CommandLine cmd;
     cmd.AddValue("duration", "the duration of the the simulation", duration);
@@ -108,7 +108,7 @@ int run_neut_test(int argc, char **argv) {
     cmd.AddValue("linkRate", "the rate of the common link", commonLinkRate);
     cmd.AddValue("appProtocol", "the protocol used by the wehe app: 0=udp, 1=tcp", isTCP);
     cmd.AddValue("TCPProtocol", "the tcp congestion control protocol", tcpProtocol);
-    cmd.AddValue("scenario", "it is defined based on what is in the NeutTestWeheCleanCode file", scenario);
+    cmd.AddValue("appType", "The measurement application to run", appType);
     cmd.AddValue("pktSize", "pktSize", pktSize);
     cmd.AddValue("lambda", "lambda", lambda);
     cmd.AddValue("replayTrace", "file to replay by the Client", replayTrace);
@@ -116,7 +116,7 @@ int run_neut_test(int argc, char **argv) {
     cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "duration of burst (in sec)", burstLength);
     cmd.AddValue("throttleUdp", "0 to throttle udp traffic, 1 otherwise", throttleUdp);
-    cmd.AddValue("case", "", theCase);
+    cmd.AddValue("scenario", "scenario to run (e.g., congesion on non-common link)", scenario);
 
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
@@ -172,22 +172,21 @@ int run_neut_test(int argc, char **argv) {
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
 
 
-
     NetDeviceContainer channels_r1_servers[nbServers];
     string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
     string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate, defaultCommonDataRate};
 
-    if(theCase == 3) {
+    if(scenario == 3) {
         delays[2] = "15ms";
     }
-    else if(theCase == 4) {
+    else if(scenario == 4) {
         dataRates[2] = "100Mbps";
         dataRates[3] = "100Mbps";
     }
-    else if(theCase == 5) {
+    else if(scenario == 5) {
         dataRates[2] = "100Mbps";
     }
-    else if(theCase == 6) {
+    else if(scenario == 6) {
         dataRates[2] = "150Mbps";
         dataRates[3] = "100Mbps";
     }
@@ -244,7 +243,6 @@ int run_neut_test(int argc, char **argv) {
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
     string queueSize = to_string(int(0.02 * (DataRate(commonLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
-//    if(queueSize.compare("0B") == 0) {queueSize == "1300B";}
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
 
@@ -312,42 +310,34 @@ int run_neut_test(int argc, char **argv) {
         sinkAddress.SetTos(trafficClass[i]); // used for policing to set the traffic type
 
         ApplicationContainer app;
+        if (appType == 1 || appType == 2) {
+            string intervalRV = (appType == 1) ?
+                    "ns3::ConstantRandomVariable[Constant=" + to_string(lambda) + "]" :
+                    "ns3::ExponentialRandomVariable[Mean=" + to_string(lambda) + "]";
 
-        if (scenario == 1 || scenario == 2) {
             PoissonClientHelper poissonClientHelper(sinkAddress);
             poissonClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
-            if (scenario == 1) {
-                poissonClientHelper.SetAttribute("Interval", StringValue(
-                        "ns3::ConstantRandomVariable[Constant=" + to_string(lambda) + "]"));
-            } else if (scenario == 2) {
-                poissonClientHelper.SetAttribute("Interval", StringValue(
-                        "ns3::ExponentialRandomVariable[Mean=" + to_string(lambda) + "]"));
-            }
+            poissonClientHelper.SetAttribute("Interval", StringValue(intervalRV));
             poissonClientHelper.SetAttribute("PacketSize", UintegerValue(pktSize));
-            if (isTCP == 1) {
-                poissonClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
-                poissonClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
-            }
+            poissonClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
+            poissonClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             app = poissonClientHelper.Install(serverNodes.Get(i));
         }
-        else if (scenario == 3) {
+        else if (appType == 3) {
             MeasurReplayClientHelper replayClientHelper(sinkAddress);
             replayClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
             replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
-            if(isTCP == 1) {
-                replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
-                replayClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
-            }
+            replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
+            replayClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             app = replayClientHelper.Install(serverNodes.Get(i));
         }
-        else if (scenario == 4) {
+        else if (appType == 4) {
             InfiniteTCPClientHelper infiniteTcpClientHelper(sinkAddress);
             infiniteTcpClientHelper.SetAttribute("PacketSize", UintegerValue(pktSize));
             infiniteTcpClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
             infiniteTcpClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             app = infiniteTcpClientHelper.Install(serverNodes.Get(i));
         }
-
         app.Start(warmupTime);
         app.Stop(warmupTime + Seconds(duration));
 
