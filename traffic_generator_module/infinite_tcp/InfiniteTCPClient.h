@@ -30,6 +30,7 @@ private:
     uint32_t _pktSize, _nbSentPkts; // size of sent packets
 
     Ptr<Socket> _socket;
+    string _tcpProtocol;
     Address _peerAddress;
     uint16_t _peerPort;
 

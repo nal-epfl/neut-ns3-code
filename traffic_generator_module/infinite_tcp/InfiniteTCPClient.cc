@@ -23,6 +23,10 @@ TypeId InfiniteTCPClient::GetTypeId(void) {
                            UintegerValue (100),
                            MakeUintegerAccessor (&InfiniteTCPClient::_peerPort),
                            MakeUintegerChecker<uint16_t> ())
+            .AddAttribute ("TcpProtocol", "The congestion control algorithm",
+                           StringValue (""),
+                           MakeStringAccessor(&InfiniteTCPClient::_tcpProtocol),
+                           MakeStringChecker())
             .AddAttribute ("PacketSize",
                            "Size of packets generated. The minimum packet size is 12 bytes which is the size of the header carrying the sequence number and the time stamp.",
                            UintegerValue (1024),
@@ -70,8 +74,9 @@ void InfiniteTCPClient::StartApplication(void) {
     NS_LOG_FUNCTION (this);
 
     if (_socket == 0)     {
-        TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
-        _socket = Socket::CreateSocket (GetNode (), tid);
+        Ptr<TcpL4Protocol> tcpProtocol = GetNode()->GetObject<TcpL4Protocol> ();
+        _socket = tcpProtocol->CreateSocket(ns3::TypeId::LookupByName(_tcpProtocol));
+
         if (Ipv4Address::IsMatchingType (_peerAddress) == true) {
             if (_socket->Bind () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
