@@ -1,6 +1,7 @@
 //
 // Created by nal on 31.08.20.
 //
+#include <math.h>
 
 #include "TraceReplayClient.h"
 
@@ -98,6 +99,10 @@ void TraceReplayClient::DoDispose(void) {
 }
 
 void TraceReplayClient::StartApplication(void) {
+    ScheduleSendEvents();
+}
+
+void TraceReplayClient::PrepareSocket(void) {
     NS_LOG_FUNCTION (this);
 
     if (_socket == 0)     {
@@ -136,7 +141,6 @@ void TraceReplayClient::StartApplication(void) {
     // part to change starts from here
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
-    _sendEvent = Simulator::Schedule (Seconds (0.0), &TraceReplayClient::ScheduleSendEvents, this);
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
@@ -203,7 +207,16 @@ void TraceReplayClient::ScheduleSendEvents() {
     ifstream traceInput(_traceFilename);
     string line;
     ns3::Time finalTimestamp;
-    while(getline(traceInput, line)) {
+
+
+    // prepare the sockets based on the trace starting time
+    getline(traceInput, line);
+    vector<string> pkt_attributes = trace_replay_helper::split(line, ',');
+    double startTIme = floor(stod(pkt_attributes[1]));
+    Simulator::Schedule(Seconds(startTIme), &TraceReplayClient::PrepareSocket, this);
+
+    // Schedule sending the actual packets
+     do {
         vector<string> pkt_attributes = trace_replay_helper::split(line, ',');
         ns3::Time timestamp = Time(pkt_attributes[1] + std::string("s"));// + NanoSeconds(rand() % 100000);
         uint32_t payload_size = stoi(pkt_attributes[2]);
@@ -211,7 +224,7 @@ void TraceReplayClient::ScheduleSendEvents() {
 
         // to know when the application should stop
         finalTimestamp = timestamp;
-    }
+    } while(getline(traceInput, line));
     traceInput.close();
 
     // make the application stop itself based on the trace file data

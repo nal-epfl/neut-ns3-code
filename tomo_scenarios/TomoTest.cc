@@ -81,7 +81,7 @@ int run_tomo_test(int argc, char **argv) {
     Time simEndTime = warmupTime + Seconds(duration) + Seconds(5);
 
     /*** Input-Output parameters ***/
-    string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
+    string resultsPath = (string)(getenv("PWD")) + "/results/" + resultsFolderName;
     string dataPath = (string)(getenv("PWD")) + "/data";
 
     /*** Topology Parameters ***/

@@ -4,8 +4,6 @@
 
 #include "PacketMonitor.h"
 
-#include <utility>
-
 PacketMonitorEvent::PacketMonitorEvent(PacketKey *key) : _key(key) {}
 
 void PacketMonitorEvent::SetSent() {

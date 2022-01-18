@@ -20,6 +20,7 @@ private:
     static int CLIENTS_COUNT;
 
     virtual void StartApplication(void);
+    void PrepareSocket();
 
     virtual void StopApplication(void);
     void Send(uint32_t payload_size);

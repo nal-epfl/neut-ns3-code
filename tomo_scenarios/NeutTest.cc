@@ -4,8 +4,10 @@
 // Network topology
 //
 //                            +--- d0
-//      s0 ---+-- r0 ___ r1 --+--- d1
-//                            +--- d2
+//                            +--- d1
+//      s0 ---+-- r0 ___ r1 --+--- d2
+//                            +--- d3
+//                            +--- d4
 //
 // - All links are P2P
 // - Wehe applications runs along d0->s0, d1->s0, d2->s0, and d3->s0
@@ -22,20 +24,21 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
-#include "ns3/traffic-control-module.h"
 
+#include "ns3/traffic-control-module.h"
 #include "ns3/netanim-module.h"
 #include "ns3/flow-monitor-module.h"
+
 #include "ns3/file-helper.h"
 
 #include "../monitors_module/PacketMonitor.h"
-
 #include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
 #include "../traffic_generator_module/poisson/PoissonClientHelper.h"
 #include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
 #include "../traffic_generator_module/infinite_tcp/InfiniteTCPClientHelper.h"
-
 #include "../traffic_differentiation_module/CbQueueDisc.h"
+
+#include "../helper_classes/HelperMethods.h"
 
 using namespace ns3;
 using namespace std;
@@ -45,38 +48,6 @@ NS_LOG_COMPONENT_DEFINE("NeutTest");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
-
-void runRandomControlAndThrottledTraffic(MultipleReplayClients* replayClient,string tracesPath, uint32_t nbTCPFlows, double throttledProb, uint8_t thottledTos, bool splitUdp) {
-    vector<string> udpTracesPathNeutral, udpTracesPathThrottled;
-    if (splitUdp) {
-        udpTracesPathNeutral.push_back(tracesPath + "/UDP/trace_tos0.csv");
-        udpTracesPathThrottled.push_back(tracesPath + "/UDP/trace_tos4.csv");
-    }
-    else {
-        udpTracesPathNeutral.push_back(tracesPath + "/UDP/trace_0.csv");
-    }
-
-    vector<string> tcpTracesPathNeutral, tcpTracesPathThrottled;
-
-    random_device rd;
-    mt19937 mt(rd());
-    uniform_real_distribution<double> dist(0.0, 1.0);
-
-    uint32_t countTCP4 = 0;
-    for(uint32_t i = 0; i < nbTCPFlows; i++) {
-        string tracePath = tracesPath + "/TCP/trace_" + to_string(i) + ".csv";
-        if (dist(mt) < throttledProb) {
-            countTCP4++;
-            tcpTracesPathThrottled.push_back(tracePath);
-        }
-        else {
-            tcpTracesPathNeutral.push_back(tracePath);
-        };
-    }
-    cout << "we have " << countTCP4 << " tcp flows being throttled" << endl;
-    replayClient->RunSpecificTraces(tcpTracesPathNeutral, udpTracesPathNeutral, 0);
-    replayClient->RunSpecificTraces(tcpTracesPathThrottled, udpTracesPathThrottled, thottledTos);
-}
 
 int run_neut_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
@@ -96,11 +67,13 @@ int run_neut_test(int argc, char **argv) {
     uint32_t pktSize = 256; // size of probe packets
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = "empty"; // specific traffic to send along the measurement paths
+    string backgroundDir = "empty"; // specifiy which background traffic to use in our experiments
     int isNeutral = 0; // 0 to Run a neutral appType  --- 1 to enable shared policing -- 2 to enable perPath policers
     double policingRate = 4; // the rate at which tokens in the token bucket are generated
     double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
     int throttleUdp = 0; // 0 -> do not throttle, 1 -> otherwise
-    int scenario = 0; // This is used to enable running different scenarios (e.g., congesion on non-common link)
+    string linksDelaysStr = "empty"; // you can pass the propagation delays of the non-common links
+    string linksDataRatesStr = "empty"; // you can pass the link bandwidth of the non-common links
 
     CommandLine cmd;
     cmd.AddValue("linkRate", "the rate of the common link", commonLinkRate);
@@ -112,11 +85,13 @@ int run_neut_test(int argc, char **argv) {
     cmd.AddValue("pktSize", "pktSize", pktSize);
     cmd.AddValue("lambda", "lambda", lambda);
     cmd.AddValue("replayTrace", "file to replay by the Client", replayTrace);
+    cmd.AddValue("backgroundDir", "directory for the background traces to use as cross traffic", backgroundDir);
     cmd.AddValue("neutral", "to enable neutral bottleneck behaviour (0 means neutral)", isNeutral);
     cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "duration of burst (in sec)", burstLength);
     cmd.AddValue("throttleUdp", "0 to throttle udp traffic, 1 otherwise", throttleUdp);
-    cmd.AddValue("scenario", "scenario to run (e.g., congesion on non-common link)", scenario);
+    cmd.AddValue("nonCommonlinksDelays", "the propagation delay of the 5 non-common links", linksDelaysStr);
+    cmd.AddValue("nonCommonlinksDataRates", "the bandwidth of the 5 non-common links", linksDataRatesStr);
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
 
@@ -128,8 +103,8 @@ int run_neut_test(int argc, char **argv) {
     Time simEndTime = warmupTime + Seconds(duration) + Seconds(5);
 
     /*** Input-Output parameters ***/
-    string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
-    string dataPath = (string)(getenv("PWD")) + "/data";
+    string resultsPath = (string)(getenv("PWD")) + "/results/" + resultsFolderName;
+    string dataPath = (string)(getenv("PWD")) + "/data/";
 
     /*** Topology Parameters ***/
     uint32_t nbApps = 4;
@@ -170,23 +145,11 @@ int run_neut_test(int argc, char **argv) {
 
 
     NetDeviceContainer channels_r1_servers[nbServers];
-    string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
-    string dataRates[] = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate, defaultCommonDataRate};
+    vector<string> delays = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
+    if (linksDelaysStr != "empty") { delays = HelperMethods::SplitStr(linksDelaysStr, ','); }
 
-    if(scenario == 3) {
-        delays[2] = "8ms";
-    }
-    else if(scenario == 4) {
-        dataRates[2] = "100Mbps";
-        dataRates[3] = "100Mbps";
-    }
-    else if(scenario == 5) {
-        dataRates[2] = "100Mbps";
-    }
-    else if(scenario == 6) {
-        dataRates[2] = "150Mbps";
-        dataRates[3] = "100Mbps";
-    }
+    vector<string> dataRates = {defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultNonCommonDataRate, defaultCommonDataRate};
+    if (linksDataRatesStr != "empty") { dataRates = HelperMethods::SplitStr(linksDataRatesStr, ','); }
 
     for(uint32_t i = 0; i < nbServers; i++) {
         p2p.SetDeviceAttribute("DataRate", StringValue(dataRates[i]));
@@ -205,7 +168,8 @@ int run_neut_test(int argc, char **argv) {
             uint8_t linkTos = (isNeutral == 4 && i == 3) ? 8 : 4;
 
             int burst = floor(policingRate * burstLength * 125000);// in byte
-            string subQueueSize = to_string(int(0.02 * ((DataRate(defaultNonCommonDataRate).GetBitRate() - policingRate * 1e6) * 0.125))) + "B";
+            string subQueueSize = queueSize;
+//            string subQueueSize = to_string(int(0.02 * ((DataRate(defaultNonCommonDataRate).GetBitRate() - policingRate * 1e6) * 0.125))) + "B";
 
             TrafficControlHelper policerTch;
             uint16_t handle2 = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
@@ -245,7 +209,8 @@ int run_neut_test(int argc, char **argv) {
 
     if(isNeutral == 1 || isNeutral == 2) {
         int burst = floor(policingRate * burstLength * 125000); // in byte
-        string subQueueSize = to_string(int(0.02 * ((DataRate(commonLinkRate).GetBitRate() - isNeutral * policingRate * 1e6) * 0.125))) + "B";
+        string subQueueSize = queueSize;
+//        string subQueueSize = to_string(int(0.02 * ((DataRate(commonLinkRate).GetBitRate() - isNeutral * policingRate * 1e6) * 0.125))) + "B";
 
         TrafficControlHelper policerTch;
         uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
@@ -323,7 +288,7 @@ int run_neut_test(int argc, char **argv) {
         else if (appType == 3) {
             MeasurReplayClientHelper replayClientHelper(sinkAddress);
             replayClientHelper.SetAttribute("Protocol", StringValue(appProtocol));
-            replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + "/" + replayTrace));
+            replayClientHelper.SetAttribute("TraceFile", StringValue(dataPath + replayTrace));
             replayClientHelper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
             replayClientHelper.SetAttribute("ResultsFolder", StringValue(resultsPath));
             app = replayClientHelper.Install(serverNodes.Get(i));
@@ -349,22 +314,28 @@ int run_neut_test(int argc, char **argv) {
 //    // adjust them so that some of them can be throttled
 //    double throttledProb = (isNeutral == 1) ? 0.4 : 0;
 //    string tracesPath = dataPath + "/chicago_2010_back_traffic_5min_control_cbp";
-//    runRandomControlAndThrottledTraffic(back, tracesPath, 3281, throttledProb, 4);
+//    back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 4);
 
 
 
     /*** Create Cross Traffic On Paths 3 & 4 ***/
-    bool splitUdp = (throttleUdp == 1);
+//    MultipleReplayClients* backP2 = new MultipleReplayClients(serverNodes.Get(2), routers.Get(0));
+//    double throttledProbP2 = (isNeutral == 1 || isNeutral == 3 || isNeutral == 5) ? 0.4 : 0;
+//    string tracesPathP2 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link0";
+//    backP2->RunTracesWithRandomThrottledTCPFlows(tracesPathP2, throttledProbP2, 4);
+//
+//    MultipleReplayClients* backP3 = new MultipleReplayClients(serverNodes.Get(3), routers.Get(0));
+//    double throttledProbP3 = (isNeutral == 1 || isNeutral == 3 || isNeutral == 5) ? 0.4 : 0;
+//    string tracesPathP3 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link1";
+//    backP3->RunTracesWithRandomThrottledTCPFlows(tracesPathP3, throttledProbP3, 4);
 
-    MultipleReplayClients* backP2 = new MultipleReplayClients(serverNodes.Get(2), routers.Get(0));
-    double throttledProbP2 = (isNeutral == 1 || isNeutral == 3 || isNeutral == 5) ? 0.4 : 0;
-    string tracesPathP2 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link0";
-    runRandomControlAndThrottledTraffic(backP2, tracesPathP2, 1668, throttledProbP2, 4, splitUdp);
-
-    MultipleReplayClients* backP3 = new MultipleReplayClients(serverNodes.Get(3), routers.Get(0));
-    double throttledProbP3 = (isNeutral == 1 || isNeutral == 3 || isNeutral == 5) ? 0.4 : 0;
-    string tracesPathP3 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link1";
-    runRandomControlAndThrottledTraffic(backP3, tracesPathP3, 1649, throttledProbP3, 4, splitUdp);
+    /*** Create Cross Traffic On All Paths ***/
+    double throttledProb = (isNeutral == 1 || isNeutral == 3 || isNeutral == 5) ? 0.4 : 0;
+    for(uint32_t i = 0; i < nbApps; i++) {
+        MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(i), routers.Get(0));
+        string tracesPath = dataPath + backgroundDir + "/path" + to_string(i);
+        back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 4);
+    }
 
 
 
@@ -399,6 +370,7 @@ int run_neut_test(int argc, char **argv) {
 
 #endif
 
+    cout << "Start Simulation" << endl;
     /*** Run simulation ***/
     NS_LOG_INFO("Run Simulation.");
     Simulator::Stop(simEndTime);

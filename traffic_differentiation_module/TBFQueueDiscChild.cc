@@ -206,7 +206,7 @@ TbfQueueDiscChild::DoEnqueue (Ptr<QueueDiscItem> item)
 
     UdpHeader h; // works for udp and tcp
     item->GetPacket()->PeekHeader(h);
-    _enquedEvents.push_back({h.GetSourcePort(), h.GetDestinationPort(), item->GetSize(), retval, (Simulator::Now()).GetSeconds(), queueSize});
+//    _enquedEvents.push_back({h.GetSourcePort(), h.GetDestinationPort(), item->GetSize(), retval, (Simulator::Now()).GetSeconds(), queueSize});
 
   // If Queue::Enqueue fails, QueueDisc::Drop is called by the child queue
   // disc because QueueDisc::AddQueueDiscClass sets the drop callback

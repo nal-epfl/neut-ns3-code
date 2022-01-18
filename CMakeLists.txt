@@ -23,6 +23,7 @@ link_directories(~/Desktop/experiments2/ns-allinone-3.35/ns-3.35/build)
 
 set(SOURCE_FILES main.cc)
 set(PROJECT_ENV_FILES project_run_env/RunConfig.py loss_analysis/loss_analysis_funcs.py neut_infer_scenarios/NeutTestPoisson.cc)
+file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES ploss_infer_scenarios/* testing_scenarios/* neut_infer_scenarios/* tomo_scenarios/*)
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES traffic_generator_module/poisson/* traffic_generator_module/trace_replay/*
