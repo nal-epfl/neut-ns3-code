@@ -176,3 +176,28 @@ void CbQueueDisc::InitializeParams() {
     NS_LOG_FUNCTION (this);
     _id = EventId ();
 }
+
+TrafficControlHelper
+CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsTos,
+                                        double policingRate, double burstLength, const string& resultsPath) {
+    system(("mkdir -p " + resultsPath).c_str());
+
+    TrafficControlHelper policerTch;
+    uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize), "TosMap", TosMapValue(childDiscsTos));
+
+    TrafficControlHelper::ClassIdList cid = policerTch.AddQueueDiscClasses (handle, childDiscsTos.size(), "ns3::QueueDiscClass");
+    policerTch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+
+    int burst = floor(policingRate * burstLength * 125000);// in byte
+    for (int i = 1; i < childDiscsTos.size(); i++) {
+        policerTch.AddChildQueueDisc(handle, cid[i], "ns3::TbfQueueDiscChild",
+                                     "MaxSize", StringValue(to_string(burst) + "B"),
+                                     "Burst", UintegerValue(burst),
+                                     "Mtu", UintegerValue (1500),
+                                     "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),
+                                     "PeakRate", DataRateValue(DataRate("0bps")),
+                                     "QueueTraceOutput", StringValue(resultsPath + "/enqueued_events_policer" + to_string(childDiscsTos[i]) + ".csv"));
+    }
+
+    return policerTch;
+}

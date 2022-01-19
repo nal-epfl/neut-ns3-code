@@ -35,3 +35,28 @@ ApplicationContainer PoissonClientHelper::Install(NodeContainer c) {
     }
     return apps;
 }
+
+ApplicationContainer
+PoissonClientHelper::CreatePoissonApplication(InetSocketAddress sinkAddress, bool isTCP, double lambda,
+                                              uint32_t pktSize, const string &resultsPath, const Ptr<Node> &node) {
+    PoissonClientHelper helper(sinkAddress);
+    helper.SetAttribute("Protocol", StringValue((isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory"));
+    helper.SetAttribute("Interval", StringValue("ns3::ExponentialRandomVariable[Mean=" + to_string(lambda) + "]"));
+    helper.SetAttribute("PacketSize", UintegerValue(pktSize));
+    helper.SetAttribute("EnableCwndMonitor", BooleanValue(isTCP));
+    helper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+    return helper.Install(node);
+}
+
+ApplicationContainer
+PoissonClientHelper::CreateConstantProbeApplication(InetSocketAddress sinkAddress, bool isTCP, double lambda,
+                                                    uint32_t pktSize, const string &resultsPath,
+                                                    const Ptr<Node> &node) {
+    PoissonClientHelper helper(sinkAddress);
+    helper.SetAttribute("Protocol", StringValue((isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory"));
+    helper.SetAttribute("Interval", StringValue("ns3::ConstantRandomVariable[Constant=" + to_string(lambda) + "]"));
+    helper.SetAttribute("PacketSize", UintegerValue(pktSize));
+    helper.SetAttribute("EnableCwndMonitor", BooleanValue(isTCP));
+    helper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+    return helper.Install(node);
+}

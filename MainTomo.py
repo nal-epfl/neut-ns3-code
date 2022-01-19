@@ -2,54 +2,70 @@
 from project_run_env.RunConfig import *
 from multiprocessing import Process
 
-app_name = 'Poisson_Probes'
-
-
 class ExperimentParameters:
-    def __init__(self, link_rate, duration, is_tcp=0, tcp_protocol='TcpCubic', seed=3, scenario=0, exp_batch='',
-                 pkt_size=1228, p_lambda=0.001, replay_trace='empty'):
+    def __init__(self, link_rate, duration, is_tcp=0, tcp_protocol='TcpCubic', seed=3,
+                 app_type=0, app_name='Poisson_Probes', pkt_size=1228, p_lambda=0.001, replay_trace='empty',
+                 background_dir='empty', exp_batch='', noncommon_links_delays='empty', noncommon_links_rates='empty'):
         self.link_rate = link_rate
         self.duration = duration
         self.is_tcp = is_tcp
         self.tcp_protocol = tcp_protocol
         self.seed = seed
-        self.scenario = scenario
-        self.exp_batch = exp_batch
+        self.app_type = app_type
+        self.app_name = app_name
         self.pkt_size = pkt_size
         self.p_lambda = p_lambda
         self.replay_trace = replay_trace
+        self.background_dir = background_dir
+        self.exp_batch = exp_batch
+        self.noncommon_links_delays = noncommon_links_delays
+        self.noncommon_links_rates = noncommon_links_rates
 
 
 def run_probing_experiment_with_params(params):
-    run_probing_experiment(params.link_rate, params.duration, params.is_tcp, params.tcp_protocol, params.seed,
-                           params.app_type, params.exp_batch, params.pkt_size, params.p_lambda, params.replay_trace)
+    run_probing_experiment(link_rate=params.link_rate, duration=params.duration,
+                           is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
+                           app_type=params.app_type, app_name=params.app_name,
+                           pkt_size=params.pkt_size, p_lambda=params.p_lambda, replay_trace=params.replay_trace,
+                           background_dir=params.background_dir, exp_batch=params.exp_batch,
+                           noncommon_links_delays=params.noncommon_links_delays,
+                           noncommon_links_rates=params.noncommon_links_rates)
 
 
-def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic', seed=3, scenario=0, exp_batch='',
-                           pkt_size=1228, p_lambda=0.001, replay_trace='empty'):
+def run_probing_experiment(link_rate, duration, is_tcp=0, tcp_protocol='TcpCubic', seed=3,
+                           app_type=0, app_name='Poisson_Probes', pkt_size=1228, p_lambda=0.001, replay_trace='empty',
+                           background_dir='empty', exp_batch='',
+                           noncommon_links_delays='empty', noncommon_links_rates='empty'):
     # run the ns3 simulation
-    result_folder_name = '/9_2021/tomo_with_loss/' + app_name + '/link_' + link_rate + '/' + exp_batch
-    if is_tcp:
-        result_folder_name = result_folder_name + '/' + tcp_protocol
-    else:
-        result_folder_name = result_folder_name + '/udp'
-    results_path = get_ns3_path() + '/scratch/wehe_p_tomography/results' + result_folder_name
+    result_folder_name = '9_2021/tomo_with_loss/{}/link_{}/{}/{}/seed_{}/{}'.format(
+        app_name, link_rate, background_dir, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
+    )
 
-    os.system("mkdir -p " + results_path)
-    # os.system(get_ns3_path() + "/waf --run \"wehe_p_tomography\" > log.out 2>&1 --command-template=\"%s" +
-    os.system(get_ns3_path() + "/waf --run \"wehe_p_tomography\" --command-template=\"%s" +
-              " --RngSeed=" + str(seed) +
-              " --RngRun=1" +
-              " --duration=" + str(duration) +
-              " --resultsFolderName=" + result_folder_name +
-              " --linkRate=" + link_rate +
-              " --appProtocol=" + str(is_tcp) +
-              " --TCPProtocol=ns3::" + tcp_protocol +
-              " --scenario=" + str(scenario) +
-              " --pktSize=" + str(pkt_size) +
-              " --lambda=" + str(p_lambda) +
-              " --replayTrace=" + replay_trace +
-              "\"")
+    os.system('mkdir -p {}/scratch/wehe_p_tomography/results/{}'.format(get_ns3_path(), result_folder_name))
+
+    os.system(
+        # '{}/waf --run "wehe_p_tomography" > log.out 2>&1 --command-template="%s'.format(get_ns3_path()) +
+        '{}/waf --run "wehe_p_tomography" --command-template="%s'.format(get_ns3_path()) +
+        ' --RngSeed={}'.format(seed) +
+        ' --RngRun=1' +
+        ' --linkRate={}'.format(link_rate) +
+        ' --duration={}'.format(duration) +
+        ' --resultsFolderName={}'.format(result_folder_name) +
+        ' --appProtocol={}'.format(is_tcp) +
+        ' --TCPProtocol=ns3::{}'.format(tcp_protocol) +
+        ' --appType={}'.format(app_type) +
+        ' --pktSize={}'.format(pkt_size) +
+        ' --lambda={}'.format(p_lambda) +
+        ' --replayTrace={}'.format(replay_trace) +
+        ' --backgroundDir={}'.format(background_dir) +
+        ' --nonCommonlinksDelays={}'.format(noncommon_links_delays) +
+        ' --nonCommonlinksDataRates={}'.format(noncommon_links_rates) +
+        '"'
+    )
+
+
+def rebuild_project():
+    os.system('{}/waf build'.format(get_ns3_path()))
 
 
 def run_parallel_experiments(experiments):
@@ -66,75 +82,17 @@ def run_parallel_experiments(experiments):
 
 
 if __name__ == '__main__':
+    rebuild_project()
 
     # constant rate probing + poisson replay
     run_parallel_experiments([
         ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp',
-                             scenario=1, pkt_size=1228, p_lambda=0),
+                             app_type=4, app_name='Infinite_Tcp', pkt_size=1228,
+                             background_dir='back_traffic_long', exp_batch=''),
         ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp',
-                             scenario=1, pkt_size=1228, p_lambda=0),
+                             app_type=4, app_name='Infinite_Tcp', pkt_size=1228,
+                             background_dir='back_traffic_long', exp_batch=''),
         ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-                             exp_batch='back_traffic_long/infinite_tcp',
-                             scenario=1, pkt_size=1228, p_lambda=0)
+                             app_type=4, app_name='Infinite_Tcp', pkt_size=1228,
+                             background_dir='back_traffic_long', exp_batch=''),
     ])
-    #
-    #     ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/same_poisson',
-    #                          scenario=3, replay_trace="poisson_trace_lambda_2.5ms_pktSize_1228_10min"),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/same_poisson',
-    #                          scenario=3, replay_trace="poisson_trace_lambda_2.5ms_pktSize_1228_10min"),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/lambda_2.5ms_pktSize_1228/same_poisson',
-    #                          scenario=3, replay_trace="poisson_trace_lambda_2.5ms_pktSize_1228_10min"),
-    #
-    # ])
-
-    # # badabing + wehe replay - Done
-    # run_parallel_experiments([
-    #     ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/badabing',
-    #                          scenario=3, replay_trace="badabing_probes"),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/badabing',
-    #                          scenario=3, replay_trace="badabing_probes"),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/badabing',
-    #                          scenario=3, replay_trace="badabing_probes"),
-    #
-    #     ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Netflix_12122018',
-    #                          scenario=3, replay_trace="Very_Long_Netflix_12122018_packetMeta_processed_new"),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Netflix_12122018',
-    #                          scenario=3, replay_trace="Very_Long_Netflix_12122018_packetMeta_processed_new"),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Netflix_12122018',
-    #                          scenario=3, replay_trace="Very_Long_Netflix_12122018_packetMeta_processed_new"),
-    # ])
-
-    # # wehe replay
-    # run_parallel_experiments([
-    #     ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Amazon_01042019',
-    #                          scenario=3, replay_trace="Very_Long_Amazon_01042019_packetMeta_processed"),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Amazon_01042019',
-    #                          scenario=3, replay_trace="Very_Long_Amazon_01042019_packetMeta_processed"),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/Amazon_01042019',
-    #                          scenario=3, replay_trace="Very_Long_Amazon_01042019_packetMeta_processed"),
-    #
-    #
-    #     ExperimentParameters(link_rate='200Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/FacebookVideo_04112019',
-    #                          scenario=3, replay_trace="Very_Long_FacebookVideo_04112019_packetMeta_processed"),
-    #     ExperimentParameters(link_rate='250Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/FacebookVideo_04112019',
-    #                          scenario=3, replay_trace="Very_Long_FacebookVideo_04112019_packetMeta_processed"),
-    #     ExperimentParameters(link_rate='280Mbps', duration=590, is_tcp=1, tcp_protocol='TcpCubic',
-    #                          exp_batch='back_traffic_long/wehe/FacebookVideo_04112019',
-    #                          scenario=3, replay_trace="Very_Long_FacebookVideo_04112019_packetMeta_processed"),
-    # ])

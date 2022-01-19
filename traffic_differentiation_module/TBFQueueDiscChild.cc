@@ -90,9 +90,9 @@ TypeId TbfQueueDiscChild::GetTypeId (void)
                      "Number of Second Bucket Tokens in bytes",
                      MakeTraceSourceAccessor (&TbfQueueDiscChild::m_ptokens),
                      "ns3::TracedValueCallback::Uint32")
-    .AddAttribute ("ResultsFolder", "folder to which all results are saved",
+    .AddAttribute ("QueueTraceOutput", "file to which all the queue events are saved",
                      StringValue (""),
-                     MakeStringAccessor(&TbfQueueDiscChild::_resultsFolder),
+                     MakeStringAccessor(&TbfQueueDiscChild::_outputFile),
                      MakeStringChecker())
   ;
 
@@ -117,7 +117,7 @@ TbfQueueDiscChild::DoDispose (void)
   QueueDisc::DoDispose ();
 
   std::ofstream outfile;
-  outfile.open(_resultsFolder);
+  outfile.open(_outputFile);
   for (TBFEnqueueEvent event : _enquedEvents) {
       outfile << event.srcPort << "," << event.dstPort << "," << event.size << "," << event.isEnqueued
                 << "," <<  event.time << "," << event.queueSize << std::endl;

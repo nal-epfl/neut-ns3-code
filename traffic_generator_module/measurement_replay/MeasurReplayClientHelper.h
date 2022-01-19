@@ -22,14 +22,17 @@ public:
     MeasurReplayClientHelper();
 
     MeasurReplayClientHelper(Address ip, uint16_t port);
+
     MeasurReplayClientHelper(Address addr);
 
     void SetAttribute(std::string name, const AttributeValue &value);
 
     ApplicationContainer Install(NodeContainer c);
 
+    static ApplicationContainer
+    CreateMeasurementReplayApplication(InetSocketAddress sinkAddress, bool isTCP, const string &traceFile,
+                                       const string &resultsPath, const Ptr<Node> &node);
 };
-
 
 
 #endif //WEHE_P_TOMOGRAPHY_NEW_MEASURREPLAYCLIENTHELPER_H

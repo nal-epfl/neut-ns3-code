@@ -10,6 +10,10 @@
 #include <filesystem>
 #include <vector>
 #include <algorithm>
+#include <regex>
+
+#include "ns3/core-module.h"
+#include "ns3/internet-module.h"
 
 using namespace std;
 
@@ -17,7 +21,9 @@ class HelperMethods {
 
     public:
         static vector<string> SplitStr (const string &s, char delim);
-        static uint32_t GetSubDirCount(string dirPath);
+        static uint32_t GetSubDirCount(const string& dirPath);
+        static string ComputeQueueSize(const string& linkRate, const vector<string>& linksDelay);
+        static ns3::Ipv4Address GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface);
 };
 
 

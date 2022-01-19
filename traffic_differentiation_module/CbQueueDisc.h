@@ -41,6 +41,10 @@ class CbQueueDisc : public QueueDisc {
 
         void SetTosMap (TosMap tosMap);
 
+        static TrafficControlHelper
+        GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsTos,
+                                   double policingRate, double burstLength, const string& resultsPath);
+
 };
 
 std::ostream &operator << (std::ostream &os, const TosMap &tosMap);

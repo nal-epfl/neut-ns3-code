@@ -27,6 +27,9 @@ public:
 
     ApplicationContainer Install(NodeContainer c);
 
+    static ApplicationContainer CreatePoissonApplication(InetSocketAddress sinkAddress, bool isTCP, double lambda, uint32_t pktSize, const string& resultsPath, const Ptr<Node>& node);
+    static ApplicationContainer CreateConstantProbeApplication(InetSocketAddress sinkAddress, bool isTCP, double lambda, uint32_t pktSize, const string& resultsPath, const Ptr<Node>& node);
+
 };
 
 

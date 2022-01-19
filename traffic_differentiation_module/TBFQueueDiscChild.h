@@ -172,7 +172,7 @@ private:
 
   /* This part is for tracing TBF behaviour */
   std::vector<TBFEnqueueEvent> _enquedEvents;
-  std::string _resultsFolder = "";
+  std::string _outputFile = "";
 
 };
 

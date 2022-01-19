@@ -34,3 +34,15 @@ ApplicationContainer InfiniteTCPClientHelper::Install(NodeContainer c) {
     }
     return apps;
 }
+
+ApplicationContainer
+InfiniteTCPClientHelper::CreateInfiniteTcpApplication(InetSocketAddress sinkAddress, const string &tcpProtocol,
+                                                      uint32_t pktSize,
+                                                      const string &resultsPath, const Ptr<Node> &node) {
+    InfiniteTCPClientHelper helper(sinkAddress);
+    helper.SetAttribute("TcpProtocol", StringValue(tcpProtocol));
+    helper.SetAttribute("PacketSize", UintegerValue(pktSize));
+    helper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
+    helper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+    return helper.Install(node);
+}

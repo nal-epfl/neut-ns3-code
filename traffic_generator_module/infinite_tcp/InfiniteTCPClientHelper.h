@@ -23,9 +23,14 @@ public:
     InfiniteTCPClientHelper(Address ip, uint16_t port); // here you should set ip and port of the destination
     InfiniteTCPClientHelper(Address addr); // this refers to InetSocketAddress(Address ip, uint16_t port) of the destination Socket
 
+
     void SetAttribute(std::string name, const AttributeValue &value);
 
     ApplicationContainer Install(NodeContainer c);
+
+    static ApplicationContainer
+    CreateInfiniteTcpApplication(InetSocketAddress sinkAddress, const string &tcpProtocol, uint32_t pktSize,
+                                 const string &resultsPath, const Ptr<Node> &node);
 
 };
 

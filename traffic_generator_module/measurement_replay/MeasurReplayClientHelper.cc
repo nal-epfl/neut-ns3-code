@@ -34,3 +34,15 @@ ApplicationContainer MeasurReplayClientHelper::Install(NodeContainer c) {
     }
     return apps;
 }
+
+ApplicationContainer
+MeasurReplayClientHelper::CreateMeasurementReplayApplication(InetSocketAddress sinkAddress, bool isTCP,
+                                                             const string &traceFile, const string &resultsPath,
+                                                             const Ptr<Node> &node) {
+    MeasurReplayClientHelper helper(sinkAddress);
+    helper.SetAttribute("Protocol", StringValue((isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory"));
+    helper.SetAttribute("TraceFile", StringValue(traceFile));
+    helper.SetAttribute("EnableCwndMonitor", BooleanValue(isTCP));
+    helper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+    return helper.Install(node);
+}

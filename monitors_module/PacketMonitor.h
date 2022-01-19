@@ -78,12 +78,13 @@ public:
 
     void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t srcPort, uint16_t dstPort);
     void AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp);
+    void AddAppKey(AppKey appKey);
 
     void SaveRecordedPacketsToCSV(const string& filename);
     void SaveRecordedPacketsCompactByIP(const string& filename);
     void SaveRecordedPacketsCompact(const string &filename);
-    void DisplayStats();
 
+    void DisplayStats();
 };
 
 #endif //NEUTRALITY_PACKETMONITOR_H

@@ -59,6 +59,10 @@ void PacketMonitor::AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp, uint16_t src
     _appsKey.insert(AppKey(srcIp, dstIp, srcPort, dstPort));
 }
 
+void PacketMonitor::AddAppKey(AppKey appKey) {
+    _appsKey.insert(appKey);
+}
+
 void PacketMonitor::AddAppKey(Ipv4Address srcIp, Ipv4Address dstIp) {
     _appsKey.insert(AppKey(srcIp, dstIp));
 }
