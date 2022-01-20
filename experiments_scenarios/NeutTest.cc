@@ -135,7 +135,7 @@ int run_neut_test(int argc, char **argv) {
             isPolicerIndependent = true, policerOnNonCommonPath3 = true, policerOnNonCommonPath4 = true;
             break;
         case 5:
-            isPolicerShared = true, policerOnNonCommonPath3 = true;
+            isPolicerShared = true, policerOnNonCommonPath4 = true;
             break;
     }
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
@@ -281,12 +281,12 @@ int run_neut_test(int argc, char **argv) {
     /*** Create Cross Traffic On Paths 3 & 4 ***/
     MultipleReplayClients *backP2 = new MultipleReplayClients(appsServer[2], client);
     double throttledProbP2 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP2 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link0";
+    string tracesPathP2 = dataPath + backgroundDir + "/link0";
     backP2->RunTracesWithRandomThrottledTCPFlows(tracesPathP2, throttledProbP2, 4);
 
     MultipleReplayClients *backP3 = new MultipleReplayClients(appsServer[3], client);
     double throttledProbP3 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP3 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link1";
+    string tracesPathP3 = dataPath + backgroundDir + "/link1";
     backP3->RunTracesWithRandomThrottledTCPFlows(tracesPathP3, throttledProbP3, 4);
 
     /*** Create Cross Traffic On All Paths ***/
