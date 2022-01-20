@@ -14,6 +14,7 @@ int run_weheCS_test(int argc, char **argv);
 
 int run_tomo_test(int argc, char **argv);
 int run_neut_test(int argc, char **argv);
+int run_same_topo_neut_test(int argc, char **argv);
 
 
 int main(int argc, char **argv) {
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
 
 ////     This is the new set of experiments after Sep 2021
 //    run_tomo_test(argc, argv);
-    run_neut_test(argc, argv);
+//    run_neut_test(argc, argv);
+    run_same_topo_neut_test(argc, argv);
 }
 

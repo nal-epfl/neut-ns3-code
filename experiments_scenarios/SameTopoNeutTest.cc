@@ -1,17 +1,17 @@
 //
-// Created by nal on 20.10.21.
+// Created by nal on 20.01.22.
 //
 // Network topology
 //
 //                            +--- d0
-//                            +--- d1
-//      s0 ---+-- r0 ___ r1 --+--- d2
-//                            +--- d3
-//                            +--- d4
+//      s0 ---+-- r0 ___ r1 --+--- d1
+//                            +--- d2
 //
 // - All links are P2P
-// - Wehe applications runs along d0->s0, d1->s0, d2->s0, and d3->s0
+// - Wehe applications runs along d0->s0, d1->s0 back-to-back or simultaneously
+// - App 1 and 3 along path d0->s0   &&   App 2 and 4 along path d1->s0
 // - Background is CAIDA traces
+//
 
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ using namespace std::chrono;
 #define PCAP_FLAG 0
 
 /*****************************************************************************/
-int run_neut_test(int argc, char **argv) {
+int run_same_topo_neut_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
 /* ################################################ READ AND PREPARE PARAMETERS (START) ################################################ */
@@ -89,8 +89,13 @@ int run_neut_test(int argc, char **argv) {
     srand(ns3::RngSeedManager::GetSeed());
 
     /*** Time Parameters ***/
-    Time warmupTime = Seconds(10); // time before start sending measurement traffic to eliminate transient period
-    Time simEndTime = warmupTime + Seconds(duration) + Seconds(5);
+    bool runBackToBack = true;
+    uint16_t controlTestId = 0, suspectedTestId = 1;
+    Time testsStartTime[2], testsEndTime[2];
+    testsStartTime[controlTestId] = Seconds(10);
+    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(duration)  + Seconds(5);
+    testsStartTime[suspectedTestId] = runBackToBack ? testsEndTime[controlTestId] : testsStartTime[controlTestId];
+    testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(duration)  + Seconds(5);
 
     /*** Input-Output parameters ***/
     string resultsPath = (string) (getenv("PWD")) + "/results/" + resultsFolderName;
@@ -98,7 +103,7 @@ int run_neut_test(int argc, char **argv) {
 
     /*** Topology Parameters ***/
     uint32_t nbApps = 4;
-    uint32_t nbServers = nbApps + 1; // the +1 is for the last path which carries only back traffic
+    uint32_t nbServers = nbApps/2 + 1; // the +1 is for the last path which carries only back traffic
 
     /*** Traffic Parameters ***/
     string appProtocol = (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
@@ -116,7 +121,7 @@ int run_neut_test(int argc, char **argv) {
 
     /*** Interpret isNeutral Case ***/
     bool isPolicerShared = false, isPolicerIndependent = false;
-    bool policerOnCommonLink = false, policerOnNonCommonPath3 = false, policerOnNonCommonPath4 = false;
+    bool policerOnCommonLink = false, policerOnNonCommonForApp3 = false, policerOnNonCommonForApp4 = false;
     if (isNeutral == 1 || isNeutral == -1) {
         isPolicerShared = true, policerOnCommonLink = true;
     }
@@ -124,14 +129,15 @@ int run_neut_test(int argc, char **argv) {
         isPolicerIndependent = true, policerOnCommonLink = true;
     }
     else if(isNeutral == 3 || isNeutral == -3) {
-        isPolicerShared = true, policerOnNonCommonPath3 = true, policerOnNonCommonPath4 = true;
+        isPolicerShared = true, policerOnNonCommonForApp3 = true, policerOnNonCommonForApp4 = true;
     }
     else if(isNeutral == 4 || isNeutral == -4) {
-        isPolicerIndependent = true, policerOnNonCommonPath3 = true, policerOnNonCommonPath4 = true;
+        isPolicerIndependent = true, policerOnNonCommonForApp3 = true, policerOnNonCommonForApp4 = true;
     }
     else if(isNeutral == 5 || isNeutral == -5) {
-        isPolicerShared = true, policerOnNonCommonPath4 = true;
+        isPolicerShared = true, policerOnNonCommonForApp4 = true;
     }
+
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
 
 
@@ -169,7 +175,7 @@ int run_neut_test(int argc, char **argv) {
         tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
         tch.Install(channels_r1_servers[i]);
         // For the policers on non-common links
-        if ((i == 2 && policerOnNonCommonPath3) || (i == 3 && policerOnNonCommonPath4)) {
+        if ((i == 0 && policerOnNonCommonForApp3) || (i == 1 && policerOnNonCommonForApp4)) {
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
                     queueSize, {0, 4, 8}, policingRate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
@@ -226,24 +232,25 @@ int run_neut_test(int argc, char **argv) {
         trafficClass[2] = 4;
         trafficClass[3] = isPolicerIndependent? 8 : 4;
     }
+    uint32_t testId[] = {controlTestId, controlTestId, suspectedTestId, suspectedTestId};
     /*** Create Application Traffic ***/
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsServer.push_back(serverNodes.Get(i));
+        appsServer.push_back(serverNodes.Get(i % 2));
         appsKey.emplace_back(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // exceptional case of WeheCS (Wehe Client-Server)
         if (appType == 5) {
             WeheCS* weheCS = WeheCS::CreateWeheCS(client, appsServer[i], dataPath + "/weheCS_trace", isTCP, trafficClass[i], resultsPath);
-            weheCS->StartApplication(warmupTime);
-            weheCS->StopApplication(simEndTime);
+            weheCS->StartApplication(testsStartTime[testId[i]]);
+            weheCS->StopApplication(testsEndTime[testId[i]]);
             continue;
         }
 
         // create the application at destination
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(client);
-        sinkApp.Start(warmupTime);
-        sinkApp.Stop(simEndTime);
+        sinkApp.Start(testsStartTime[testId[i]]);
+        sinkApp.Stop(testsEndTime[testId[i]]);
 
         // create the client sending traffic
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());
@@ -265,28 +272,21 @@ int run_neut_test(int argc, char **argv) {
             app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
                     sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
         }
-        app.Start(warmupTime);
-        app.Stop(warmupTime + Seconds(duration));
+        app.Start(testsStartTime[testId[i]]);
+        app.Stop(testsStartTime[testId[i]] + Seconds(duration));
     }
 
-    /*** Create Cross Traffic On Paths 3 & 4 ***/
-    auto *backP2 = new MultipleReplayClients(appsServer[2], client);
-    double throttledProbP2 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP2 = dataPath + backgroundDir + "/link0";
-    backP2->RunTracesWithRandomThrottledTCPFlows(tracesPathP2, throttledProbP2, 4);
+    /*** Create Cross Traffic On Paths 1 & 2 ***/
+    auto *backP0 = new MultipleReplayClients(appsServer[0], client);
+    double throttledProbP0 = (isPolicerShared) ? 0.3 : 0;
+    string tracesPathP0 = dataPath + backgroundDir + "/link0";
+    backP0->RunTracesWithRandomThrottledTCPFlows(tracesPathP0, throttledProbP0, 4);
 
-    auto *backP3 = new MultipleReplayClients(appsServer[3], client);
-    double throttledProbP3 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP3 = dataPath + backgroundDir + "/link1";
-    backP3->RunTracesWithRandomThrottledTCPFlows(tracesPathP3, throttledProbP3, 4);
+    auto *backP1 = new MultipleReplayClients(appsServer[1], client);
+    double throttledProbP1 = (isPolicerShared) ? 0.3 : 0;
+    string tracesPathP1 = dataPath + backgroundDir + "/link1";
+    backP1->RunTracesWithRandomThrottledTCPFlows(tracesPathP1, throttledProbP1, 4);
 
-    /*** Create Cross Traffic On All Paths ***/
-//    double throttledProb = (isPolicerShared) ? 0.4 : 0;
-//    for(uint32_t i = 0; i < nbApps; i++) {
-//        MultipleReplayClients* back = new MultipleReplayClients(appsServer[i], client);
-//        string tracesPath = dataPath + backgroundDir + "/path" + to_string(i);
-//        back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 4);
-//    }
 /* ########################################### SETUP THE APPLICATIONS AND BACKGROUND (END) ########################################### */
 
 
@@ -299,19 +299,21 @@ int run_neut_test(int argc, char **argv) {
 #endif
 
     /*** Attach a Packet Monitor ***/
-    auto *commonLinkMonitor = new PacketMonitor(warmupTime, Seconds(duration), routerR->GetId(), client->GetId(), "commonLink");
+    auto *commonLinkMonitor = new PacketMonitor(
+            testsStartTime[controlTestId], testsEndTime[suspectedTestId], routerR->GetId(), client->GetId(), "commonLink"
+    );
     vector<PacketMonitor *> appsMonitors;
     for (uint32_t i = 0; i < nbApps; i++) {
         commonLinkMonitor->AddAppKey(appsKey[i]);
 
-        auto *appMonitor = new PacketMonitor(warmupTime, Seconds(duration), appsServer[i]->GetId(), client->GetId(), "app" + to_string(i));
+        auto *appMonitor = new PacketMonitor(testsStartTime[testId[i]], Seconds(duration), appsServer[i]->GetId(), client->GetId(), "app" + to_string(i));
         appMonitor->AddAppKey(appsKey[i]);
         appsMonitors.push_back(appMonitor);
     }
 
     /*** Run simulation ***/
     cout << "Start Simulation" << endl;
-    Simulator::Stop(simEndTime);
+    Simulator::Stop(testsEndTime[suspectedTestId]);
     Simulator::Run();
     Simulator::Destroy();
 
@@ -326,5 +328,7 @@ int run_neut_test(int argc, char **argv) {
 
     return 0;
 }
+
+
 
 

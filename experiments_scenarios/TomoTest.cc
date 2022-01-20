@@ -40,15 +40,13 @@ using namespace ns3;
 using namespace std;
 using namespace std::chrono;
 
-NS_LOG_COMPONENT_DEFINE("TomoTest");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
 
+/*****************************************************************************/
 int run_tomo_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
-
-    NS_LOG_INFO("Two Probing applications with CAIDA background is running");
 
 /* ################################################ READ AND PREPARE PARAMETERS (START) ################################################ */
     /*** Defining Inputs: Variables read from arguments ***/
@@ -116,7 +114,6 @@ int run_tomo_test(int argc, char **argv) {
 
 /* ################################################ BUILD AND CONFIGURE TOPOLOGY (START) ################################################ */
     /*** Create the topology ***/
-    NS_LOG_INFO("Create Topology.");
     NodeContainer routers; routers.Create(2); // router[0] is actually the mobile client
     NodeContainer serverNodes; serverNodes.Create(nbServers);
 
@@ -124,8 +121,7 @@ int run_tomo_test(int argc, char **argv) {
     internetStackHelper.Install(routers);
     internetStackHelper.Install(serverNodes);
 
-    string defaultCommonLinkRate = "10Gbps", defaultNonCommonLinkRate = "1Gbps";
-    string defaultLinkDelay = "5ms";
+    string defaultNonCommonLinkRate = "1Gbps", defaultLinkDelay = "5ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
@@ -189,43 +185,39 @@ int run_tomo_test(int argc, char **argv) {
     /*** Create Application Traffic ***/
     for(uint32_t i = 0; i < nbApps; i++) {
         appsServer.push_back(serverNodes.Get(i));
-        appsKey.push_back(AppKey(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i));
+        appsKey.emplace_back(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // create the application at destination
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny (), appsKey[i].GetDstPort()));
-        ApplicationContainer sinkApp = sinkAppHelper.Install(routers.Get(0));
+        ApplicationContainer sinkApp = sinkAppHelper.Install(client);
         sinkApp.Start(warmupTime);
         sinkApp.Stop(simEndTime);
 
         // create the client sending poisson
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());
         ApplicationContainer app;
-
-        switch (appType) {
-            case 1:
-                app = PoissonClientHelper::CreateConstantProbeApplication(
-                        sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
-                break;
-            case 2:
-                app = PoissonClientHelper::CreatePoissonApplication(
-                        sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
-                break;
-            case 3:
-                app = MeasurReplayClientHelper::CreateMeasurementReplayApplication(
-                        sinkAddress, isTCP, dataPath + replayTrace, resultsPath, appsServer[i]);
-                break;
-            case 4:
-                app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
-                        sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
-                break;
+        if (appType == 1) {
+            app = PoissonClientHelper::CreateConstantProbeApplication(
+                    sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
         }
-
+        else if (appType == 2) {
+            app = PoissonClientHelper::CreatePoissonApplication(
+                    sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
+        }
+        else if (appType == 3) {
+            app = MeasurReplayClientHelper::CreateMeasurementReplayApplication(
+                    sinkAddress, isTCP, dataPath + replayTrace, resultsPath, appsServer[i]);
+        }
+        else if (appType == 4) {
+            app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
+                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
+        }
         app.Start(warmupTime);
         app.Stop(warmupTime + Seconds(duration));
     }
 
     /*** Create Background Traffic ***/
-    MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), client);
+    auto* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), client);
     back->RunAllTraces(dataPath + backgroundDir, 0);
 //    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 0);
 /* ########################################### SETUP THE APPLICATIONS AND BACKGROUND (END) ########################################### */
@@ -239,28 +231,26 @@ int run_tomo_test(int argc, char **argv) {
 //    p2pRouters.EnablePcap(resultsPath + "/router-link", 0, 1);
 #endif
 
-    PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routerR->GetId(), client->GetId(), "bottleneckDown");
-    vector<PacketMonitor*> pathPktsMonitorsDown;
+    auto* commonLinkMonitor = new PacketMonitor(warmupTime, Seconds(duration), routerR->GetId(), client->GetId(), "commonLink");
+    vector<PacketMonitor*> appsMonitors;
     for(uint32_t i = 0; i < nbApps; i++) {
-        bottleneckPktMonitorDown->AddAppKey(appsKey[i]);
+        commonLinkMonitor->AddAppKey(appsKey[i]);
 
-        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), appsServer[i]->GetId(), client->GetId(),  "path" + to_string(i) + "Down");
-        pathMonitor->AddAppKey(appsKey[i]);
-        pathPktsMonitorsDown.push_back(pathMonitor);
+        auto* appMonitor = new PacketMonitor(warmupTime, Seconds(duration), appsServer[i]->GetId(), client->GetId(), "path" + to_string(i) + "Down");
+        appMonitor->AddAppKey(appsKey[i]);
+        appsMonitors.push_back(appMonitor);
     }
 
     /*** Run simulation ***/
     cout << "Start Simulation" << endl;
-    NS_LOG_INFO("Run Simulation.");
     Simulator::Stop(simEndTime);
     Simulator::Run();
     Simulator::Destroy();
-    NS_LOG_INFO("Done.");
 
 
-    bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
+    commonLinkMonitor->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
     for(uint32_t i = 0; i < nbApps; i++) {
-        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
     }
 /* ############################################## RUN SIMULATION AND MONITORING (END) ############################################## */
 
