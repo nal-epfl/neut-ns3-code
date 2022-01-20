@@ -1,6 +1,5 @@
 import sys
 from project_run_env.RunConfig import *
-from loss_analysis.loss_experiments import *
 
 # set configurations and variables
 np.set_printoptions(threshold=sys.maxsize)

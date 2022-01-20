@@ -70,7 +70,7 @@ int run_multipleReplayClient_test(int argc, char **argv) {
     Time simStartTime = Seconds(0.);
     Time warmupTime = Seconds(0);
     Time simEndTime = warmupTime + Seconds(duration) + Seconds(10);
-    string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
+    string resultsPath = (string)(getenv("PWD")) + "/results/" + resultsFolderName;
     string dataPath = (string)(getenv("PWD")) + "/data";
 
     // should change here the RTT to 0.02

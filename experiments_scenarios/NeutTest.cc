@@ -35,8 +35,7 @@
 #include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
 #include "../traffic_generator_module/infinite_tcp/InfiniteTCPClientHelper.h"
 #include "../traffic_differentiation_module/CbQueueDisc.h"
-
-#include "../helper_classes/HelperMethods.h"
+#include "../traffic_generator_module/wehe_cs/WeheCS.h"
 
 using namespace ns3;
 using namespace std;
@@ -46,6 +45,7 @@ NS_LOG_COMPONENT_DEFINE("NeutTest");
 
 #define PCAP_FLAG 0
 
+/*****************************************************************************/
 int run_neut_test(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
@@ -135,7 +135,7 @@ int run_neut_test(int argc, char **argv) {
             isPolicerIndependent = true, policerOnNonCommonPath3 = true, policerOnNonCommonPath4 = true;
             break;
         case 5:
-            isPolicerShared = true, policerOnNonCommonPath3 = true;
+            isPolicerShared = true, policerOnNonCommonPath4 = true;
             break;
     }
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
@@ -237,6 +237,14 @@ int run_neut_test(int argc, char **argv) {
         appsServer.push_back(serverNodes.Get(i));
         appsKey.push_back(AppKey(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i));
 
+        // exceptional case of WeheCS (Wehe Client-Server)
+        if (appType == 5) {
+            WeheCS* weheCS = WeheCS::CreateWeheCS(client, appsServer[i], dataPath + "/weheCS_trace", isTCP, trafficClass[i], resultsPath);
+            weheCS->StartApplication(warmupTime);
+            weheCS->StopApplication(simEndTime);
+            continue;
+        }
+
         // create the application at destination
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(routers.Get(0));
@@ -270,23 +278,15 @@ int run_neut_test(int argc, char **argv) {
         app.Stop(warmupTime + Seconds(duration));
     }
 
-    /*** Create Background Traffic ***/
-//    MultipleReplayClients* back = new MultipleReplayClients(serverNodes.Get(nbServers-1), client);
-////    back->RunAllTraces(dataPath + "/chicago_2010_back_traffic_10min", 0);
-//    // adjust them so that some of them can be throttled
-//    double throttledProb = (isPolicerShared) ? 0.4 : 0;
-//    string tracesPath = dataPath + "/chicago_2010_back_traffic_5min_control_cbp";
-//    back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 4);
-
     /*** Create Cross Traffic On Paths 3 & 4 ***/
     MultipleReplayClients *backP2 = new MultipleReplayClients(appsServer[2], client);
     double throttledProbP2 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP2 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link0";
+    string tracesPathP2 = dataPath + backgroundDir + "/link0";
     backP2->RunTracesWithRandomThrottledTCPFlows(tracesPathP2, throttledProbP2, 4);
 
     MultipleReplayClients *backP3 = new MultipleReplayClients(appsServer[3], client);
     double throttledProbP3 = (isPolicerShared) ? 0.4 : 0;
-    string tracesPathP3 = dataPath + "/chicago_2010_back_traffic_5min_control_cbp_2links/link1";
+    string tracesPathP3 = dataPath + backgroundDir + "/link1";
     backP3->RunTracesWithRandomThrottledTCPFlows(tracesPathP3, throttledProbP3, 4);
 
     /*** Create Cross Traffic On All Paths ***/

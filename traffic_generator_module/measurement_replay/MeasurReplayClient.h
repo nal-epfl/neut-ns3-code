@@ -11,6 +11,8 @@
 
 #include "../../monitors_module/CwndMonitor.h"
 
+#include "../../helper_classes/HelperMethods.h"
+
 using namespace ns3;
 using namespace std;
 

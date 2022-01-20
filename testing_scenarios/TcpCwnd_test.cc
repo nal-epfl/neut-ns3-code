@@ -44,33 +44,8 @@ NS_LOG_COMPONENT_DEFINE("NTCPwithCAIDA");
 #define PACKET_MONITOR_FLAG 1
 #define CWND_MONITOR 1
 
-/*****************************************************************************/
-// This function is to handle when ns3 fails to save current work
-//int nbWeheApp = 4;
-//string resultsPath;
-//PacketMonitor* bottleneckPktMonitorDown;
-//vector<PacketMonitor*> pathPktsMonitorsDown;
-//vector<CwndMonitor*> cwndMonitors;
-//void CleanTerminate () {
-//    cerr << "terminate handler called\n";
-//    bottleneckPktMonitorDown->SaveRecordedPacketsFor1Path(resultsPath + "/bottleneck_packets_down.csv");
-//    for(int i = 0; i < nbWeheApp; i++) {
-//        pathPktsMonitorsDown[i]->SaveRecordedPacketsFor1Path(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-//    }
-//
-//    for(int i = 0; i < nbWeheApp; i++) {
-//        cwndMonitors[i]->SaveCwndChanges();
-//        cwndMonitors[i]->SaveCongStateChanges();
-//        cwndMonitors[i]->SaveRtoChanges();
-//        cwndMonitors[i]->SaveRttChanges();
-//    }
-//}
 
-/*****************************************************************************/
 int run_TcpCwnd_test(int argc, char **argv) {
-    // temp to be fixed later
-    int nbTcpFlows = 4;
-    //////////////////////////
     auto start = high_resolution_clock::now();
 
     LogComponentEnable ("NTCPwithCAIDA", LOG_LEVEL_INFO);
@@ -118,6 +93,7 @@ int run_TcpCwnd_test(int argc, char **argv) {
 
 
     /*** Topology Parameters ***/
+    int nbTcpFlows = 4;
     int nbDsts = nbTcpFlows + 1;
 //    int nbSrcs = 1;
 
@@ -194,25 +170,7 @@ int run_TcpCwnd_test(int argc, char **argv) {
     string queueSize = to_string(int(0.035 * (DataRate(btlkLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
     if(isNeutral == 0) {
         cout << "we have policing with rate " << policingRate << "Mbps";
-
-        int burst = floor(policingRate * burstLength * 125000);// in byte
-        cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
-
-        uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
-                                               "TosMap", TosMapValue(TosMap{0, 4, 8}));
-
-        TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 3, "ns3::QueueDiscClass");
-        tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-        tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
-                               "Burst", UintegerValue (burst),
-                               "Mtu", UintegerValue (mtu),
-                               "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
-                               "PeakRate", DataRateValue (DataRate ("0bps")));
-        tch.AddChildQueueDisc (handle, cid[2], "ns3::TbfQueueDiscChild",
-                               "Burst", UintegerValue (burst),
-                               "Mtu", UintegerValue (mtu),
-                               "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
-                               "PeakRate", DataRateValue (DataRate ("0bps")));
+        tch = CbQueueDisc::GenerateDisc1FifoNPolicers(queueSize, {0, 4, 8}, policingRate, burstLength, "");
     }
     else {
         cout << "queue size: " << queueSize << endl;
@@ -232,8 +190,6 @@ int run_TcpCwnd_test(int argc, char **argv) {
         addresses_dsts_r0[i] = ipv4.Assign(channels_r1_dsts[i]);
         dstAddresses[i] = addresses_dsts_r0[i].GetAddress(0);
     }
-
-
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
@@ -346,7 +302,6 @@ int run_TcpCwnd_test(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-//    bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
     for(int i = 0; i < nbTcpFlows; i++)
         bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], addresses_r0_r1.GetAddress(0), 0, sinkPorts[i]);
 
@@ -365,9 +320,6 @@ int run_TcpCwnd_test(int argc, char **argv) {
         cwndMonitors.push_back(new CwndMonitor(dstIds[i], 0, warmupTime+Seconds(0.1), outputFolder));
     }
 #endif
-
-//    std::set_terminate(CleanTerminate);
-
 
     /*** Run simulation ***/
     NS_LOG_INFO("Run Simulation.");

@@ -4,34 +4,6 @@
 
 #include "MeasurReplayClient.h"
 
-namespace measure_replay_helper {
-
-    vector<string> split (const string &s, char delim) {
-        vector<string> result;
-        stringstream ss (s);
-        string item;
-
-        while (getline (ss, item, delim)) {
-            result.push_back (item);
-        }
-
-        return result;
-    }
-
-    template <class T>
-    string VectorToString(vector<T> vector, string separator) {
-        if (vector.empty()) return "";
-
-        stringstream ss;
-        ss << vector[0];
-        auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
-        for_each(vector.begin() + 1, vector.end(), aggregate);
-
-        return ss.str();
-    }
-
-}
-
 
 NS_LOG_COMPONENT_DEFINE ("MeasurReplayClient");
 
@@ -178,7 +150,7 @@ void MeasurReplayClient::LoadTrace() {
     string line;
     ns3::Time finalTimestamp;
     while(getline(traceInput, line)) {
-        vector<string> pkt_attributes = measure_replay_helper::split(line, ',');
+        vector<string> pkt_attributes = HelperMethods::SplitStr(line, ',');
 
         uint32_t frameNb = stoi(pkt_attributes[0]);
         ns3::Time timestamp = Seconds(stod(pkt_attributes[1]));
