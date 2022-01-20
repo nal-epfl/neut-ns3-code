@@ -16,6 +16,18 @@ vector<string> HelperMethods::SplitStr (const string &s, char delim) {
     return result;
 }
 
+template <class T>
+string HelperMethods::VectorToString(vector<T> vector, string separator) {
+    if (vector.empty()) return "";
+
+    stringstream ss;
+    ss << vector[0];
+    auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
+    for_each(vector.begin() + 1, vector.end(), aggregate);
+
+    return ss.str();
+}
+
 uint32_t HelperMethods::GetSubDirCount(const string& dirPath) {
     auto dirIter = std::filesystem::directory_iterator(dirPath);
     return count_if(

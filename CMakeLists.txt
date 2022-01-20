@@ -11,28 +11,40 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 ##########################################
-#find_package(Matlab)
-#if(NOT Matlab_FOUND)
-#    message(FATAL_ERROR "Matlab Not found")
-#endif()
-
 
 add_definitions(-DNS3_LOG_ENABLE)
 include_directories(~/Desktop/experiments2/ns-allinone-3.35/ns-3.35/build)
 link_directories(~/Desktop/experiments2/ns-allinone-3.35/ns-3.35/build)
 
+
 set(SOURCE_FILES main.cc)
-set(PROJECT_ENV_FILES project_run_env/RunConfig.py loss_analysis/loss_analysis_funcs.py neut_infer_scenarios/NeutTestPoisson.cc)
+set(PROJECT_ENV_FILES project_run_env/RunConfig.py)
 file(GLOB HELPER_CLASSES helper_classes/*)
-file(GLOB SCENARIOS_FILES ploss_infer_scenarios/* testing_scenarios/* neut_infer_scenarios/* tomo_scenarios/*)
+file(GLOB SCENARIOS_FILES
+        experiments_scenarios/*
+        testing_scenarios/*
+        old_code/very_old_experiments_with_ppb_background/* )
 file(GLOB MONITOR_FILES monitors_module/*)
-file(GLOB TRAFFIC_GENERATOR_FILES traffic_generator_module/poisson/* traffic_generator_module/trace_replay/*
-        traffic_generator_module/ppb/* traffic_generator_module/utility/* traffic_generator_module/poisson_bursts/*
-        traffic_generator_module/wehe_cs/* traffic_generator_module/badabing/*
-        traffic_generator_module/measurement_replay/*
-        traffic_generator_module/infinite_tcp/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
-add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${PROJECT_ENV_FILES} ${SCENARIOS_FILES} ${MONITOR_FILES} ${TRAFFIC_GENERATOR_FILES} ${TRAFFIC_DIFFERENTATION_FILES} ${HELPER_CLASSES})
+file(GLOB TRAFFIC_GENERATOR_FILES
+        traffic_generator_module/infinite_tcp/*
+        traffic_generator_module/measurement_replay/*
+        traffic_generator_module/poisson/*
+        traffic_generator_module/poisson_bursts/*
+        traffic_generator_module/ppb/*
+        traffic_generator_module/trace_replay/*
+        traffic_generator_module/utility/*
+        traffic_generator_module/wehe_cs/*)
+
+add_executable(${PROJECT_NAME}
+        ${SOURCE_FILES}
+        ${PROJECT_ENV_FILES}
+        ${HELPER_CLASSES}
+        ${SCENARIOS_FILES}
+        ${MONITOR_FILES}
+        ${TRAFFIC_DIFFERENTATION_FILES}
+        ${TRAFFIC_GENERATOR_FILES})
+
 
 set(NS3_EMU ON)
 target_link_libraries(${PROJECT_NAME}

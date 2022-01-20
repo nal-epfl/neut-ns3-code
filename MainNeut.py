@@ -157,16 +157,16 @@ if __name__ == '__main__':
     duration = 10
     seed = 7
 
-    # for background_dir in background_dirs:
-    #     run_parallel_experiments([
-    #         ExperimentParameters(
-    #             link_rate="210Mbps", duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=seed,
-    #             app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir='back_traffic_long_3',
-    #             exp_batch=case+'/single_policer_40Mbps_0.03s_40p',
-    #             noncommon_links_delays=noncommon_links_delays, noncommon_links_rates=noncommon_links_rates,
-    #             is_neutral=1, policing_rate=40, burst_length=0.03
-    #         ),
-    #     ])
+    for background_dir in background_dirs:
+        run_parallel_experiments([
+            ExperimentParameters(
+                link_rate="210Mbps", duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=seed,
+                app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir='back_traffic_long_3',
+                exp_batch=case+'/single_policer_40Mbps_0.03s_40p',
+                noncommon_links_delays=noncommon_links_delays, noncommon_links_rates=noncommon_links_rates,
+                is_neutral=1, policing_rate=40, burst_length=0.03
+            ),
+        ])
 
     # for background_dir in background_dirs:
     #     run_parallel_experiments([

@@ -1,6 +1,15 @@
 //
-// Created by nal on 30.09.20.
+// Created by nal on 26.08.20.
 //
+// Network topology
+//
+//    s0 ---+              +--- d0
+//          +-- r0 -- r1 --+
+//    s1 ---+              +--- d1
+//
+// - All links are P2P
+// - Wehe data traces between s0-d0
+// - Background UDP flow with Poisson Pareto Bursts between s1-d1
 
 #include <iostream>
 #include <string>
@@ -17,56 +26,39 @@
 #include "ns3/flow-monitor-module.h"
 #include "ns3/file-helper.h"
 
-#include "../monitors_module/PacketMonitor.h"
-#include "../monitors_module/LossMonitor.h"
+#include "../../monitors_module/PacketMonitor.h"
 
-#include "../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
-#include "../traffic_generator_module/ppb/PPBBidirectional.h"
+#include "../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 
 
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("QueueTesting");
+NS_LOG_COMPONENT_DEFINE("Wehe1PathWithPpbNoise");
 
 #define APP_LOG_FLAG 0
 #define PCAP_FLAG 0
-#define PACKET_MONITOR_FLAG 0
-#define LOSS_MONITOR_FLAG 1
+#define PACKET_MONITOR_FLAG 1
+#define LOSS_MONITOR_FLAG 0
 #define POLICING_FLAG 0
 
 /*****************************************************************************/
-//ofstream pktsEnqueueOutfile;
-//int enCount = 0;
-//void enqueueTracing(ns3::Ptr<ns3::Packet const> packet) {
-//    pktsEnqueueOutfile << enCount++ << " " << (ns3::Now().GetNanoSeconds() / 1e9) << " " << packet->ToString() << endl;
-//}
-//ofstream queueOutfile;
-//ofstream enqueueOutfile;
+ofstream pktsEnqueueOutfile;
+int enCount = 0;
+void enqueueTracing(ns3::Ptr<ns3::Packet const> packet) {
+    pktsEnqueueOutfile << enCount++ << " " << (ns3::Now().GetNanoSeconds() / 1e9) << " " << packet->ToString() << endl;
+}
 
-//void trace_queue(unsigned int oldSize, unsigned int newSize) {
-//    queueOutfile << oldSize << "," << newSize << "," << (Simulator::Now()).GetNanoSeconds() << endl;
-//    if(oldSize < newSize) {
-//        enqueueOutfile << oldSize << "," << newSize << "," << (Simulator::Now()).GetNanoSeconds() << endl;
-//    }
-//}
-//
-//int sent_pkts = 0;
-//
-//void RecordIpv4PacketSent(string context, Ptr<Packet const> packet, Ptr<Ipv4> ipv4, uint32_t interface) {
-//    sent_pkts++;
-//}
-//
-//int received_pkts = 0;
-//void RecordIpv4PacketReceived(string context, Ptr<Packet const> packet, Ptr<Ipv4> ipv4, uint32_t interface) {
-//    received_pkts++;
-//}
+ofstream queueOutfile;
+void trace_queue(unsigned int oldSize, unsigned int newSize) {
+    queueOutfile << oldSize << "," << newSize << "," << (Simulator::Now()).GetNanoSeconds() << endl;
+}
 
-int run_queue_testing(int argc, char **argv) {
 
-    LogComponentEnable ("QueueTesting", LOG_LEVEL_INFO);
-    NS_LOG_INFO("Test queue setup is running");
-//    LogComponentEnable("QueueDisc", LOG_LEVEL_ALL);
+int run_wehe_1path_w_ppb_noise(int argc, char **argv) {
+
+    LogComponentEnable ("Wehe1PathWithPpbNoise", LOG_LEVEL_INFO);
+    NS_LOG_INFO("Wehe traces with PPB Noise is running");
 
 #if APP_LOG_FLAG
     LogComponentEnable("UdpClient", LOG_LEVEL_INFO);
@@ -75,7 +67,7 @@ int run_queue_testing(int argc, char **argv) {
 
     /*** Variables read from arguments ***/
     float duration = 120.;
-    string resultsFolderName = "";
+    string resultsFolderName;
     CommandLine cmd;
     cmd.AddValue("duration", "the duration of the the simulation", duration);
     cmd.AddValue("resultsFolderName", " the name of the folder to save results to", resultsFolderName);
@@ -84,19 +76,18 @@ int run_queue_testing(int argc, char **argv) {
 
     /*** Simulation Parameters ***/
     Time simStartTime = Seconds(0.);
-    Time warmupTime = Seconds(0);
+    Time warmupTime = Seconds(10);
     Time simEndTime = warmupTime + Seconds(duration) + Seconds(10);
     string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
     string dataPath = (string)(getenv("PWD")) + "/data";
 
 
     /*** Topology Parameters ***/
-//    string linkPropagationDelay = "10ms";
-//    string linkRate = "15Mbps";
     int nbPaths = 2;
     int nbDsts = nbPaths;
     int nbSrcs = nbPaths;
 
+    string btlkLinkRate = "140Mbps";
 
     /*** Traffic Parameters ***/
     string trafficProtocol = "ns3::UdpSocketFactory";
@@ -126,11 +117,8 @@ int run_queue_testing(int argc, char **argv) {
     for(int i = 0; i < nbDsts; i++) channels_r1_dsts[i] = p2p.Install( dstNodes.Get(i), routers.Get(1));
 
     // Parameters for the bottleneck channel
-    string linkRate = "150Mbps";
-    string queueSize = to_string(int(0.035 * (DataRate(linkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
-    cout << "the queue size = " << queueSize << endl;
     PointToPointHelper p2pRouters;
-    p2pRouters.SetDeviceAttribute("DataRate", StringValue(linkRate));
+    p2pRouters.SetDeviceAttribute("DataRate", StringValue(btlkLinkRate));
     p2pRouters.SetDeviceAttribute("Mtu", UintegerValue(2000));
     p2pRouters.SetChannelAttribute("Delay", StringValue("10ms"));
     p2pRouters.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
@@ -141,25 +129,46 @@ int run_queue_testing(int argc, char **argv) {
     TrafficControlHelper tch;
 #if POLICING_FLAG
     string policingRate = "0.2Mb/s";
-    TokenBucket policerForTos4(4, 2000, policingRate);
-    tch.SetRootQueueDisc("ns3::CbPolicingQueueDisc", "MaxSize", StringValue ("1p"), "TokenBucket", TokenBucketValue(policerForTos4));
+    cout << "we have policing with rate " << policingRate;
+
+    double burstLength = 1; // in sec
+    int burst = 2000;
+    cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
+
+    uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue("1p"),
+                                           "TosMap", TosMapValue(TosMap{0, 4}));
+
+    TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 2, "ns3::QueueDiscClass");
+    tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue("1p"));
+    tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
+                           "Burst", UintegerValue (burst),
+                           "Mtu", UintegerValue (1500),
+                           "Rate", DataRateValue (DataRate (policingRate))),
+                           "PeakRate", DataRateValue (DataRate ("0bps"));
 #else
+    string queueSize = to_string(int(0.035 * (DataRate(btlkLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
+    cout << "queue size: " << queueSize << endl;
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
 #endif
     tch.Install(channel_r0_r1);
-//    pktsEnqueueOutfile.open(resultsPath + "/enqueue_traces.txt");
+
+//    pktsEnqueueOutfile.open(resultsPath + "/btlk_down_enqueue_traces.txt");
 //    Simulator::Schedule(warmupTime, []() {
 //        Config::ConnectWithoutContext("/NodeList/3/DeviceList/3/$ns3::PointToPointNetDevice/MacTx", MakeCallback(&enqueueTracing));
-//    }
+//    });
 //    Simulator::Schedule(warmupTime + Seconds(duration), []() {
 //        Config::DisconnectWithoutContext("/NodeList/3/DeviceList/3/#ns3::PointToPointNetDevice/MacTx", MakeCallback(&enqueueTracing));
 //    });
-
-//    queueOutfile.open(resultsPath + "/btlk_down_queue_size_log.csv");
-//    enqueueOutfile.open(resultsPath + "/btlk_down_queue_size_on_enqueue_log.csv");
-//    Simulator::Schedule(warmupTime, []() {
-//        Config::ConnectWithoutContext("/NodeList/3/DeviceList/3/$ns3::PointToPointNetDevice/TxQueue/BytesInQueue", MakeCallback(&trace_queue));
+//
+//    queueOutfile.open(resultsPath + "/btlk_down_queue_size_log.txt");
+//    Config::ConnectWithoutContext("/NodeList/3/DeviceList/3/$ns3::PointToPointNetDevice/TxQueue/BytesInQueue", MakeCallback(&trace_queue));
+//    Simulator::Schedule(Seconds(0), []() {
+//
 //    });
+//    Simulator::Schedule(simEndTime, []() {
+//        Config::DisconnectWithoutContext("/NodeList/3/DeviceList/3/#ns3::PointToPointNetDevice/TxQueue/BytesInQueue", MakeCallback(&enqueueTracing));
+//    });
+
 
     Ipv4AddressHelper ipv4;
     uint16_t nbSubnets = 0;
@@ -205,65 +214,59 @@ int run_queue_testing(int argc, char **argv) {
     backReplayClientServer->SetServer(dstNodes.Get(nbDsts-1));
     backReplayClientServer->SetProtocol(trafficProtocol);
     backReplayClientServer->SetTracesPath(dataPath + "/", dataPath + "/control_trace");
-    backReplayClientServer->Setup(warmupTime, simEndTime);
+    backReplayClientServer->Setup(simStartTime, simEndTime);
 
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
     AsciiTraceHelper ascii;
     p2p.EnableAsciiAll(ascii.CreateFileStream(resultsPath + "/tracing.tr"));
     p2p.EnablePcapAll(resultsPath + "/dumbbell-topo", false);
-
 #endif
 
+//    uint32_t srcIds[nbSrcs]; for(int i = 0; i < nbSrcs; i++) { srcIds[i] = srcNodes.Get(i)->GetId(); }
+    uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
+//    uint32_t dstIds[nbDsts]; for(int i = 0; i < nbDsts; i++) { dstIds[i] = dstNodes.Get(i)->GetId(); }
 
 #if PACKET_MONITOR_FLAG
-    uint32_t srcIds[nbSrcs]; for(int i = 0; i < nbSrcs; i++) { srcIds[i] = srcNodes.Get(i)->GetId(); }
-    uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
-    uint32_t dstIds[nbDsts]; for(int i = 0; i < nbDsts; i++) { dstIds[i] = dstNodes.Get(i)->GetId(); }
-
 //    PacketMonitor* bottleneckPktMonitorUp = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], routersIds[1], "bottleneckUp");
-//    for(int i = 0; i < nbDsts; i++) bottleneckPktMonitorUp->AddDestination(dstAddresses[i]);
+//    for(int i = 0; i < nbDsts; i++) bottleneckPktMonitorUp->AddAppKey(dstAddresses[i]);
 //
-//    vector<PacketMonitor*> pathMonitorsUp;
+//    vector<PacketMonitor*> pathPktsMonitorsUp;
 //    for(int i = 0; i < nbPaths; i++) {
 //        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), srcIds[i], dstIds[i],  "path" + to_string(i) + "Up");
-//        pathMonitor->AddDestination(dstAddresses[i]);
-//        pathMonitorsUp.push_back(pathMonitor);
+//        pathMonitor->AddAppKey(dstAddresses[i]);
+//        pathPktsMonitorsUp.push_back(pathMonitor);
 //    }
 
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorDown->AddDestination(srcAddresses[i]);
+    for(int i = 0; i < nbPaths; i++) bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], srcAddresses[i]);
 
-    vector<PacketMonitor*> pathMonitorsDown;
-    for(int i = 0; i < nbPaths; i++) {
-        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), dstIds[i], srcIds[i],  "path" + to_string(i) + "Down");
-        pathMonitor->AddAppKey(srcAddresses[i]);
-        pathMonitorsDown.push_back(pathMonitor);
-    }
+//    vector<PacketMonitor*> pathPktsMonitorsDown;
+//    for(int i = 0; i < nbPaths; i++) {
+//        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), dstIds[i], srcIds[i],  "path" + to_string(i) + "Down");
+//        pathMonitor->AddAppKey(srcAddresses[i]);
+//        pathPktsMonitorsDown.push_back(pathMonitor);
+//    }
 #endif
 
 #if LOSS_MONITOR_FLAG
-    uint32_t srcIds[nbSrcs]; for(int i = 0; i < nbSrcs; i++) { srcIds[i] = srcNodes.Get(i)->GetId(); }
-    uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
-    uint32_t dstIds[nbDsts]; for(int i = 0; i < nbDsts; i++) { dstIds[i] = dstNodes.Get(i)->GetId(); }
-
-//    LossMonitor* bottleneckPktMonitorUp = new LossMonitor(warmupTime, simEndTime, routersIds[0], routersIds[1], "bottleneckUp");
-//    for(int i = 0; i < nbDsts; i++) bottleneckPktMonitorUp->AddAppKey(dstAddresses[i]);
+//    auto* bottleneckLossMonitorUp = new LossMonitor(warmupTime, simEndTime, routersIds[0], routersIds[1], "bottleneckUp");
+//    for(int i = 0; i < nbDsts; i++) bottleneckLossMonitorUp->AddDestination(dstAddresses[i]);
 //
-//    vector<LossMonitor*> pathMonitorsUp;
+//    vector<LossMonitor*> pathLossMonitorsUp;
 //    for(int i = 0; i < nbPaths; i++) {
-//        LossMonitor* pathMonitor = new LossMonitor(warmupTime, Seconds(duration), srcIds[i], dstIds[i],  "path" + to_string(i) + "Up");
-//        pathMonitor->AddAppKey(dstAddresses[i]);
-//        pathMonitorsUp.push_back(pathMonitor);
+//        auto* pathMonitor = new LossMonitor(warmupTime, Seconds(duration), srcIds[i], dstIds[i],  "path" + to_string(i) + "Up");
+//        pathMonitor->AddDestination(dstAddresses[i]);
+//        pathLossMonitorsUp.push_back(pathMonitor);
 //    }
-//
-    LossMonitor* bottleneckPktMonitorDown = new LossMonitor(warmupTime, simEndTime, routersIds[1], routersIds[0], "bottleneckDown");
-    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorDown->AddDestination(srcAddresses[i]);
 
-    vector<LossMonitor*> pathMonitorsDown;
+    auto* bottleneckLossMonitorDown = new LossMonitor(warmupTime, simEndTime, routersIds[1], routersIds[0], "bottleneckDown");
+    for(int i = 0; i < nbSrcs; i++) bottleneckLossMonitorDown->AddDestination(srcAddresses[i]);
+
+    vector<LossMonitor*> pathLossMonitorsDown;
     for(int i = 0; i < nbPaths; i++) {
-        LossMonitor* pathMonitor = new LossMonitor(warmupTime, Seconds(duration), dstIds[i], srcIds[i],  "path" + to_string(i) + "Down");
-        pathMonitor->AddDestination(srcAddresses[i]);
-        pathMonitorsDown.push_back(pathMonitor);
+        auto* pathMonitor = new LossMonitor(warmupTime, Seconds(duration), dstIds[i], srcIds[i],  "path" + to_string(i) + "Down");
+        pathMonitor->AddAppKey(srcAddresses[i]);
+        pathLossMonitorsDown.push_back(pathMonitor);
     }
 #endif
 
@@ -276,9 +279,6 @@ int run_queue_testing(int argc, char **argv) {
     bottleneckClass2Monitor.AddAppKey(sink2Address);
     bottleneckClass2Monitor.Install(0, 1);
 #endif
-//
-//    Config::Connect("/NodeList/" + to_string(routersIds[1]) + "/$ns3::Ipv4L3Protocol/Tx", MakeCallback(&RecordIpv4PacketSent));
-//    Config::Connect("/NodeList/" + to_string(routersIds[0]) + "/$ns3::Ipv4L3Protocol/Rx", MakeCallback(&RecordIpv4PacketReceived));
 
 
     /*** Run simulation ***/
@@ -290,21 +290,23 @@ int run_queue_testing(int argc, char **argv) {
 
 
 #if PACKET_MONITOR_FLAG
-    //    bottleneckPktMonitorUp->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_up.csv");
+//    bottleneckPktMonitorUp->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_up.csv");
+//    for(int i = 0; i < nbPaths; i++) {
+//        pathPktsMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
+//    }
+
     bottleneckPktMonitorDown->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
-    for(int i = 0; i < nbPaths; i++) {
-//        pathMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
-        pathMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
-    }
+//    for(int i = 0; i < nbPaths; i++) {
+//        pathPktsMonitorsDown[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_down.csv");
+//    }
 #endif
 
 #if LOSS_MONITOR_FLAG
-//    bottleneckPktMonitorUp->DisplayStats();
-    bottleneckPktMonitorDown->DisplayStats();
-    for(int i = 0; i < nbPaths; i++) {
-//        pathMonitorsUpp[i]->DisplayStats();
-        pathMonitorsDown[i]->DisplayStats();
-    }
+//    bottleneckLossMonitorUp->DisplayStats();
+//    for(int i = 0; i < nbPaths; i++) { pathLossMonitorsUp[i]->DisplayStats(); }
+
+    bottleneckLossMonitorDown->DisplayStats();
+    for(int i = 0; i < nbPaths; i++) { pathLossMonitorsDown[i]->DisplayStats(); }
 #endif
 
 
@@ -317,12 +319,9 @@ int run_queue_testing(int argc, char **argv) {
     bottleneckClass2Monitor.SaveLossRatiosToCSV(resultsPath + "/bottleneck_c2_loss_ratios.csv");
     bottleneckClass2Monitor.SaveAllStatsToCSV(resultsPath + "/bottleneck_c2_stats.csv");
 #endif
-//
-//    queueOutfile.close();
-//    enqueueOutfile.close();
 
-//    cout << sent_pkts << " packets are sent and " << received_pkts << " packets are received" << endl;
+    queueOutfile.close();
+    pktsEnqueueOutfile.close();
 
     return 0;
 }
-

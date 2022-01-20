@@ -19,21 +19,16 @@
 #include "ns3/traffic-control-module.h"
 
 #include "../monitors_module/PacketMonitor.h"
-#include "../monitors_module/LossMonitor.h"
 
 #include "../traffic_generator_module/ppb/PPBClientHelper.h"
-#include "../traffic_generator_module/poisson_bursts/PBClientHelper.h"
 
 using namespace ns3;
 using namespace std;
 
 NS_LOG_COMPONENT_DEFINE("1PathPPBUdp");
 
-#define APP_LOG_FLAG 0
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
-#define LOSS_MONITOR_FLAG 0
-
 
 /*****************************************************************************/
 
@@ -41,14 +36,6 @@ int run_1path_ppb_udp(int argc, char **argv) {
 
     LogComponentEnable("1PathPPBUdp", LOG_LEVEL_INFO);
     NS_LOG_INFO("Single path with PPB UDP flows is running");
-//    LogComponentEnable("PointToPointNetDevice", LOG_LEVEL_ALL);
-
-#if APP_LOG_FLAG
-    LogComponentEnable("UdpClient", LOG_LEVEL_INFO);
-    LogComponentEnable("UdpServer", LOG_LEVEL_INFO);
-#endif
-
-//    LogComponentEnable("PPBPApplication", LOG_LEVEL_INFO);
 
     /*** Variables read from arguments ***/
     float duration = 120.;
@@ -70,7 +57,7 @@ int run_1path_ppb_udp(int argc, char **argv) {
     Time startTime = Seconds(0.);
     Time transientPeriod = Seconds(200);
     Time endTime = transientPeriod + Seconds(duration) + Seconds(10);
-    string resultsPath = (string) (getenv("PWD")) + "/results" + resultsFolderName;
+    string resultsPath = (string) (getenv("PWD")) + "/results/" + resultsFolderName;
 
 
     /*** Traffic Parameters ***/
@@ -137,14 +124,6 @@ int run_1path_ppb_udp(int argc, char **argv) {
     Ptr<Socket> sinkSocket = Socket::CreateSocket(nodeContainer.Get(2), UdpSocketFactory::GetTypeId());
     sinkSocket->Bind(sinkAddress);
 
-//    PBClientHelper burstClientHelper(trafficProtocol, sinkAddress);
-//    burstClientHelper.SetAttribute("BurstIntensity", DataRateValue(DataRate("120Mbps")));
-//    burstClientHelper.SetAttribute("MeanBurstArrivals", DoubleValue(1));
-//    burstClientHelper.SetAttribute("MeanBurstTimeLength", DoubleValue(0.03));
-//    ApplicationContainer burstApp = burstClientHelper.Install(nodeContainer.Get(0));
-//    burstApp.Start(startTime);
-//    burstApp.Stop(endTime);
-
 
     PPBClientHelper burstClientHelper(trafficProtocol, sinkAddress);
     burstClientHelper.SetAttribute("BurstIntensity", DataRateValue(DataRate("150Mbps")));
@@ -168,10 +147,6 @@ int run_1path_ppb_udp(int argc, char **argv) {
                               nodeContainer.Get(2)->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal());
 #endif
 
-#if LOSS_MONITOR_FLAG /*** Monitor the paths ***/
-    LossMonitor* pathLossMonitor = new LossMonitor(transientPeriod, Seconds(duration), nodeContainer.Get(0)->GetId(), nodeContainer.Get(2)->GetId(), "path");
-    pathLossMonitor->AddDestination(nodeContainer.Get(2)->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal());
-#endif
 
 
     /*** Run simulation ***/
@@ -184,10 +159,6 @@ int run_1path_ppb_udp(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     pathPktMonitor->SaveRecordedPacketsCompact(resultsPath + "/path_packets_up.csv");
-#endif
-
-#if LOSS_MONITOR_FLAG
-    pathLossMonitor->DisplayStats();
 #endif
 
     return 0;

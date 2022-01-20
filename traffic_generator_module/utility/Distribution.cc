@@ -10,33 +10,6 @@
 
 #include "Distribution.h"
 
-namespace distribution_helper {
-
-    vector<string> split (const string &s, char delim) {
-        vector<string> result;
-        stringstream ss (s);
-        string item;
-
-        while (getline (ss, item, delim)) {
-            result.push_back (item);
-        }
-
-        return result;
-    }
-
-    template <class T>
-    string VectorToString(vector<T> vector, string separator) {
-        if (vector.empty()) return "";
-
-        stringstream ss;
-        ss << vector[0];
-        auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
-        for_each(vector.begin() + 1, vector.end(), aggregate);
-
-        return ss.str();
-    }
-
-}
 
 DistElt::DistElt(uint32_t value, double pdf, double cdf) : value(value), pdf(pdf), cdf(cdf) {}
 
@@ -51,7 +24,7 @@ void Distribution::LoadFromFile(string filename) {
     ifstream file(filename);
     string line;
     while(getline(file, line)) {
-        vector<string> attributes = distribution_helper::split(line, ',');
+        vector<string> attributes = HelperMethods::SplitStr(line, ',');
         hist.emplace_back(stoi(attributes[0]), stod(attributes[2]), stod(attributes[3]));
     }
     file.close();

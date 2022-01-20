@@ -5,35 +5,6 @@
 
 #include "TraceReplayClient.h"
 
-namespace trace_replay_helper {
-
-    vector<string> split (const string &s, char delim) {
-        vector<string> result;
-        stringstream ss (s);
-        string item;
-
-        while (getline (ss, item, delim)) {
-            result.push_back (item);
-        }
-
-        return result;
-    }
-
-    template <class T>
-    string VectorToString(vector<T> vector, string separator) {
-        if (vector.empty()) return "";
-
-        stringstream ss;
-        ss << vector[0];
-        auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
-        for_each(vector.begin() + 1, vector.end(), aggregate);
-
-        return ss.str();
-    }
-
-}
-
-
 NS_LOG_COMPONENT_DEFINE ("TraceReplayClient");
 
 NS_OBJECT_ENSURE_REGISTERED (TraceReplayClient);
@@ -150,7 +121,6 @@ void TraceReplayClient::PrepareSocket(void) {
 
 void TraceReplayClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
-//    cout << "nb packets sent " << _nbSentPkts << endl;
     Simulator::Cancel (_sendEvent);
 
     // part for monitoring the congestion window
@@ -176,9 +146,6 @@ void TraceReplayClient::Send(uint32_t payload_size) {
     else {
         p = Create<Packet>(payload_size);
     }
-
-//    cout << "timestamp: " << Simulator::Now().GetSeconds() << ", payload size: " << payload_size << endl;
-
 
     std::stringstream peerAddressStringStream;
     if (Ipv4Address::IsMatchingType (_peerAddress)) {
@@ -211,13 +178,13 @@ void TraceReplayClient::ScheduleSendEvents() {
 
     // prepare the sockets based on the trace starting time
     getline(traceInput, line);
-    vector<string> pkt_attributes = trace_replay_helper::split(line, ',');
+    vector<string> pkt_attributes = HelperMethods::SplitStr(line, ',');
     double startTIme = floor(stod(pkt_attributes[1]));
     Simulator::Schedule(Seconds(startTIme), &TraceReplayClient::PrepareSocket, this);
 
     // Schedule sending the actual packets
      do {
-        vector<string> pkt_attributes = trace_replay_helper::split(line, ',');
+        pkt_attributes = HelperMethods::SplitStr(line, ',');
         ns3::Time timestamp = Time(pkt_attributes[1] + std::string("s"));// + NanoSeconds(rand() % 100000);
         uint32_t payload_size = stoi(pkt_attributes[2]);
         Simulator::Schedule(timestamp, &TraceReplayClient::Send, this, payload_size);

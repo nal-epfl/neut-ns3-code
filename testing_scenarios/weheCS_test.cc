@@ -108,21 +108,8 @@ int run_weheCS_test(int argc, char **argv) {
     TrafficControlHelper tch;
 #if POLICING_FLAG
     cout << "we have policing with rate " << policingRate;
-
     double burstLength = 1; // in sec
-    int burst = floor(policingRate * burstLength * 125000);// in byte
-    cout << ", and burst duration " << burstLength << " sec, giving burst = " << burst << " Byte." << endl;
-
-    uint16_t handle = tch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize),
-                                           "TosMap", TosMapValue(TosMap{0, 4}));
-
-    TrafficControlHelper::ClassIdList cid = tch.AddQueueDiscClasses (handle, 2, "ns3::QueueDiscClass");
-    tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-    tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
-                           "Burst", UintegerValue (burst),
-                           "Mtu", UintegerValue (mtu),
-                           "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
-                           "PeakRate", DataRateValue (DataRate ("0bps")));
+    tch = CbQueueDisc::GenerateDisc1FifoNPolicers(queueSize, {0, 4}, policingRate, burstLength, "");
 #else
     cout << "queue size: " << queueSize << endl;
 //    tch.SetRootQueueDisc("ns3::RedQueueDisc", "MaxSize", StringValue(queueSize));
@@ -135,8 +122,6 @@ int run_weheCS_test(int argc, char **argv) {
     uint16_t nbSubnets = 0;
     ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
     Ipv4InterfaceContainer addresses_r0_r1 = ipv4.Assign(channel_r0_r1);
-
-
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 

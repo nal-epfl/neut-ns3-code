@@ -8,6 +8,8 @@
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
 
+#include "../../helper_classes/HelperMethods.h"
+
 #include "WeheClient.h"
 #include "WeheServer.h"
 #include "./wehe_tcp_cs/TCPWeheClient.h"
@@ -24,6 +26,7 @@ private:
 
     static uint32_t APPS_COUNT;
     uint32_t _appId;
+    uint16_t _serverPort;
 
     Ptr<Node> _clientNode, _serverNode;
     WeheServer* _serverApp;
@@ -43,6 +46,7 @@ public:
     WeheCS(Ptr<Node> client, Ptr<Node> server, string protocol);
 
     uint16_t GetPort();
+    void SetPort(uint16_t port);
 
     void SetTos(int tos);
     void SetResultsFolder(string resultsFolder);
@@ -51,6 +55,8 @@ public:
     void LoadTrace(const string& traceFile);
     void StartApplication(ns3::Time startTime);
     void StopApplication(ns3::Time endTime);
+
+    static WeheCS* CreateWeheCS(Ptr<Node> client, Ptr<Node> server, const string &trace, bool isTCP, uint8_t tos, const string &resultsPath);
 
 };
 

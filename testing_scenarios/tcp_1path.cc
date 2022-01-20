@@ -23,7 +23,6 @@
 #include "ns3/file-helper.h"
 
 #include "../monitors_module/PacketMonitor.h"
-#include "../monitors_module/LossMonitor.h"
 
 #include "../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 #include "../traffic_generator_module/ppb/PPBBidirectional.h"
@@ -61,8 +60,8 @@ int run_1path_tcp(int argc, char **argv) {
     /*** Simulation Parameters ***/
     Time simStartTime = Seconds(0.);
     Time simEndTime = Seconds(duration) + Seconds(10);
-    string resultsPath = (string)(getenv("PWD")) + "/results" + resultsFolderName;
-    string dataPath = (string)(getenv("PWD")) + "/data";
+    string resultsPath = (string)(getenv("PWD")) + "/results/" + resultsFolderName;
+    string dataPath = (string)(getenv("PWD")) + "/data/";
     cout << "simulation end time " << simEndTime << endl;
 
 
@@ -146,13 +145,6 @@ int run_1path_tcp(int argc, char **argv) {
     AsciiTraceHelper ascii;
 //    p2pRouters.EnableAsciiAll(ascii.CreateFileStream(resultsPath + "/tracing.tr"));
     p2pRouters.EnablePcapAll(resultsPath + "/router-link");
-
-    AnimationInterface::SetConstantPosition(routers.Get(0), 0.0, 20.0);
-    AnimationInterface::SetConstantPosition(routers.Get(1), 20.0, 20.0);
-
-    AnimationInterface anim(resultsPath + "/routers-anim.xml");
-    anim.EnablePacketMetadata(true);
-    anim.SetStartTime(simStartTime);
 #endif
 
     uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};

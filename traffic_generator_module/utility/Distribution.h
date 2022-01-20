@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include "../../helper_classes/HelperMethods.h"
+
 using namespace std;
 
 struct DistElt {

@@ -8,24 +8,6 @@
 #include "WeheClient.h"
 #include "WeheServer.h"
 
-
-namespace wehe_cs_helper {
-
-    vector<string> split (const string &s, char delim) {
-        vector<string> result;
-        stringstream ss (s);
-        string item;
-
-        while (getline (ss, item, delim)) {
-            result.push_back (item);
-        }
-
-        return result;
-    }
-
-}
-
-
 uint32_t WeheCS::APPS_COUNT = 0;
 
 
@@ -34,7 +16,7 @@ WeheCS::WeheCS(Ptr<Node> client, Ptr<Node> server, string protocol) {
     _clientNode = client;
     _serverNode = server;
     _protocol = std::move(protocol);
-
+    SetPort(3000 + _appId);
 }
 
 void WeheCS::SetTos(int tos) {
@@ -53,7 +35,7 @@ void WeheCS::LoadTrace(const string& traceFile) {
     ifstream traceInput(traceFile);
     string line;
     while(getline(traceInput, line)) {
-        vector<string> pkt_attributes = wehe_cs_helper::split(line, ',');
+        vector<string> pkt_attributes = HelperMethods::SplitStr(line, ',');
 
         uint32_t frameNb = stoi(pkt_attributes[0]);
         ns3::Time timestamp = Seconds(stod(pkt_attributes[1]));
@@ -105,7 +87,20 @@ void WeheCS::StopApplication(ns3::Time endTime) {
 }
 
 uint16_t WeheCS::GetPort() {
-    return 3000 + _appId;;
+    return _serverPort;
+}
+
+void WeheCS::SetPort(uint16_t port) {
+    _serverPort = port;
+}
+
+WeheCS* WeheCS::CreateWeheCS(Ptr<Node> client, Ptr<Node> server, const string &trace, bool isTCP, uint8_t tos, const string &resultsPath) {
+    WeheCS* weheCS = new WeheCS(client, server, ((isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory"));
+    weheCS->SetTos(tos);
+    weheCS->SetResultsFolder(resultsPath);
+    weheCS->LoadTrace(trace);
+    if(isTCP == 1) weheCS->EnableCwndMonitor();
+    return weheCS;
 }
 
 
