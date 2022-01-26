@@ -5,6 +5,8 @@
 #ifndef WEHE_P_TOMOGRAPHY_INFINITETCPCLIENT_H
 #define WEHE_P_TOMOGRAPHY_INFINITETCPCLIENT_H
 
+#include <stdlib.h>     //for using the function sleep
+
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
@@ -28,6 +30,7 @@ private:
     uint32_t _appId;
 
     uint32_t _pktSize, _nbSentPkts; // size of sent packets
+    DataRate _maxSendingRate;
 
     Ptr<Socket> _socket;
     string _tcpProtocol;

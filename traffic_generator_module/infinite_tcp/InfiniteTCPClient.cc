@@ -53,6 +53,7 @@ InfiniteTCPClient::InfiniteTCPClient() {
     _socket = 0;
     _appPaused = false;
     _sendEvent = EventId ();
+    _maxSendingRate = DataRate("20Mbps");
 }
 
 InfiniteTCPClient::~InfiniteTCPClient() {
@@ -153,7 +154,7 @@ bool InfiniteTCPClient::Send(void) {
         peerAddressStringStream << Ipv6Address::ConvertFrom (_peerAddress);
     }
 
-    if ((_socket->Send (p)) >= 0) {
+    if ((_socket->GetTxAvailable () > 0) && ((_socket->Send (p)) >= 0)) {
         ++_nbSentPkts;
         NS_LOG_INFO ("TraceDelay TX " << _pktSize << " bytes to "
                                       << peerAddressStringStream.str () << " Uid: "
@@ -169,8 +170,12 @@ bool InfiniteTCPClient::Send(void) {
 
 void InfiniteTCPClient::SchedualeSend(void) {
     NS_LOG_FUNCTION(this);
-    while (Send()) {}
-    _appPaused = true;
+    if (!Send()) {
+        _appPaused = true;
+        return;
+    }
+    Time nextTime (Seconds ((_pktSize * 8) / static_cast<double>(_maxSendingRate.GetBitRate ()))); // Time till next packet
+    Simulator::Schedule (nextTime, &InfiniteTCPClient::SchedualeSend, this);
 }
 
 // This is just a wrap-up function
