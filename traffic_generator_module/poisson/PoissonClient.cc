@@ -133,6 +133,7 @@ void PoissonClient::StartApplication(void) {
 
 void PoissonClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
+    _socket->Dispose();
     Simulator::Cancel (_sendEvent);
     if (isTCP && _enableCwndMonitor) {
         _cwndMonitor->SaveCwndChanges();

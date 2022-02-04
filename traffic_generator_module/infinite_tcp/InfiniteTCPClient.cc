@@ -129,6 +129,7 @@ void InfiniteTCPClient::StartApplication(void) {
 
 void InfiniteTCPClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
+    _socket->Dispose();
     Simulator::Cancel (_sendEvent);
     if (_enableCwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
@@ -140,6 +141,7 @@ void InfiniteTCPClient::StopApplication(void) {
 
 bool InfiniteTCPClient::Send(void) {
     NS_LOG_FUNCTION (this);
+    NS_ASSERT (_sendEvent.IsExpired ());
 
     SeqTsHeader seqTs;
     seqTs.SetSeq (_nbSentPkts);
@@ -175,7 +177,7 @@ void InfiniteTCPClient::SchedualeSend(void) {
         return;
     }
     Time nextTime (Seconds ((_pktSize * 8) / static_cast<double>(_maxSendingRate.GetBitRate ()))); // Time till next packet
-    Simulator::Schedule (nextTime, &InfiniteTCPClient::SchedualeSend, this);
+    _sendEvent = Simulator::Schedule (nextTime, &InfiniteTCPClient::SchedualeSend, this);
 }
 
 // This is just a wrap-up function

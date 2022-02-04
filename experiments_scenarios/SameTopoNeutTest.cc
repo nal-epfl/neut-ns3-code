@@ -250,7 +250,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(client);
         sinkApp.Start(testsStartTime[testId[i]]);
-        sinkApp.Stop(testsEndTime[testId[i]]);
+        sinkApp.Stop(testsStartTime[testId[i]] + Seconds(duration));
 
         // create the client sending traffic
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());

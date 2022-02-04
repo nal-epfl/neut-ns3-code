@@ -121,6 +121,7 @@ void TraceReplayClient::PrepareSocket(void) {
 
 void TraceReplayClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
+    _socket->Dispose();
     Simulator::Cancel (_sendEvent);
 
     // part for monitoring the congestion window

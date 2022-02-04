@@ -46,6 +46,8 @@ void UDPWeheClient::StartApplication() {
 }
 
 void UDPWeheClient::StopApplication() {
+    _socket->Dispose();
+
     ofstream outfile;
     outfile.open(_resultsFolder + "/client_app" + to_string(_appId) + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }

@@ -131,8 +131,7 @@ void MeasurReplayClient::StartApplication(void) {
 
 void MeasurReplayClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
-//    cout << "nb packets sent " << _nbSentPkts << endl;
-    Simulator::Cancel (_sendEvent);
+    _socket->Dispose();
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
@@ -169,7 +168,6 @@ void MeasurReplayClient::LoadTrace() {
 
 bool MeasurReplayClient::Send(uint32_t payload_size) {
     NS_LOG_FUNCTION(this);
-//    NS_ASSERT (_sendEvent.IsExpired());
 
     Ptr<Packet> p;
     if (payload_size > (8+4)) {
@@ -181,8 +179,6 @@ bool MeasurReplayClient::Send(uint32_t payload_size) {
     else {
         p = Create<Packet>(payload_size);
     }
-
-//    cout << "timestamp: " << Simulator::Now().GetSeconds() << ", payload size: " << payload_size << endl;
 
     std::stringstream peerAddressStringStream;
     if (Ipv4Address::IsMatchingType (_peerAddress)) {

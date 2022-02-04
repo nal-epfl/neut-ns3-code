@@ -62,6 +62,8 @@ void TCPWeheClient::StartApplication() {
 }
 
 void TCPWeheClient::StopApplication() {
+    _socket->Dispose();
+
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
