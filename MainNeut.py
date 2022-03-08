@@ -49,7 +49,7 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
                            noncommon_links_delays='empty', noncommon_links_rates='empty',
                            is_neutral=0, policing_rate=0.0, burst_length=0.0, throttle_udp=0):
     # run the ns3 simulation
-    result_folder_name = '1_2022/{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
+    result_folder_name = '2_2022/{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
         TEST_TYPE, app_name, link_rate, background_dir, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
     )
 
@@ -131,50 +131,133 @@ if __name__ == '__main__':
     #         ) for case, is_neutral, policing_rate in cases_per_exp
     #     ])
 
+    # ############################################################## Back to Back Tests ##############################################################
     TEST_TYPE = 'b2b_neut_with_loss'
-    seed, duration = 3, 1
-    background_dir = 'chicago_2010_back_traffic_5min_control_cbp_2links'
+    seed, duration = 3, 250
+    background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
+
+
+    ##### experiment 1: varying the common link congestion
+    # exps = [
+    #     ('congestion_on_common_link_only', '100Mbps', '1Gbps,1Gbps,10Gbps'), # high congestion on common link only
+    #     ('congestion_on_common_link_only', '150Mbps', '1Gbps,1Gbps,10Gbps'), # high congestion on common link only
+    #     ('congestion_on_common_link_only', '180Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+    #     ('congestion_on_common_link_only', '200Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+    #     ('congestion_on_common_link_only', '220Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+    # ]
+    #
+    # for a_seed in [3, 7]:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(
+    #             link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+    #             app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
+    #             exp_batch='{}/{}'.format(exp_batch, 'neutral_with_shared_common_policer_30Mbps_0.03s_30p'),
+    #             noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+    #             is_neutral=-1, policing_rate=30, burst_length=0.03
+    #         ) for exp_batch, link_rate, noncommon_link_rates in exps
+    #     ])
+
+
+    ###### experiment 2: varying the throttling rate on common link
+    # exp_batch, link_rate, noncommon_link_rates = 'throttling_rate_effect', '10Gbps', '1Gbps,1Gbps,10Gbps'
+    # cases_per_exp = [
+    #     ('shared_common_policer_40Mbps_0.03s_30p', 1, 40),
+    #     ('shared_common_policer_35Mbps_0.03s_30p', 1, 35),
+    #     ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
+    #     ('shared_common_policer_28Mbps_0.03s_30p', 1, 28),
+    #     ('shared_common_policer_25Mbps_0.03s_30p', 1, 25),
+    # ]
+    # for a_seed in [3, 7]:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(
+    #             link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+    #             app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
+    #             exp_batch='{}/{}'.format(exp_batch, case),
+    #             noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+    #             is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
+    #         ) for case, is_neutral, policing_rate in cases_per_exp
+    #     ])
+
+
+    ###### experiment 2: varying the throttling rate on non-common link
+    # exp_batch, link_rate, noncommon_link_rates = 'throttling_rate_effect', '10Gbps', '1Gbps,1Gbps,10Gbps'
+    # cases_per_exp = [
+    #     ('shared_noncommon_policer_20Mbps_0.03s_30p', 3, 20),
+    #     ('shared_noncommon_policer_18Mbps_0.03s_30p', 3, 18),
+    #     ('shared_noncommon_policer_15Mbps_0.03s_30p', 3, 15),
+    #     ('shared_noncommon_policer_14Mbps_0.03s_30p', 3, 14),
+    #     ('shared_noncommon_policer_13Mbps_0.03s_30p', 3, 13),
+    # ]
+    # for a_seed in [3, 7]:
+    #     run_parallel_experiments([
+    #         ExperimentParameters(
+    #             link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+    #             app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
+    #             exp_batch='{}/{}'.format(exp_batch, case),
+    #             noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+    #             is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
+    #         ) for case, is_neutral, policing_rate in cases_per_exp
+    #     ])
+
+
+    #### experiments 4: congestion on non-common links only
     exps = [
-        ('congestion_on_common_link_only', '180Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
-        ('congestion_on_common_link_only', '200Mbps', '1Gbps,1Gbps,10Gbps'), # low congestion on common link only
-        ('congestion_on_noncommon_links_only_p12_90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps'), # medium congestion on non-common links only
-        ('congestion_on_noncommon_links_only_p12_100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps'), # low congestion on non-common links only
-        ('congestion_on_noncommon_links_only_p12_100Mbps', '10Gbps', '1Gbps,1Gbps,10Gbps'), # no_congestion at all
+        # ('congestion_on_noncommon_links_only_p12_90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps'), # medium congestion on non-common links only
+        # ('congestion_on_noncommon_links_only_p12_100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps'), # low congestion on non-common links only
+        #
+        # ('congestion_on_common_link_only', '180Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+        # ('congestion_on_all_links_90Mbps_outside', '180Mbps', '90Mbps,90Mbps,10Gbps'), # high congestion on common link only
+        # ('congestion_on_all_links_100Mbps_outside', '180Mbps', '100Mbps,100Mbps,100Mbps'), # high congestion on common link only
+        #
+        #
+        # ('congestion_on_common_link_only', '200Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+        ('congestion_on_all_links_90Mbps_outside', '200Mbps', '90Mbps,90Mbps,10Gbps'), # medium congestion on common link only
+        ('congestion_on_all_links_100Mbps_outside', '200Mbps', '100Mbps,100Mbps,100Mbps'), # medium congestion on common link only
     ]
-
 
     cases_per_exp = [
-        ('neutral_with_shared_common_policer_35Mbps_0.03s_30p', -1, 35),
-        ('shared_common_policer_35Mbps_0.03s_30p', 1, 35),
-        ('neutral_with_shared_noncommon_policer_18Mbps_0.03s_30p', -3, 18),
-        ('shared_noncommon_policer_18Mbps_0.03s_30p', 3, 18),
+        [
+            ('neutral_with_shared_common_policer_40Mbps_0.03s_30p', -1, 40),
+            ('shared_common_policer_40Mbps_0.03s_30p', 1, 40),
+            ('neutral_with_shared_noncommon_policer_20Mbps_0.03s_30p', -3, 20),
+            ('shared_noncommon_policer_20Mbps_0.03s_30p', 3, 20),
+        ],
+        [
+            ('neutral_with_shared_common_policer_35Mbps_0.03s_30p', -1, 35),
+            ('shared_common_policer_35Mbps_0.03s_30p', 1, 35),
+            ('neutral_with_shared_noncommon_policer_18Mbps_0.03s_30p', -3, 18),
+            ('shared_noncommon_policer_18Mbps_0.03s_30p', 3, 18),
+        ],
+        [
+            ('neutral_with_shared_common_policer_30Mbps_0.03s_30p', -1, 30),
+            ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
+            ('neutral_with_shared_noncommon_policer_15Mbps_0.03s_30p', -3, 15),
+            ('shared_noncommon_policer_15Mbps_0.03s_30p', 3, 15),
+        ],
+        [
+            ('neutral_with_shared_common_policer_28Mbps_0.03s_30p', -1, 28),
+            ('shared_common_policer_28Mbps_0.03s_30p', 1, 28),
+            ('neutral_with_shared_noncommon_policer_14Mbps_0.03s_30p', -3, 14),
+            ('shared_noncommon_policer_14Mbps_0.03s_30p', 3, 14),
+        ],
+        [
+            ('neutral_with_shared_common_policer_25Mbps_0.03s_30p', -1, 25),
+            ('shared_common_policer_25Mbps_0.03s_30p', 1, 25),
+            ('neutral_with_shared_noncommon_policer_13Mbps_0.03s_30p', -3, 13),
+            ('shared_noncommon_policer_13Mbps_0.03s_30p', 3, 13),
+        ]
     ]
-    for exp_batch, link_rate, noncommon_link_rates in exps:
-        run_parallel_experiments([
-            ExperimentParameters(
-                link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=seed,
-                app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
-                exp_batch='{}/{}'.format(exp_batch, case),
-                noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
-                is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
-            ) for case, is_neutral, policing_rate in cases_per_exp
-        ])
+    for a_seed in [3, 7]:
+        for exp_batch, link_rate, noncommon_link_rates in exps:
+            for mini_cases_per_exp in cases_per_exp:
+                run_parallel_experiments([
+                    ExperimentParameters(
+                        link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+                        app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
+                        exp_batch='{}/{}'.format(exp_batch, case),
+                        noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+                        is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
+                    ) for case, is_neutral, policing_rate in mini_cases_per_exp
+                ])
 
-
-    cases_per_exp = [
-        ('neutral_with_shared_common_policer_30Mbps_0.03s_30p', -1, 30),
-        ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
-        ('neutral_with_shared_noncommon_policer_15Mbps_0.03s_30p', -3, 15),
-        ('shared_noncommon_policer_15Mbps_0.03s_30p', 3, 15),
-    ]
-    for exp_batch, link_rate, noncommon_link_rates in exps:
-        run_parallel_experiments([
-            ExperimentParameters(
-                link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=seed,
-                app_type=4, app_name='Infinite_Tcp', pkt_size=1228, background_dir=background_dir,
-                exp_batch='{}/{}'.format(exp_batch, case),
-                noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
-                is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
-            ) for case, is_neutral, policing_rate in cases_per_exp
-        ])

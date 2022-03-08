@@ -176,8 +176,9 @@ int run_same_topo_neut_test(int argc, char **argv) {
         tch.Install(channels_r1_servers[i]);
         // For the policers on non-common links
         if ((i == 0 && policerOnNonCommonForApp3) || (i == 1 && policerOnNonCommonForApp4)) {
+            double rate = policingRate; //(i == 1) ? 15 : policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, {0, 4, 8}, policingRate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, {0, 4, 8}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
             tch.Uninstall(netDevice);
