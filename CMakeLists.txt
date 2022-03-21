@@ -13,8 +13,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 ##########################################
 
 add_definitions(-DNS3_LOG_ENABLE)
-include_directories(~/Desktop/experiments2/ns-allinone-3.35/ns-3.35/build)
-link_directories(~/Desktop/experiments2/ns-allinone-3.35/ns-3.35/build)
+include_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
+link_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
 
 
 set(SOURCE_FILES main.cc)

@@ -40,6 +40,7 @@
 using namespace ns3;
 using namespace std;
 using namespace std::chrono;
+namespace fs = std::filesystem;
 
 #define PCAP_FLAG 0
 
@@ -93,7 +94,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     uint16_t controlTestId = 0, suspectedTestId = 1;
     Time testsStartTime[2], testsEndTime[2];
     testsStartTime[controlTestId] = Seconds(10);
-    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(duration)  + Seconds(5);
+    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(0)  + Seconds(5); //TODO: correct this back to duration instad of 0
     testsStartTime[suspectedTestId] = runBackToBack ? testsEndTime[controlTestId] : testsStartTime[controlTestId];
     testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(duration)  + Seconds(5);
 
@@ -118,6 +119,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(1));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue(MilliSeconds(200)));
     Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue(TcpClassicRecovery::GetTypeId()));
+    Config::SetDefault ("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
 
     /*** Interpret isNeutral Case ***/
     bool isPolicerShared = false, isPolicerIndependent = false;
@@ -281,12 +283,20 @@ int run_same_topo_neut_test(int argc, char **argv) {
     auto *backP0 = new MultipleReplayClients(appsServer[0], client);
     double throttledProbP0 = (isPolicerShared) ? 0.3 : 0;
     string tracesPathP0 = dataPath + backgroundDir + "/link0";
-    backP0->RunTracesWithRandomThrottledTCPFlows(tracesPathP0, throttledProbP0, 4);
+    if (fs::exists(tracesPathP0)) {
+        backP0->RunTracesWithRandomThrottledTCPFlows(tracesPathP0, throttledProbP0, 4);
+    } else {
+        cout << "requested Background Directory does not exist" << endl;
+    }
 
     auto *backP1 = new MultipleReplayClients(appsServer[1], client);
     double throttledProbP1 = (isPolicerShared) ? 0.3 : 0;
     string tracesPathP1 = dataPath + backgroundDir + "/link1";
-    backP1->RunTracesWithRandomThrottledTCPFlows(tracesPathP1, throttledProbP1, 4);
+    if (fs::exists(tracesPathP1)) {
+        backP1->RunTracesWithRandomThrottledTCPFlows(tracesPathP1, throttledProbP1, 4);
+    } else {
+        cout << "requested Background Directory does not exist" << endl;
+    }
 
 /* ########################################### SETUP THE APPLICATIONS AND BACKGROUND (END) ########################################### */
 
