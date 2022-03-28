@@ -60,7 +60,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = "empty"; // specific traffic to send along the measurement paths
     string backgroundDir = "empty"; // specifiy which background traffic to use in our experiments
-    int isNeutral = 0; // 0 to Run a neutral appType  --- 1 to enable shared policing -- 2 to enable perPath policers
+    int isNeutral = 0; // 0 to Run a neutral appType
     double policingRate = 4; // the rate at which tokens in the token bucket are generated
     double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
     int throttleUdp = 0; // 0 -> do not throttle, 1 -> otherwise
@@ -92,11 +92,12 @@ int run_same_topo_neut_test(int argc, char **argv) {
     /*** Time Parameters ***/
     bool runBackToBack = true;
     uint16_t controlTestId = 0, suspectedTestId = 1;
+    Time warmupTime = Seconds(10);
     Time testsStartTime[2], testsEndTime[2];
-    testsStartTime[controlTestId] = Seconds(10);
-    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(0)  + Seconds(5); //TODO: correct this back to duration instad of 0
-    testsStartTime[suspectedTestId] = runBackToBack ? testsEndTime[controlTestId] : testsStartTime[controlTestId];
-    testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(duration)  + Seconds(5);
+    testsStartTime[controlTestId] = warmupTime;
+    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(0); //TODO: correct this back to duration instead of 0
+    testsStartTime[suspectedTestId] = runBackToBack ? warmupTime + testsEndTime[controlTestId] : testsStartTime[controlTestId];
+    testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(duration);
 
     /*** Input-Output parameters ***/
     string resultsPath = (string) (getenv("PWD")) + "/results/" + resultsFolderName;
@@ -276,7 +277,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
                     sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
         }
         app.Start(testsStartTime[testId[i]]);
-        app.Stop(testsStartTime[testId[i]] + Seconds(duration));
+        app.Stop(testsEndTime[testId[i]]);
     }
 
     /*** Create Cross Traffic On Paths 1 & 2 ***/
@@ -317,7 +318,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     for (uint32_t i = 0; i < nbApps; i++) {
         commonLinkMonitor->AddAppKey(appsKey[i]);
 
-        auto *appMonitor = new PacketMonitor(testsStartTime[testId[i]], Seconds(duration), appsServer[i]->GetId(), client->GetId(), "app" + to_string(i));
+        auto *appMonitor = new PacketMonitor(testsStartTime[testId[i]], testsEndTime[testId[i]], appsServer[i]->GetId(), client->GetId(), "app" + to_string(i));
         appMonitor->AddAppKey(appsKey[i]);
         appsMonitors.push_back(appMonitor);
     }

@@ -145,11 +145,74 @@ if __name__ == '__main__':
     #         ) for case, is_neutral, policing_rate in cases_per_exp
     #     ])
 
-    ############################################################### Back to Back Tests ##############################################################
+    ############################################################### Localization Tests ##############################################################
     TEST_TYPE = 'localization_with_loss'
     seed, duration = 3, 120
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
+
+    #### experiment 1: varying the common link congestion
+    exps = [
+        ('congestion_on_common_link', '120Mbps', '1Gbps,1Gbps,10Gbps'), # high congestion on common link only
+        ('congestion_on_common_link', '150Mbps', '1Gbps,1Gbps,10Gbps'), # high congestion on common link only
+        ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+        ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps'), # medium congestion on common link only
+        ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps'), # low congestion on common link only
+        ('congestion_on_common_link', '240Mbps', '1Gbps,1Gbps,10Gbps'), # low congestion on common link only
+    ]
+
+    for a_seed in [3, 7]:
+        run_parallel_experiments([
+            ExperimentParameters(
+                link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+                app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
+                exp_batch='{}/{}'.format(exp_batch, 'neutral'),
+                noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+                is_neutral=0,
+            ) for exp_batch, link_rate, noncommon_link_rates in exps
+        ])
+
+    #### experiment 2: varying the non-common link congestion - same level
+    exps = [
+        ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p12_r95Mbps', '10Gbps', '95Mbps,95Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p12_r110Mbps', '10Gbps', '110Mbps,110Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p12_r120Mbps', '10Gbps', '120Mbps,120Mbps,10Gbps'),
+    ]
+
+    for a_seed in [3, 7]:
+        run_parallel_experiments([
+            ExperimentParameters(
+                link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+                app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
+                exp_batch='{}/{}'.format(exp_batch, 'neutral'),
+                noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+                is_neutral=0,
+            ) for exp_batch, link_rate, noncommon_link_rates in exps
+        ])
+
+    #### experiment 2: varying the non-common link congestion - different levels
+    exps = [
+        ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p1_r90Mbps_p2_r110Mbps', '10Gbps', '90Mbps,110Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p1_r100Mbps_p2_r120Mbps', '10Gbps', '100Mbps,120Mbps,10Gbps'),
+        ('congestion_on_noncommon_links_p2_r110Mbps', '10Gbps', '10Gbps,110Mbps,10Gbps'),
+    ]
+
+    for a_seed in [3, 7]:
+        run_parallel_experiments([
+            ExperimentParameters(
+                link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+                app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
+                exp_batch='{}/{}'.format(exp_batch, 'neutral'),
+                noncommon_links_delays='empty', noncommon_links_rates=noncommon_link_rates,
+                is_neutral=0,
+            ) for exp_batch, link_rate, noncommon_link_rates in exps
+        ])
+
+
+    #### experiment 1: varying the many conditions
     exps = [
         ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'), # no congestion at all
 
@@ -163,7 +226,6 @@ if __name__ == '__main__':
         ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'), # medium congestion on common link only
         ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'), # medium congestion on common link only
         ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'), # medium congestion on common link only
-
 
         ('congestion_on_common_link_p2_d2ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
         ('congestion_on_common_link_p2_d15ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
@@ -201,10 +263,25 @@ if __name__ == '__main__':
             ('shared_noncommon_policer_p2_15Mbps_0.03s_30p', 5, 15),
             ('shared_noncommon_policer_p2_14Mbps_0.03s_30p', 5, 14),
             ('shared_noncommon_policer_p2_13Mbps_0.03s_30p', 5, 13),
-        ]
+        ],
+        [
+            ('independent_common_policer_0.5Mbps_0.03s', 2, 0.5),
+            ('independent_common_policer_1Mbps_0.03s', 2, 1),
+            ('independent_common_policer_1.5Mbps_0.03s', 2, 1.5),
+            ('independent_common_policer_2Mbps_0.03s', 2, 2),
+            ('independent_common_policer_2.5Mbps_0.03s', 2, 2.5),
+        ],
+        [
+            ('independent_noncommon_policers_0.5Mbps_0.03s', 4, 0.5),
+            ('independent_noncommon_policers_1Mbps_0.03s', 4, 1),
+            ('independent_noncommon_policers_1.5Mbps_0.03s', 4, 1.5),
+            ('independent_noncommon_policers_2Mbps_0.03s', 4, 2),
+            ('independent_noncommon_policers_2.5Mbps_0.03s', 4, 2.5),
+        ],
     ]
-    for a_seed in [3, 7, 11, 13]:
+    for a_seed in [3, 7]:
         for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
+            print('----------------- Running experiment set: {} / seed: {} -----------------'.format(exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 run_parallel_experiments([
                     ExperimentParameters(
