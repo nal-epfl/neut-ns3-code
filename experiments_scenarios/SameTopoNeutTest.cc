@@ -56,6 +56,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     int isTCP = 0; // 0 to run wehe app as UDP --- 1 to run it as TCP
     string tcpProtocol = "ns3::TcpCubic"; // in case of TCP the congestion control algorithm to use
     uint32_t appType = 0; // the type of measurement application
+    string appDataRate = "20Mbps";
     uint32_t pktSize = 256; // size of probe packets
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = "empty"; // specific traffic to send along the measurement paths
@@ -77,6 +78,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     cmd.AddValue("pktSize", "pktSize", pktSize);
     cmd.AddValue("lambda", "lambda", lambda);
     cmd.AddValue("replayTrace", "file to replay by the Client", replayTrace);
+    cmd.AddValue("appDataRate", "The application rate of generating data", appDataRate);
     cmd.AddValue("backgroundDir", "directory for the background traces to use as cross traffic", backgroundDir);
     cmd.AddValue("neutral", "to enable neutral bottleneck behaviour (0 means neutral)", isNeutral);
     cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
@@ -95,7 +97,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     Time warmupTime = Seconds(10);
     Time testsStartTime[2], testsEndTime[2];
     testsStartTime[controlTestId] = warmupTime;
-    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(0); //TODO: correct this back to duration instead of 0
+    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(duration);
     testsStartTime[suspectedTestId] = runBackToBack ? warmupTime + testsEndTime[controlTestId] : testsStartTime[controlTestId];
     testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(duration);
 
@@ -109,10 +111,8 @@ int run_same_topo_neut_test(int argc, char **argv) {
 
     /*** Traffic Parameters ***/
     string appProtocol = (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
-    uint32_t rcvBufSize = 131072;
-    uint32_t sndBufSize = 131072;
-    uint32_t mss = 1228;
-    uint32_t mtu = 1500;
+    uint32_t rcvBufSize = 131072, sndBufSize = 131072;
+    uint32_t mss = 1228, mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpCubic"));
     Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(mss));
     Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue(rcvBufSize));
@@ -254,7 +254,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(client);
         sinkApp.Start(testsStartTime[testId[i]]);
-        sinkApp.Stop(testsStartTime[testId[i]] + Seconds(duration));
+        sinkApp.Stop(testsEndTime[testId[i]]);
 
         // create the client sending traffic
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());
@@ -274,7 +274,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
         }
         else if (appType == 4) {
             app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
-                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
+                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i], appDataRate);
         }
         app.Start(testsStartTime[testId[i]]);
         app.Stop(testsEndTime[testId[i]]);
@@ -315,23 +315,29 @@ int run_same_topo_neut_test(int argc, char **argv) {
             testsStartTime[controlTestId], testsEndTime[suspectedTestId], routerR->GetId(), client->GetId(), "commonLink"
     );
     vector<PacketMonitor *> appsMonitors;
+    vector<PacketMonitor *> nonCommonLinkMonitors;
     for (uint32_t i = 0; i < nbApps; i++) {
         commonLinkMonitor->AddAppKey(appsKey[i]);
 
         auto *appMonitor = new PacketMonitor(testsStartTime[testId[i]], testsEndTime[testId[i]], appsServer[i]->GetId(), client->GetId(), "app" + to_string(i));
         appMonitor->AddAppKey(appsKey[i]);
         appsMonitors.push_back(appMonitor);
+
+        auto *nonCommonLinkMonitor = new PacketMonitor(testsStartTime[testId[i]], testsEndTime[testId[i]], appsServer[i]->GetId(), routerR->GetId(), "noncommonLink" + to_string(i));
+        nonCommonLinkMonitor->AddAppKey(appsKey[i]);
+        nonCommonLinkMonitors.push_back(nonCommonLinkMonitor);
     }
 
     /*** Run simulation ***/
     cout << "Start Simulation" << endl;
-    Simulator::Stop(testsEndTime[suspectedTestId]);
+    Simulator::Stop(testsEndTime[suspectedTestId] + warmupTime);
     Simulator::Run();
     Simulator::Destroy();
 
-    commonLinkMonitor->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_down.csv");
+    commonLinkMonitor->SaveRecordedPacketsCompact(resultsPath + "/common_link_packets.csv");
     for (uint32_t i = 0; i < nbApps; i++) {
         appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/app" + to_string(i) + "_packets.csv");
+        nonCommonLinkMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/app" + to_string(i) + "_noncommon_link_packets.csv");
     }
 /* ############################################## RUN SIMULATION AND MONITORING (END) ############################################## */
 

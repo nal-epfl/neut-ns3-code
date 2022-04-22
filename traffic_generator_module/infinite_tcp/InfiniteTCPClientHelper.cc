@@ -3,6 +3,8 @@
 //
 
 #include "InfiniteTCPClientHelper.h"
+
+#include <utility>
 #include "InfiniteTCPClient.h"
 
 InfiniteTCPClientHelper::InfiniteTCPClientHelper() {
@@ -37,12 +39,13 @@ ApplicationContainer InfiniteTCPClientHelper::Install(NodeContainer c) {
 
 ApplicationContainer
 InfiniteTCPClientHelper::CreateInfiniteTcpApplication(InetSocketAddress sinkAddress, const string &tcpProtocol,
-                                                      uint32_t pktSize,
-                                                      const string &resultsPath, const Ptr<Node> &node) {
+                                                      uint32_t pktSize, const string &resultsPath,
+                                                      const Ptr<Node> &node, string dataRate) {
     InfiniteTCPClientHelper helper(sinkAddress);
     helper.SetAttribute("TcpProtocol", StringValue(tcpProtocol));
     helper.SetAttribute("PacketSize", UintegerValue(pktSize));
     helper.SetAttribute("EnableCwndMonitor", BooleanValue(true));
     helper.SetAttribute("ResultsFolder", StringValue(resultsPath));
+    helper.SetAttribute("MaxSendingRate", DataRateValue(DataRate(std::move(dataRate))));
     return helper.Install(node);
 }

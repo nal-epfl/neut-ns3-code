@@ -210,7 +210,7 @@ int run_tomo_test(int argc, char **argv) {
         }
         else if (appType == 4) {
             app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
-                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i]);
+                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i], "20Mbps");
         }
         app.Start(warmupTime);
         app.Stop(warmupTime + Seconds(duration));

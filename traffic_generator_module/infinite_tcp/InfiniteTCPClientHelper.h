@@ -29,8 +29,9 @@ public:
     ApplicationContainer Install(NodeContainer c);
 
     static ApplicationContainer
-    CreateInfiniteTcpApplication(InetSocketAddress sinkAddress, const string &tcpProtocol, uint32_t pktSize,
-                                 const string &resultsPath, const Ptr<Node> &node);
+    CreateInfiniteTcpApplication(InetSocketAddress sinkAddress, const string &tcpProtocol,
+                                 uint32_t pktSize, const string &resultsPath,
+                                 const Ptr<Node> &node, string dataRate);
 
 };
 

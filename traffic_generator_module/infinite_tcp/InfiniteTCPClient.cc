@@ -40,6 +40,10 @@ TypeId InfiniteTCPClient::GetTypeId(void) {
                            StringValue (""),
                            MakeStringAccessor(&InfiniteTCPClient::_resultsFolder),
                            MakeStringChecker())
+            .AddAttribute ("MaxSendingRate", "max rate of generating data",
+                           DataRateValue (DataRate("20Mbps")),
+                           MakeDataRateAccessor(&InfiniteTCPClient::_maxSendingRate),
+                           MakeDataRateChecker())
     ;
     return tid;
 }
@@ -111,6 +115,10 @@ void InfiniteTCPClient::StartApplication(void) {
     // adjust socket buffers
     _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
     _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+
+    // un-comment this code if you want to disable pacing for the measurement traffic
+    //Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+    //tcpSocket->SetPacingStatus(false);
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
