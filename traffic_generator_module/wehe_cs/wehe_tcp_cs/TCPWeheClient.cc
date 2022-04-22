@@ -116,11 +116,11 @@ void TCPWeheClient::ScheduleNextSendingEvents() {
         WeheTraceItem item = _traceItems[_traceItemIdx];
 
         // keep this time pacing on the client requests side
-//        ns3::Time relativeTime = Simulator::Now() - _startTime;
-//        ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
-//        Simulator::Schedule(remainingTime, &TCPWeheClient::Send, this, item.payloadSize);
+        ns3::Time relativeTime = Simulator::Now() - _startTime;
+        ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
+        Simulator::Schedule(remainingTime, &TCPWeheClient::Send, this, item.payloadSize);
 
-        Send(item.payloadSize);
+//        Send(item.payloadSize);
 
         _traceItemIdx++;
     } while(_traceItemIdx < _traceItems.size() && _traceItems[_traceItemIdx].preBytesRx == 0);

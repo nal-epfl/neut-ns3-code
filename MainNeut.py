@@ -1,6 +1,12 @@
 # This file is for experiments done after Sep 2021 related to tomography inference based on loss
 from project_run_env.RunConfig import *
+from data.data_preparation import *
 from multiprocessing import Process
+
+wehe_apps_names = ['Amazon_01042019', 'Amazon_12122018', 'AppleMusic_04112019', 'FacebookVideo_04112019',
+                   'Hulu_04112019', 'NBCSports_01042019', 'NBCSports_12122018', 'Netflix_12122018',
+                   'Skype_12122018', 'Spotify_01042019', 'Spotify_12122018', 'Twitch_04112019', 'Vimeo_12122018',
+                   'WhatsApp_04112019', 'Youtube_12122018']
 
 # This is to specify how I am performing the test
 TEST_TYPE = 'neut_with_loss'
@@ -76,6 +82,53 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
         ' --policingRate={}'.format(policing_rate) +
         ' --policingBurstLength={}'.format(burst_length) +
         ' --throttleUdp={}'.format(throttle_udp) +
+        ' --nonCommonlinksDelays={}'.format(noncommon_links_delays) +
+        ' --nonCommonlinksDataRates={}'.format(noncommon_links_rates) +
+        '"'
+    )
+
+
+def run_weheCS_experiment_with_params(params):
+    run_weheCS_experiment(link_rate=params.link_rate, is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol,
+                          seed=params.seed, app_name=params.app_name,
+                          background_dir=params.background_dir, exp_batch=params.exp_batch,
+                          noncommon_links_delays=params.noncommon_links_delays,
+                          noncommon_links_rates=params.noncommon_links_rates,
+                          is_neutral=params.is_neutral, policing_rate=params.policing_rate,
+                          burst_length=params.burst_length)
+
+
+def run_weheCS_experiment(link_rate, is_tcp, tcp_protocol='TcpCubic', seed=3, app_name='Netflix_12122018',
+                          background_dir='empty', exp_batch='',
+                          noncommon_links_delays='empty', noncommon_links_rates='empty',
+                          is_neutral=0, policing_rate=0.0, burst_length=0.0):
+
+    # prepare the wehe trace
+    project_data_path = '{}/scratch/wehe_p_tomography/data'.format(get_ns3_path())
+    generate_weheCS_trace(project_data_path, app_name, 'weheCS_trace')
+    duration = 2 * get_weheCS_duration(project_data_path + '/weheCS_trace')
+
+    # run the ns3 simulation
+    result_folder_name = '2_2022/{}/Wehe_{}/link_{}/{}/{}/seed_{}/{}'.format(
+        TEST_TYPE, app_name, link_rate, background_dir, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
+    )
+
+    os.system('mkdir -p {}/scratch/wehe_p_tomography/results/{}'.format(get_ns3_path(), result_folder_name))
+    os.system(
+        # '{}/waf --run "wehe_p_tomography" > log.out 2>&1 --command-template="%s'.format(get_ns3_path()) +
+        '{}/waf --run "wehe_p_tomography" --command-template="%s'.format(get_ns3_path()) +
+        ' --RngSeed={}'.format(seed) +
+        ' --RngRun=1' +
+        ' --linkRate={}'.format(link_rate) +
+        ' --duration={}'.format(duration) +
+        ' --resultsFolderName={}'.format(result_folder_name) +
+        ' --appProtocol={}'.format(is_tcp) +
+        ' --TCPProtocol=ns3::{}'.format(tcp_protocol) +
+        ' --appType={}'.format(5) +
+        ' --backgroundDir={}'.format(background_dir) +
+        ' --neutral={}'.format(is_neutral) +
+        ' --policingRate={}'.format(policing_rate) +
+        ' --policingBurstLength={}'.format(burst_length) +
         ' --nonCommonlinksDelays={}'.format(noncommon_links_delays) +
         ' --nonCommonlinksDataRates={}'.format(noncommon_links_rates) +
         '"'
@@ -214,7 +267,7 @@ if __name__ == '__main__':
         # ('congestion_on_common_link_p2_d15ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
         # ('congestion_on_all_links_p12_r95Mbps', '180Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
         # ('congestion_on_all_links_p12_r100Mbps', '180Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
-        ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '180Mbps', '100Mbps,95Mbps,10Gbps', 'empty'), ################### we have reached here with seed 3
+        ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '180Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
         ('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '180Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
 
         ('congestion_on_common_link_p2_d2ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
