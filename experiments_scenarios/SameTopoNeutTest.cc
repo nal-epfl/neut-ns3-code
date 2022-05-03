@@ -240,15 +240,17 @@ int run_same_topo_neut_test(int argc, char **argv) {
     /*** Create Application Traffic ***/
     for (uint32_t i = 0; i < nbApps; i++) {
         appsServer.push_back(serverNodes.Get(i % 2));
-        appsKey.emplace_back(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // exceptional case of WeheCS (Wehe Client-Server)
         if (appType == 5) {
             WeheCS* weheCS = WeheCS::CreateWeheCS(client, appsServer[i], dataPath + "/weheCS_trace", isTCP, trafficClass[i], resultsPath);
             weheCS->StartApplication(testsStartTime[testId[i]]);
             weheCS->StopApplication(testsEndTime[testId[i]]);
+            appsKey.emplace_back(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 3001 + i, 0);
             continue;
         }
+
+        appsKey.emplace_back(HelperMethods::GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // create the application at destination
         PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
