@@ -105,8 +105,8 @@ def run_weheCS_experiment(link_rate, is_tcp, tcp_protocol='TcpCubic', seed=3, ap
 
     # prepare the wehe trace
     project_data_path = '{}/scratch/wehe_p_tomography/data'.format(get_ns3_path())
-    generate_weheCS_trace(project_data_path, app_name, 'weheCS_trace')
-    duration = 2 * get_weheCS_duration(project_data_path + '/weheCS_trace')
+    # generate_weheCS_trace(project_data_path, app_name, 'weheCS_trace')
+    duration = get_weheCS_duration(project_data_path + '/weheCS_trace')
 
     # run the ns3 simulation
     result_folder_name = '2_2022/{}/Wehe_{}/link_{}/{}/{}/seed_{}/{}'.format(
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     #                 ) for case, is_neutral, policing_rate in mini_cases_per_exp
     #             ])
 
-    for a_seed in [11]:
+    for a_seed in [3, 7]:
         for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
             print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
@@ -260,7 +260,7 @@ if __name__ == '__main__':
                 run_parallel_experiments(run_weheCS_experiment_with_params, [
                     ExperimentParameters(
                         link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
-                        app_type=5, app_name='Netflix_12122018', background_dir=background_dir,
+                        app_type=5, app_name='Netflix_12122018_60sec', background_dir=background_dir,
                         exp_batch='{}/{}'.format(exp_batch, case),
                         noncommon_links_delays=noncommon_link_delays, noncommon_links_rates=noncommon_link_rates,
                         is_neutral=is_neutral, policing_rate=policing_rate, burst_length=0.03
