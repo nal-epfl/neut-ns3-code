@@ -287,7 +287,12 @@ int run_same_topo_neut_test(int argc, char **argv) {
     double throttledProbP0 = (isPolicerShared) ? 0.3 : 0;
     string tracesPathP0 = dataPath + backgroundDir + "/link0";
     if (fs::exists(tracesPathP0)) {
-        backP0->RunTracesWithRandomThrottledTCPFlows(tracesPathP0, throttledProbP0, 4);
+        if (isTCP) {
+            backP0->RunTracesWithRandomThrottledTCPFlows(tracesPathP0, throttledProbP0, 4);
+        }
+        else {
+            backP0->RunTracesWithRandomThrottledUDPFlows(tracesPathP0, throttledProbP0, 4);
+        }
     } else {
         cout << "requested Background Directory does not exist" << endl;
     }
@@ -296,7 +301,12 @@ int run_same_topo_neut_test(int argc, char **argv) {
     double throttledProbP1 = (isPolicerShared) ? 0.3 : 0;
     string tracesPathP1 = dataPath + backgroundDir + "/link1";
     if (fs::exists(tracesPathP1)) {
-        backP1->RunTracesWithRandomThrottledTCPFlows(tracesPathP1, throttledProbP1, 4);
+        if (isTCP) {
+            backP1->RunTracesWithRandomThrottledTCPFlows(tracesPathP1, throttledProbP1, 4);
+        }
+        else {
+            backP1->RunTracesWithRandomThrottledUDPFlows(tracesPathP1, throttledProbP1, 4);
+        }
     } else {
         cout << "requested Background Directory does not exist" << endl;
     }

@@ -34,7 +34,7 @@ void MultipleReplayClients::RunAllTraces(const string& tracesPath, uint8_t tos) 
 
 void MultipleReplayClients::RunSpecificTraces(const vector<string>& tcpTracesPath, const vector<string>& udpTracesPath, uint8_t tos) {
     for(const string& tracePath: udpTracesPath) {
-        RunSingleTrace(tracePath, "ns3::UdpSocketFactory", 0);
+        RunSingleTrace(tracePath, "ns3::UdpSocketFactory", tos);
     }
     for(const string& tracePath: tcpTracesPath) {
         RunSingleTrace(tracePath, "ns3::TcpSocketFactory", tos);
@@ -62,6 +62,29 @@ void MultipleReplayClients::RunTracesWithRandomThrottledTCPFlows(const string& t
     }
     this->RunSpecificTraces(tcpTracesPathNeutral, {tracesPath + "/UDP/trace_0.csv"}, 0);
     this->RunSpecificTraces(tcpTracesPathThrottled, {}, thottledTos);
+}
+
+void MultipleReplayClients::RunTracesWithRandomThrottledUDPFlows(const string& tracesPath, double throttledProb, uint8_t thottledTos) {
+    uint32_t nbTCPFlows = HelperMethods::GetSubDirCount(tracesPath + "/TCP");
+    vector<string> tcpTracesPathNeutral, udpTracesPathThrottled;
+
+    random_device rd;
+    mt19937 mt(rd());
+    uniform_real_distribution<double> dist(0.0, 1.0);
+
+    uint32_t countTCP4 = 0;
+    for(uint32_t i = 0; i < nbTCPFlows; i++) {
+        string tracePath = tracesPath + "/TCP/trace_" + to_string(i) + ".csv";
+        if (dist(mt) < throttledProb) {
+            countTCP4++;
+            udpTracesPathThrottled.push_back(tracePath);
+        }
+        else {
+            tcpTracesPathNeutral.push_back(tracePath);
+        };
+    }
+    this->RunSpecificTraces(tcpTracesPathNeutral, {tracesPath + "/UDP/trace_0.csv"}, 0);
+    this->RunSpecificTraces({},udpTracesPathThrottled,  thottledTos);
 }
 
 void MultipleReplayClients::RunSingleTrace(string tracePath, string protocol, uint8_t tos = 0) {

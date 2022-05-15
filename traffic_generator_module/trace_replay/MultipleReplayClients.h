@@ -29,8 +29,7 @@ public:
     void RunAllTraces(const string& tracesPath, uint8_t tos=0);
     void RunSpecificTraces(const vector<string>& tcpTracesPath, const vector<string>& udpTracesPath, uint8_t tos);
     void RunTracesWithRandomThrottledTCPFlows(const string& tracesPath, double throttledProb, uint8_t thottledTos);
-
-
+    void RunTracesWithRandomThrottledUDPFlows(const string& tracesPath, double throttledProb, uint8_t thottledTos);
 };
 
 
