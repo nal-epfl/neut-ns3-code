@@ -2,6 +2,7 @@
 from project_run_env.RunConfig import *
 from data.data_preparation import *
 from multiprocessing import Process
+import time
 
 wehe_apps_names = ['Amazon_01042019', 'Amazon_12122018', 'AppleMusic_04112019', 'FacebookVideo_04112019',
                    'Hulu_04112019', 'NBCSports_01042019', 'NBCSports_12122018', 'Netflix_12122018',
@@ -170,6 +171,7 @@ def run_parallel_experiments(func, experiments):
 
     # kick them off
     for process in processes:
+        time.sleep(5)
         process.start()
 
     # now wait for them to finish
@@ -242,13 +244,14 @@ if __name__ == '__main__':
     #                 ) for case, is_neutral, policing_rate in mini_cases_per_exp
     #             ])
 
-    wehe_app, is_tcp = 'Long_Netflix_12122018', 1
+    wehe_app, is_tcp = 'Netflix_12122018', 1
     generate_weheCS_trace('{}/scratch/wehe_p_tomography/data'.format(get_ns3_path()), wehe_app, 'weheCS_trace')
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
         for a_seed in [23]:
             print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
-                rebuild_project()
+                time.sleep(30)
+                #rebuild_project()
                 run_parallel_experiments(run_weheCS_experiment_with_params, [
                     ExperimentParameters(
                         link_rate=link_rate, duration=duration, is_tcp=is_tcp, tcp_protocol='TcpCubic', seed=a_seed,
