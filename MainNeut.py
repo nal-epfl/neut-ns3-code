@@ -182,7 +182,7 @@ if __name__ == '__main__':
 
     ############################################################### Localization Tests ##############################################################
     TEST_TYPE = 'neut_plus_localization'
-    seed, duration = 3, 10
+    seed, duration = 3, 60
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
@@ -216,47 +216,17 @@ if __name__ == '__main__':
 
     cases_per_exp = [
         [
-            ('shared_common_policer_2Mbps_0.03s_30p', 1, 2),
-            ('shared_common_policer_5Mbps_0.03s_30p', 1, 5),
-            # ('shared_common_policer_10Mbps_0.03s_30p', 1, 10),
-            # ('shared_common_policer_15Mbps_0.03s_30p', 1, 15),
-            # ('shared_common_policer_20Mbps_0.03s_30p', 1, 20),
-            # ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
-            # ('shared_common_policer_28Mbps_0.03s_30p', 1, 28),
-            # ('shared_common_policer_25Mbps_0.03s_30p', 1, 25),
-        ],
-        # [
-        #     ('shared_noncommon_policers_20Mbps_0.03s_30p', 3, 20),
-        #     ('shared_noncommon_policers_18Mbps_0.03s_30p', 3, 18),
-        #     ('shared_noncommon_policers_15Mbps_0.03s_30p', 3, 15),
-        #     ('shared_noncommon_policers_14Mbps_0.03s_30p', 3, 14),
-        #     ('shared_noncommon_policers_13Mbps_0.03s_30p', 3, 13),
-        # ],
-    ]
+            ('shared_common_policer_20Mbps_0.03s_30p', 1, 20),
+            ('shared_common_policer_25Mbps_0.03s_30p', 1, 25),
+            ('shared_common_policer_28Mbps_0.03s_30p', 1, 28),
+            ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
 
-    # cases_per_exp = [
-    #     [
-    #         ('shared_common_policer_40Mbps_0.03s_30p', 1, 40),
-    #         ('shared_common_policer_35Mbps_0.03s_30p', 1, 35),
-    #         ('shared_common_policer_30Mbps_0.03s_30p', 1, 30),
-    #         ('shared_common_policer_28Mbps_0.03s_30p', 1, 28),
-    #         ('shared_common_policer_25Mbps_0.03s_30p', 1, 25),
-    #     ],
-    #     [
-    #         ('shared_noncommon_policers_20Mbps_0.03s_30p', 3, 20),
-    #         ('shared_noncommon_policers_18Mbps_0.03s_30p', 3, 18),
-    #         ('shared_noncommon_policers_15Mbps_0.03s_30p', 3, 15),
-    #         ('shared_noncommon_policers_14Mbps_0.03s_30p', 3, 14),
-    #         ('shared_noncommon_policers_13Mbps_0.03s_30p', 3, 13),
-    #     ],
-    #     # [
-    #     #     ('shared_noncommonp2_policer_20Mbps_0.03s_30p', 5, 20),
-    #     #     ('shared_noncommonp2_policer_18Mbps_0.03s_30p', 5, 18),
-    #     #     ('shared_noncommonp2_policer_15Mbps_0.03s_30p', 5, 15),
-    #     #     ('shared_noncommonp2_policer_14Mbps_0.03s_30p', 5, 14),
-    #     #     ('shared_noncommonp2_policer_13Mbps_0.03s_30p', 5, 13),
-    #     # ],
-    # ]
+            ('shared_noncommon_policers_10Mbps_0.03s_30p', 3, 10),
+            ('shared_noncommon_policers_13Mbps_0.03s_30p', 3, 13),
+            ('shared_noncommon_policers_14Mbps_0.03s_30p', 3, 14),
+            ('shared_noncommon_policers_15Mbps_0.03s_30p', 3, 15),
+         ],
+     ]
     # for a_seed in [7]:
     #     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
     #         print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
@@ -272,9 +242,9 @@ if __name__ == '__main__':
     #                 ) for case, is_neutral, policing_rate in mini_cases_per_exp
     #             ])
 
-    wehe_app, is_tcp = 'Long_Skype_12122018', 0
+    wehe_app, is_tcp = 'Long_Netflix_12122018', 1
     generate_weheCS_trace('{}/scratch/wehe_p_tomography/data'.format(get_ns3_path()), wehe_app, 'weheCS_trace')
-    for a_seed in [3]:
+    for a_seed in [23]:
         for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
             print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
