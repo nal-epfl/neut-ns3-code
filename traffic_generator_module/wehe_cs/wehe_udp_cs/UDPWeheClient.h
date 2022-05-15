@@ -38,12 +38,15 @@ private:
     vector<RxEvent> _rxEvents;
     string _resultsFolder = "";
 
+    int _trafficTos = 0;
+
 public:
 
     UDPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress);
 
     void LoadTrace(vector<WeheTraceItem> &traceItems);
     void SetResultsFolder(string resultsFolder);
+    void SetTos(int tos);
     void EnableCwndMonitor();
 
     void StartApplication();

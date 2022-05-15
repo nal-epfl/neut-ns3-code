@@ -152,3 +152,5 @@ void TCPWeheServer::ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace) {
     ScheduleNextResponse();
 }
 
+void TCPWeheServer::SetTos(int tos) { }
+

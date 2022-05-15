@@ -25,6 +25,10 @@ void UDPWeheClient::SetResultsFolder(string resultsFolder) {
     _resultsFolder = resultsFolder;
 }
 
+void UDPWeheClient::SetTos(int tos) {
+    _trafficTos = tos;
+}
+
 void UDPWeheClient::EnableCwndMonitor() {}
 
 void UDPWeheClient::StartApplication() {

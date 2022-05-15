@@ -126,3 +126,5 @@ void TCPWeheClient::ScheduleNextSendingEvents() {
     } while(_traceItemIdx < _traceItems.size() && _traceItems[_traceItemIdx].preBytesRx == 0);
     _nbBytesRx = 0;
 }
+
+void TCPWeheClient::SetTos(int tos) { }

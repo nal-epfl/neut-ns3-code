@@ -66,6 +66,7 @@ void WeheCS::StartApplication(ns3::Time startTime) {
     }
     _serverApp->LoadTrace(_traceItems);
     _serverApp->SetResultsFolder(_resultsFolder);
+    _serverApp->SetTos(_trafficTos);
     if(_enableCwndMonitor) { _serverApp->EnableCwndMonitor(); }
     _serverApp->StartApplication();
 
@@ -78,6 +79,7 @@ void WeheCS::StartApplication(ns3::Time startTime) {
     }
     _clientApp->LoadTrace(_traceItems);
     _clientApp->SetResultsFolder(_resultsFolder);
+    _clientApp->SetTos(_trafficTos);
     Simulator::Schedule(startTime, &WeheClient::StartApplication, _clientApp);
 }
 

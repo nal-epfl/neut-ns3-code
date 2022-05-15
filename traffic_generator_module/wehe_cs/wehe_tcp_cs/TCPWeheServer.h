@@ -55,6 +55,7 @@ public:
 
     void LoadTrace(vector<WeheTraceItem> &traceItems);
     void SetResultsFolder(string resultsFolder);
+    void SetTos(int tos);
     void EnableCwndMonitor();
 
     void StartApplication();

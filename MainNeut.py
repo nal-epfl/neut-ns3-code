@@ -244,8 +244,8 @@ if __name__ == '__main__':
 
     wehe_app, is_tcp = 'Long_Netflix_12122018', 1
     generate_weheCS_trace('{}/scratch/wehe_p_tomography/data'.format(get_ns3_path()), wehe_app, 'weheCS_trace')
-    for a_seed in [23]:
-        for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
+    for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
+        for a_seed in [23]:
             print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 rebuild_project()

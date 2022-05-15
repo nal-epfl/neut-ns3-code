@@ -27,6 +27,10 @@ void UDPWeheServer::SetResultsFolder(string resultsFolder) {
     _resultsFolder = std::move(resultsFolder);
 }
 
+void UDPWeheServer::SetTos(int tos) {
+    _trafficTos = tos;
+}
+
 void UDPWeheServer::EnableCwndMonitor() {}
 
 void UDPWeheServer::StartApplication(void) {
@@ -45,6 +49,7 @@ void UDPWeheServer::StartApplication(void) {
 
 void UDPWeheServer::HandleUDPAccept(Ptr<Socket> socket) {
     Address from; socket->RecvFrom(from); socket->Connect(from);
+    socket->SetIpTos(_trafficTos);
     SetupConnection(socket);
     ScheduleNextSendingEvents();
 }
@@ -62,7 +67,6 @@ void UDPWeheServer::StopApplication() {
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }
-
 
 void UDPWeheServer::Send(uint32_t payloadSize, uint32_t seqNb) {
     Ptr<Packet> p = Create<Packet> (payloadSize);
