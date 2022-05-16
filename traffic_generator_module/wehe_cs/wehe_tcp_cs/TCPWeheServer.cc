@@ -136,11 +136,13 @@ void TCPWeheServer::ScheduleNextResponse() {
 
         // The server should have no time pacing and should send as the network conditions allow
         ns3::Time relativeTime = Simulator::Now() - _startTime;
-        ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
-        Simulator::Schedule(remainingTime, &TCPWeheServer::Send, this, item.payloadSize);
+        if (item.timestamp > relativeTime) {
+            Simulator::Schedule(item.timestamp - relativeTime, &TCPWeheServer::ScheduleNextResponse, this);
+            return;
+        }
 
-//        bool isSend = Send(item.payloadSize);
-//        if(!isSend) { return; }
+        bool isSend = Send(item.payloadSize);
+        if(!isSend) { return; }
 
         _traceItemIdx++;
     } while(_traceItemIdx < _traceItems.size() && _traceItems[_traceItemIdx].preBytesRx == 0);
