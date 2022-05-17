@@ -62,6 +62,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     double lambda = 0.001; // rate for constand and lambda for poisson
     string replayTrace = "empty"; // specific traffic to send along the measurement paths
     string backgroundDir = "empty"; // specifiy which background traffic to use in our experiments
+    double throttlingPctOfBack = 0.3; // percentage of background to be throttled
     int isNeutral = 0; // 0 to Run a neutral appType
     double policingRate = 4; // the rate at which tokens in the token bucket are generated
     double burstLength = 0.1; // the lnegth of the burst parameter of the token bucket
@@ -86,6 +87,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     cmd.AddValue("policingRate", "rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "controlTestDuration of burst (in sec)", burstLength);
     cmd.AddValue("throttleUdp", "0 to throttle udp traffic, 1 otherwise", throttleUdp);
+    cmd.AddValue("backThrottledPct", "percentage of background traffic to be throttle", throttlingPctOfBack);
     cmd.AddValue("nonCommonlinksDelays", "the propagation delay of the 5 non-common links", linksDelaysStr);
     cmd.AddValue("nonCommonlinksDataRates", "the bandwidth of the 5 non-common links", linksDataRatesStr);
     cmd.Parse(argc, argv);
@@ -286,7 +288,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
 
     /*** Create Cross Traffic On Paths 1 & 2 ***/
     auto *backP0 = new MultipleReplayClients(appsServer[0], client);
-    double throttledProbP0 = (isPolicerShared) ? 0.3 : 0;
+    double throttledProbP0 = (isPolicerShared) ? throttlingPctOfBack : 0;
     string tracesPathP0 = dataPath + backgroundDir + "/link0";
     if (fs::exists(tracesPathP0)) {
         if (isTCP) {
@@ -300,7 +302,7 @@ int run_same_topo_neut_test(int argc, char **argv) {
     }
 
     auto *backP1 = new MultipleReplayClients(appsServer[1], client);
-    double throttledProbP1 = (isPolicerShared) ? 0.3 : 0;
+    double throttledProbP1 = (isPolicerShared) ? throttlingPctOfBack : 0;
     string tracesPathP1 = dataPath + backgroundDir + "/link1";
     if (fs::exists(tracesPathP1)) {
         if (isTCP) {
