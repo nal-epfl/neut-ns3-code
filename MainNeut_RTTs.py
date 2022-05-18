@@ -253,7 +253,7 @@ if __name__ == '__main__':
             print('---------------- Running: {} - {} / seed {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 time.sleep(30)
-                run_parallel_experiments_safe(run_probing_experiment_with_params, [
+                run_parallel_experiments(run_probing_experiment_with_params, [
                     ExperimentParameters(
                         link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
                         app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
