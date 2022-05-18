@@ -219,8 +219,8 @@ if __name__ == '__main__':
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
-        ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
-        ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
+        #('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
+        #('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
         ('congestion_on_noncommon_links_p12_r110Mbps', '10Gbps', '110Mbps,110Mbps,10Gbps', 'empty'),
 
         ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
@@ -248,10 +248,9 @@ if __name__ == '__main__':
 
     TEST_TYPE, duration = 'Congestion_EXP_30sec', 30
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
-        print('---------------- Running: {} - {}  ----------------'.format(link_rate, exp_batch))
-
-        for mini_cases_per_exp in cases_per_exp:
-            for p_type, is_neutral, policing_rate, burst_length in mini_cases_per_exp:
+        for a_seed in [3, 5, 7, 11, 13]:
+            print('---------------- Running: {} - {} / seed {} ----------------'.format(link_rate, exp_batch, a_seed))
+            for mini_cases_per_exp in cases_per_exp:
                 time.sleep(30)
                 run_parallel_experiments_safe(run_probing_experiment_with_params, [
                     ExperimentParameters(
@@ -261,5 +260,5 @@ if __name__ == '__main__':
                         exp_batch='{}/{}_{}Mbps_{}s_30p'.format(exp_batch, p_type, policing_rate, burst_length),
                         noncommon_links_delays=noncommon_link_delays, noncommon_links_rates=noncommon_link_rates,
                         is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length
-                    ) for a_seed in primes[0:20]
+                    ) for p_type, is_neutral, policing_rate, burst_length in mini_cases_per_exp
                 ])
