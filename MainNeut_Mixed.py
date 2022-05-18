@@ -221,18 +221,18 @@ if __name__ == '__main__':
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
-        ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-
-        ('no_congestion_at_all_p2_d2ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        ('no_congestion_at_all_p2_d15ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-
-        ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
-        ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
-        ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps', 'empty'),
-
-        ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        # ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        #
+        # ('no_congestion_at_all_p2_d2ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
+        # ('no_congestion_at_all_p2_d15ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
+        #
+        # ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
+        # ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
+        # ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps', 'empty'),
+        #
+        # ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        # ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        # ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
 
         ('congestion_on_common_link_p2_d2ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
         ('congestion_on_common_link_p2_d15ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
@@ -270,7 +270,7 @@ if __name__ == '__main__':
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
         print('---------------- Running: {} - {}  ----------------'.format(link_rate, exp_batch))
         for mini_cases_per_exp in cases_per_exp:
-            for p_type, is_neutral, policing_rate, burst_length in mini_cases_per_exp:
+            for a_seed in [29, 23, 19, 17, 13, 11]:
                 time.sleep(30)
                 run_parallel_experiments_safe(run_probing_experiment_with_params, [
                     ExperimentParameters(
@@ -280,5 +280,5 @@ if __name__ == '__main__':
                         exp_batch='{}/{}_{}Mbps_{}s_30p'.format(exp_batch, p_type, policing_rate, burst_length),
                         noncommon_links_delays=noncommon_link_delays, noncommon_links_rates=noncommon_link_rates,
                         is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length
-                    ) for a_seed in primes[0:20]
+                    ) for p_type, is_neutral, policing_rate, burst_length in mini_cases_per_exp
                 ])
