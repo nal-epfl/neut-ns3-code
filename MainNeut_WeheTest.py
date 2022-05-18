@@ -218,96 +218,84 @@ if __name__ == '__main__':
 
     ############################################################### Localization Tests ##############################################################
     netflix, hulu, youtube, twitch, facebook, vimeo = 'Netflix_12122018', 'Hulu_04112019', 'Youtube_12122018', 'Twitch_04112019', 'FacebookVideo_04112019', 'Vimeo_12122018'
-    TEST_TYPE = 'Wehe_Test_Cases_2'
+    TEST_TYPE = 'Wehe_Test_Cases_DRY_RUN3'
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     link_rate, noncommon_link_rates = '10Gbps', '1Gbps,1Gbps,10Gbps'
     is_tcp, a_seed = 1, 13
-
-    #for each user I need the following information: (user, app, duration, rtt, throttling_rate)
     wehe_tests = [
         [
             ('feqHGJ240F_9', hulu, 14, 45, 38),
-            ('198iWiLIfr_128', netflix, 19, 40, 40),
-            ('3xyk5naej3_1', vimeo, 27, 45, 40),
-            ('89twsgj1pb_263', youtube, 31, 45, 27),
-            ('9lwmntt0pt_8', youtube, 22, 110, 28),
-            ('2b98k2i1qy_1', youtube, 45, 109, 25),
-
-            ('smzkg3b9c3_12', hulu, 40, 52, 30),
-            ('y3emavi0lu_22', twitch, 45, 60, 25),
-            ('v8azm5f2qe_30', twitch, 17, 59, 40),
-            ('v8azm5f2qe_21', vimeo, 23, 41, 40),
-        ],
-        [
-            ('v8azm5f2qe_31', youtube, 18, 61, 45),
-            ('y3emavi0lu_17', youtube, 14, 82, 45),
-            ('89twsgj1pb_260', youtube, 35, 51, 25),
-            ('v8azm5f2qe_32', youtube, 18, 59, 27),
-            ('y3emavi0lu_18', youtube, 45, 82, 26),
-
-            ('oxgg4e3e4j_5', facebook, 45, 19, 25),
-            ('oxgg4e3e4j_14', hulu, 45, 63, 25),
-            ('oxgg4e3e4j_15', netflix, 45, 29, 40),
-            ('X6Jbefujhj_86', netflix, 45, 117, 38),
-            ('xKMno64HM4_82', netflix, 19, 84, 42),
-        ],
-        [
-            ('oxgg4e3e4j_2', twitch, 45, 74, 35),
-            ('xKMno64HM4_80', twitch, 16, 39, 41),
-            ('5h72loiv58_2', youtube, 9, 65, 46),
-            ('X6Jbefujhj_83', youtube, 45, 150, 26),
-            ('xKMno64HM4_84', youtube, 15, 39, 36),
-
-            ('ijjflyw91d_3', youtube, 9, 39, 44),
-            ('neue1vldmc_1', youtube, 30, 60, 29),
-
-            ('yR4OlMyZ8Q_160', netflix, 45, 29, 35),
-            ('PAIiliDVCF_26', youtube, 45, 76, 27),
-            ('yR4OlMyZ8Q_153', youtube, 45, 29, 25),
-        ],
-        [
-            ('nqtiltg0z6_17', youtube, 40, 137, 26),
-            ('89twsgj1pb_255', youtube, 31, 50, 30),
-            ('9zkj054unk_24', youtube, 29, 41, 31),
-            ('4k0ct5yekk_42', youtube, 9, 39, 45),
-
-            ('thbrjjd72o_4', facebook, 30, 105, 31),
-            ('httosd1ip3_5', twitch, 45, 104, 20),
-            ('hyc7kr7x6q_1', youtube, 16, 23, 42),
-
-            ('ijdWV3YRwR_36', hulu, 41, 29, 28),
-            ('y9z2ih99ml_4', hulu, 45, 74, 25),
-            ('tadxntkmqi_2', netflix, 45, 49, 38),
-        ],
-        [
-            ('ijdWV3YRwR_39', twitch, 42, 29, 38),
-            ('ijdWV3YRwR_40', vimeo, 45, 29, 35),
+            ('v8azm5f2qe_31', youtube, 18, 61, 27),
+            ('y3emavi0lu_17', youtube, 14, 82, 29),
+            ('v8azm5f2qe_32', youtube, 18, 59, 23),
+            ('5h72loiv58_2', youtube, 9, 65, 29),
+            ('xKMno64HM4_84', youtube, 15, 39, 32),
+            ('ijjflyw91d_3', youtube, 9, 39, 29),
+            ('4k0ct5yekk_42', youtube, 9, 39, 29),
+            ('hyc7kr7x6q_1', youtube, 16, 23, 38),
             ('xphVeDZef0_3', vimeo, 14, 37, 45),
-            ('ijdWV3YRwR_46', youtube, 44, 45, 40),
-            ('39hdicOl3j_8', youtube, 30, 22, 44),
-            ('8aY9jds9sG_3', youtube, 44, 30, 40),
-            ('89twsgj1pb_253', youtube, 37, 46, 42),
-            # ('', twitch, 45, 74, ),
-            # ('', twitch, 45, 74, ),
-            # ('', twitch, 45, 74, ),
+        ],
+        [
+            ('xKMno64HM4_82', netflix, 19, 84, 37),
+            ('198iWiLIfr_128', netflix, 19, 40, 36),
+            ('9zkj054unk_24', youtube, 29, 41, 30),
+            ('3xyk5naej3_1', vimeo, 27, 45, 28),
+            ('9lwmntt0pt_8', youtube, 22, 110, 28),
+            ('v8azm5f2qe_21', vimeo, 23, 41, 28),
+            ('89twsgj1pb_263', youtube, 31, 45, 27),
+            ('neue1vldmc_1', youtube, 30, 60, 27),
+            ('89twsgj1pb_255', youtube, 31, 50, 29),
+            ('thbrjjd72o_4', facebook, 30, 105, 21),
+        ],
+        [
+            ('2b98k2i1qy_1', youtube, 45, 109, 15),
+            ('smzkg3b9c3_12', hulu, 40, 52, 30),
+            ('89twsgj1pb_260', youtube, 35, 51, 22),
+            ('y3emavi0lu_18', youtube, 45, 82, 17),
+            ('oxgg4e3e4j_5', facebook, 45, 19, 23),
+            ('oxgg4e3e4j_14', hulu, 45, 63, 22),
+            ('oxgg4e3e4j_15', netflix, 45, 29, 35),
+            ('X6Jbefujhj_86', netflix, 45, 117, 36),
+            ('39hdicOl3j_8', youtube, 30, 22, 42),
+            ('89twsgj1pb_253', youtube, 37, 46, 28),
+        ],
+        [
+            ('oxgg4e3e4j_2', twitch, 45, 74, 30),
+            ('X6Jbefujhj_83', youtube, 45, 150, 25),
+            ('yR4OlMyZ8Q_160', netflix, 45, 29, 32),
+            ('PAIiliDVCF_26', youtube, 45, 76, 26),
+            ('yR4OlMyZ8Q_153', youtube, 45, 29, 20),
+            ('nqtiltg0z6_17', youtube, 40, 137, 18),
+            ('httosd1ip3_5', twitch, 45, 104, 8),
+            ('ijdWV3YRwR_36', hulu, 41, 29, 28),
+            ('y9z2ih99ml_4', hulu, 45, 74, 22),
+            ('tadxntkmqi_2', netflix, 45, 49, 31),
+        ],
+        [
+            ('ijdWV3YRwR_39', twitch, 42, 29, 25),
+            ('ijdWV3YRwR_40', vimeo, 45, 29, 28),
+            ('ijdWV3YRwR_46', youtube, 44, 45, 25),
+            ('8aY9jds9sG_3', youtube, 44, 30, 38),
         ]
 
     ]
 
-    for wehe_test_batch in wehe_tests:
-        exp_params = []
-        for user, wehe_app, duration, rtt, throttling_rate in wehe_test_batch:
-            dp = (rtt-10)/2
-            p_type, is_neutral, policing_rate, burst_length = 'shared_common_policer', 1, throttling_rate, 0.03
-            exp_params.append(ExperimentParameters(
-                link_rate=link_rate, duration=duration, is_tcp=is_tcp, tcp_protocol='TcpCubic', seed=3,
-                app_type=5, app_name=wehe_app, background_dir=background_dir,
-                exp_batch='{}/{}_{}Mbps_{}s_30p'.format(user, p_type, policing_rate, burst_length),
-                noncommon_links_delays='{}ms,{}ms,5ms'.format(dp, dp), noncommon_links_rates=noncommon_link_rates,
-                is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length
-            ))
-        run_parallel_experiments(run_weheCS_experiment_with_params, exp_params)
+    #for each user I need the following information: (user, app, duration, rtt, throttling_rate)
+    for a_seed in [3, 5, 7, 11, 13]:
+        for wehe_test_batch in wehe_tests:
+            exp_params = []
+            for user, wehe_app, duration, rtt, throttling_rate in wehe_test_batch:
+                dp = (rtt-10)/2
+                p_type, is_neutral, policing_rate, burst_length = 'shared_common_policer', 1, throttling_rate, 0.03
+                exp_params.append(ExperimentParameters(
+                    link_rate=link_rate, duration=duration, is_tcp=is_tcp, tcp_protocol='TcpCubic', seed=a_seed,
+                    app_type=5, app_name=wehe_app, background_dir=background_dir,
+                    exp_batch='{}/{}_{}Mbps_{}s_30p'.format(user, p_type, policing_rate, burst_length),
+                    noncommon_links_delays='{}ms,{}ms,5ms'.format(dp, dp), noncommon_links_rates=noncommon_link_rates,
+                    is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length
+                ))
+            run_parallel_experiments(run_weheCS_experiment_with_params, exp_params)
 
     # for user, wehe_app, duration, rtt, throttling_rate in wehe_tests:
     #     dp = (rtt-10)/2
