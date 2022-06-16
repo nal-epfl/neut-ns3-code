@@ -67,7 +67,7 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
                            noncommon_links_delays='empty', noncommon_links_rates='empty',
                            is_neutral=0, policing_rate=0.0, burst_length=0.0, throttle_udp=0, throttled_back_pct=0.03):
     # run the ns3 simulation
-    result_folder_name = '2_2022/{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
+    result_folder_name = '6_2022/{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
         TEST_TYPE, app_name, link_rate, background_dir, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
     )
 
@@ -125,7 +125,7 @@ def run_weheCS_experiment(link_rate, original_traffic_duration=0, is_tcp=1, tcp_
         original_traffic_duration = randomized_test_duration
 
     # run the ns3 simulation
-    result_folder_name = '2_2022/{}/Wehe_{}/link_{}/{}/{}/seed_{}/{}'.format(
+    result_folder_name = '6_2022/{}/Wehe_{}/link_{}/{}/{}/seed_{}/{}'.format(
         TEST_TYPE, app_name, link_rate, background_dir, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
     )
 
@@ -157,7 +157,7 @@ def run_weheCS_experiment(link_rate, original_traffic_duration=0, is_tcp=1, tcp_
 def run_tcp_test(link_rate, duration, is_tcp, tcp_protocol='TcpCubic', seed=3, app_name='TCP_APP', pkt_size=1228,
                  exp_batch='', is_neutral=0, policing_rate=0.0, burst_length=0.0, throttled_back_pct=0.03):
     # run the ns3 simulation
-    result_folder_name = '2_2022/{}/{}/link_{}/{}/seed_{}/{}'.format(
+    result_folder_name = '6_2022/{}/{}/link_{}/{}/seed_{}/{}'.format(
         TEST_TYPE, app_name, link_rate, exp_batch, seed, tcp_protocol if is_tcp else 'udp'
     )
 
@@ -221,32 +221,32 @@ if __name__ == '__main__':
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
-        # ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        #
-        # ('no_congestion_at_all_p2_d2ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        # ('no_congestion_at_all_p2_d15ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        #
-        # ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
-        # ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
-        # ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps', 'empty'),
-        #
-        # ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        # ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        # ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+
+        ('no_congestion_at_all_p2_d2ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
+        ('no_congestion_at_all_p2_d15ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
+
+        ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
+        ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
+        ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps', 'empty'),
+
+        ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
 
         ('congestion_on_common_link_p2_d2ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
         ('congestion_on_common_link_p2_d15ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
         ('congestion_on_all_links_p12_r95Mbps', '180Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
-        #('congestion_on_all_links_p12_r100Mbps', '180Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
-        #('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '180Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
-        #('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '180Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
+        ('congestion_on_all_links_p12_r100Mbps', '180Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
+        ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '180Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
+        ('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '180Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
 
-        #('congestion_on_common_link_p2_d2ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        #('congestion_on_common_link_p2_d15ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        #('congestion_on_all_links_p12_r95Mbps', '200Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
-        #('congestion_on_all_links_p12_r100Mbps', '200Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
-        #('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '200Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
-        #('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '200Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
+        ('congestion_on_common_link_p2_d2ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
+        ('congestion_on_common_link_p2_d15ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
+        ('congestion_on_all_links_p12_r95Mbps', '200Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
+        ('congestion_on_all_links_p12_r100Mbps', '200Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
+        ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '200Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
+        ('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '200Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
     ]
 
     burst_length_est = 0.03
@@ -257,7 +257,8 @@ if __name__ == '__main__':
             ('shared_common_policer', 1, 30, 0.03),
             ('shared_common_policer', 1, 35, 0.03),
             ('shared_common_policer', 1, 40, 0.03),
-
+        ],
+        [
             ('shared_noncommon_policers', 3, 13, 0.03),
             ('shared_noncommon_policers', 3, 14, 0.03),
             ('shared_noncommon_policers', 3, 15, 0.03),
@@ -266,9 +267,9 @@ if __name__ == '__main__':
          ],
      ]
 
-    TEST_TYPE, duration = 'neut_plus_localization', 90
+    TEST_TYPE, duration = 'Mixed_Scenarios_EXP', 90
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
-        for a_seed in [29, 23, 19, 17, 13, 11]:
+        for a_seed in primes[0:10]:
             print('---------------- Running: {} - {} / seed {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 time.sleep(30)
