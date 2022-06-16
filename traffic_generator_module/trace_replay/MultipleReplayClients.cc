@@ -13,7 +13,7 @@
 
 uint32_t MultipleReplayClients::SOCKET_COUNT = 0;
 
-MultipleReplayClients::MultipleReplayClients(Ptr<Node> client, Ptr<Node> server) : _client(client), _server(server) {}
+MultipleReplayClients::MultipleReplayClients(const Ptr<Node>& sender, const Ptr<Node>& receiver) : _sender(sender), _receiver(receiver) {}
 
 void MultipleReplayClients::RunAllTraces(const string& tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t tos) {
     for(uint32_t i = 0; i < nbUDPFlows; i++) {
@@ -87,17 +87,17 @@ void MultipleReplayClients::RunTracesWithRandomThrottledUDPFlows(const string& t
     this->RunSpecificTraces({},udpTracesPathThrottled,  thottledTos);
 }
 
-void MultipleReplayClients::RunSingleTrace(string tracePath, string protocol, uint8_t tos = 0) {
+void MultipleReplayClients::RunSingleTrace(const string& tracePath, const string& protocol, uint8_t tos = 0) {
     uint32_t traceId = ++SOCKET_COUNT;
 
-    Ipv4Address serverAddress = _server->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
+    Ipv4Address serverAddress = _receiver->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
     int sinkPort = 4000 + traceId;
 
     // create sink at server
     InetSocketAddress sinkAddressServer = InetSocketAddress(serverAddress, sinkPort);
     TraceReplayServerHelper replayHelperServer(sinkAddressServer);
     replayHelperServer.SetAttribute("Protocol", StringValue(protocol));
-    ApplicationContainer replayAppServer = replayHelperServer.Install(_server);
+    ApplicationContainer replayAppServer = replayHelperServer.Install(_receiver);
     replayAppServer.Start(Simulator::Now());
 
     // for tos
@@ -107,6 +107,6 @@ void MultipleReplayClients::RunSingleTrace(string tracePath, string protocol, ui
     TraceReplayClientHelper replayHelperClient(sinkAddressServer);
     replayHelperClient.SetAttribute("Protocol", StringValue(protocol));
     replayHelperClient.SetAttribute("TraceFile", StringValue(tracePath));
-    ApplicationContainer replayAppClient = replayHelperClient.Install(_client);
+    ApplicationContainer replayAppClient = replayHelperClient.Install(_sender);
     replayAppClient.Start(Simulator::Now());
 }

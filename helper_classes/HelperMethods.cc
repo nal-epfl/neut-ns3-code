@@ -49,3 +49,15 @@ string HelperMethods::ComputeQueueSize(const string& linkRate, const vector<stri
 ns3::Ipv4Address HelperMethods::GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface) {
     return node->GetObject<ns3::Ipv4>()->GetAddress(interface, 0).GetLocal();
 }
+
+bool HelperMethods::doesPolicerLocationMatch(const string& linkLocation, const string& expectedPolicerLocation) {
+    if (expectedPolicerLocation == linkLocation) return true;
+    if (expectedPolicerLocation == "nc" && linkLocation.find("nc") != std::string::npos) return true;
+    return false;
+}
+
+bool HelperMethods::isPolicerTypePerFlowPolicer(int policerType) {
+    return policerType == 1;
+}
+
+

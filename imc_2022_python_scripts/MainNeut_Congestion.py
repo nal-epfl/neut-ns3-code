@@ -48,12 +48,12 @@ class ExperimentParameters:
 
 
 def run_probing_experiment_with_params(params):
-    run_probing_experiment(link_rate=params.link_rate, duration=params.duration,
-                           is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
+    run_probing_experiment(link_rate=params.m_link_rate, duration=params.m_duration,
+                           is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
                            app_name=params.app_name, app_type=params.app_type, pkt_size=params.pkt_size,
                            p_lambda=params.p_lambda, replay_trace=params.replay_trace,
                            app_data_rate=params.app_data_rate,
-                           background_dir=params.background_dir, exp_batch=params.exp_batch,
+                           background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                            noncommon_links_delays=params.noncommon_links_delays,
                            noncommon_links_rates=params.noncommon_links_rates,
                            is_neutral=params.is_neutral, policing_rate=params.policing_rate,
@@ -101,10 +101,10 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
 
 
 def run_weheCS_experiment_with_params(params):
-    run_weheCS_experiment(link_rate=params.link_rate, original_traffic_duration=params.duration,
-                          is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol,
+    run_weheCS_experiment(link_rate=params.m_link_rate, original_traffic_duration=params.m_duration,
+                          is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol,
                           seed=params.seed, app_name=params.app_name,
-                          background_dir=params.background_dir, exp_batch=params.exp_batch,
+                          background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                           noncommon_links_delays=params.noncommon_links_delays,
                           noncommon_links_rates=params.noncommon_links_rates,
                           is_neutral=params.is_neutral, policing_rate=params.policing_rate,
@@ -212,7 +212,6 @@ def run_parallel_experiments_safe(func, experiments):
             [p.join() for p in running_processes]
             running_processes = []
 
-
 if __name__ == '__main__':
     rebuild_project()
 
@@ -220,19 +219,19 @@ if __name__ == '__main__':
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
-        # ('no_congestion_p12_d1ms_RTT12ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '1ms,1ms,5ms'),
-        ('no_congestion_p12_d5ms_RTT20ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,5ms,5ms'),
-        ('no_congestion_p12_d15ms_RTT40ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '15ms,15ms,5ms'),
-        ('no_congestion_p12_d35ms_RTT80ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '35ms,35ms,5ms'),
+        #('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
+        #('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
+        ('congestion_on_noncommon_links_p12_r110Mbps', '10Gbps', '110Mbps,110Mbps,10Gbps', 'empty'),
 
-        # ('no_congestion_p1_RTT_20ms_p2_d1ms_RTT12ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,1ms,5ms'),
-        # ('no_congestion_p1_RTT_20ms_p2_d5ms_RTT20ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,5ms,5ms'),
-        # ('no_congestion_p1_RTT_20ms_p2_d15_RTT40ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        # ('no_congestion_p1_RTT_20ms_p2_d35_RTT80ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,35ms,5ms'),
+        ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
     ]
 
     cases_per_exp = [
         [
+            ('no_policer', 0, 0, 0),
+
             ('shared_common_policer', 1, 25, 0.03),
             ('shared_common_policer', 1, 28, 0.03),
             ('shared_common_policer', 1, 30, 0.03),
@@ -247,13 +246,13 @@ if __name__ == '__main__':
         ],
     ]
 
-    TEST_TYPE, duration = 'RTT_EXP_30sec', 30
+    TEST_TYPE, duration = 'Congestion_EXP_30sec', 30
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
-        for a_seed in [31, 29, 23, 19, 17]:# ,13, 11, 5]:
+        for a_seed in [3, 5, 7, 11, 13]:
             print('---------------- Running: {} - {} / seed {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 time.sleep(30)
-                run_parallel_experiments(run_probing_experiment_with_params, [
+                run_parallel_experiments_safe(run_probing_experiment_with_params, [
                     ExperimentParameters(
                         link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
                         app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,

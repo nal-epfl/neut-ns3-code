@@ -42,12 +42,7 @@ void WeheCS::LoadTrace(const string& traceFile) {
         uint32_t payload_size = stoi(pkt_attributes[2]);
         AppSide appSide = pkt_attributes[3] == "client" ? CLIENT : SERVER;
 
-        if(appSide == CLIENT) {
-            _traceItems.push_back({frameNb, timestamp, payload_size, appSide, 0});
-        }
-        else if(appSide == SERVER) {
-            _traceItems.push_back({frameNb, timestamp, payload_size, appSide, 0});
-        }
+        _traceItems.push_back({frameNb, timestamp, payload_size, appSide, 0});
     }
     traceInput.close();
 }

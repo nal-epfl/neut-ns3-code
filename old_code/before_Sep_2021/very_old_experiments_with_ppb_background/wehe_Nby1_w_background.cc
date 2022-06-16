@@ -1,16 +1,16 @@
 //
-// Created by nal on 23.10.20.
+// Created by nal on 05.02.21.
 //
 // Network topology
 //
-//      s0 ___+               +___ d0
-//      s1 ___+__ r0 --- r1 __+___ d1
-//        ... +               + ...
-//    sn-1 ___+               +___ dn-1
+//      s0 ___+
+//      s1 ___+__ r0 --- r1
+//        ... +
+//    sn-1 ___+
 //
 // - All links are P2P
-// - Wehe data traces between s0->d0, s1->d1, sn-2->dn-2
-// - Background UDP flow with Poisson Pareto Bursts between s3-d3
+// - Wehe data traces between s0->r1, s1->r1, sn-2->r1
+// - Background flow with Poisson Pareto Bursts between s(n-1)-r1
 
 #include <iostream>
 #include <string>
@@ -27,24 +27,24 @@
 #include "ns3/flow-monitor-module.h"
 #include "ns3/file-helper.h"
 
-#include "../../monitors_module/PacketMonitor.h"
+#include "../../../monitors_module/PacketMonitor.h"
 
-#include "../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
-#include "../../traffic_differentiation_module/CbQueueDisc.h"
+#include "../../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
+#include "../../../traffic_differentiation_module/CbQueueDisc.h"
 
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("WeheNPathWithPpbNoise");
+NS_LOG_COMPONENT_DEFINE("WeheNBy1WithPpbNoise");
 
 #define PCAP_FLAG 0
 #define PACKET_MONITOR_FLAG 1
 
 /*****************************************************************************/
-int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
+int run_wehe_Nby1_w_background(int argc, char **argv) {
 
-    LogComponentEnable ("WeheNPathWithPpbNoise", LOG_LEVEL_INFO);
-    NS_LOG_INFO("N Wehe traces on N paths with PPB Noise is running");
+    LogComponentEnable ("WeheNBy1WithPpbNoise", LOG_LEVEL_INFO);
+    NS_LOG_INFO("N Wehe traces with Background is running");
 
 
     /*** Variables read from arguments ***/
@@ -75,16 +75,13 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
 
     /*** Topology Parameters ***/
-    int nbPaths = 5;
-    int nbDsts = nbPaths;
-    int nbSrcs = nbPaths;
+    int nbSrcs = 5;
     int trafficClass[] = {0, 0, 4, 4};
 
     /*** Traffic Parameters ***/
     string trafficProtocol = (weheProtocol == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
     cout << trafficProtocol << endl;
 
-    uint32_t mtu = 1500;
     if(weheProtocol == 1) {
         uint32_t rcvBufSize = 2e9;
         uint32_t mss = 1228;
@@ -100,48 +97,32 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
     NS_LOG_INFO("Create Topology.");
     NodeContainer srcNodes; srcNodes.Create(nbSrcs);
     NodeContainer routers; routers.Create(2);
-    NodeContainer dstNodes; dstNodes.Create(nbDsts);
 
     InternetStackHelper internetStackHelper;
     internetStackHelper.Install(srcNodes);
     internetStackHelper.Install(routers);
-    internetStackHelper.Install(dstNodes);
 
 
     string defaultDataRate = "10Gbps";
     string defaultLinkDelay = "10ms";
+    string dataRates[] = {defaultDataRate, defaultDataRate, "60Mbps", defaultDataRate, defaultDataRate};
+    string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
+
     PointToPointHelper p2p;
-    p2p.SetDeviceAttribute("DataRate", StringValue(defaultDataRate));
-    p2p.SetChannelAttribute("Delay", StringValue("10ms"));
     p2p.SetDeviceAttribute("Mtu", UintegerValue(2000));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
-
     NetDeviceContainer channels_srcs_r0[nbSrcs];
     for(int i = 0; i < nbSrcs; i++) {
-        channels_srcs_r0[i] = p2p.Install(srcNodes.Get(i), routers.Get(0));
-        // set the queues to fifo queueing discipline
-        TrafficControlHelper tch;
-        string queueSize = to_string(int(0.035 * (DataRate(defaultDataRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
-        tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-        tch.Install(channels_srcs_r0[i]);
-    }
-
-    NetDeviceContainer channels_r1_dsts[nbDsts];
-    string dataRates[] = {"5Mbps", defaultDataRate, defaultDataRate, defaultDataRate, defaultDataRate};
-    string delays[] = {defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay, defaultLinkDelay};
-    for(int i = 0; i < nbDsts; i++) {
-        // to create scenarios on the non-common links
         p2p.SetDeviceAttribute("DataRate", StringValue(dataRates[i]));
         p2p.SetChannelAttribute("Delay", StringValue(delays[i]));
-        channels_r1_dsts[i] = p2p.Install( dstNodes.Get(i), routers.Get(1));
+        channels_srcs_r0[i] = p2p.Install(srcNodes.Get(i), routers.Get(0));
+
         // set the queues to fifo queueing discipline
         TrafficControlHelper tch;
         string queueSize = to_string(int(0.035 * (DataRate(dataRates[i]).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
         tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-        tch.Install(channels_r1_dsts[i]);
+        tch.Install(channels_srcs_r0[i]);
     }
-
-
 
 
     // Parameters for the bottleneck channel
@@ -171,7 +152,7 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
         tch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
         tch.AddChildQueueDisc (handle, cid[1], "ns3::TbfQueueDiscChild",
                                "Burst", UintegerValue (burst),
-                               "Mtu", UintegerValue (mtu),
+                               "Mtu", UintegerValue (1500),
                                "Rate", DataRateValue (DataRate (to_string(policingRate) + "Mbps")),
                                "PeakRate", DataRateValue (DataRate ("0bps")));
     }
@@ -193,23 +174,19 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
     }
     ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
     Ipv4InterfaceContainer addresses_r0_r1 = ipv4.Assign(channel_r0_r1);
-    Ipv4InterfaceContainer addresses_dsts_r0[nbDsts];
-    Ipv4Address dstAddresses[nbDsts];
-    for(int i = 0; i < nbDsts; i++) {
-        ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
-        addresses_dsts_r0[i] = ipv4.Assign(channels_r1_dsts[i]);
-        dstAddresses[i] = addresses_dsts_r0[i].GetAddress(0);
-    }
 
 
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
+    Ptr<Node> dstNode = routers.Get(1);
+    Ipv4Address dstAddress = addresses_r0_r1.GetAddress(1);
+    cout << "the destination address is " << dstAddress << endl;
 
     /*** Create Measurement Traffic ***/
-    for(int i = 0; i < nbDsts - 1; i++) {
+    for(int i = 0; i < nbSrcs - 1; i++) {
         TraceReplayClientServer *replayClientServer = new TraceReplayClientServer();
         replayClientServer->SetClient(srcNodes.Get(i));
-        replayClientServer->SetServer(dstNodes.Get(i));
+        replayClientServer->SetServer(dstNode);
         replayClientServer->SetProtocol(trafficProtocol);
         replayClientServer->SetTrafficsTos(trafficClass[i], trafficClass[i]);
         replayClientServer->SetTracesPath(dataPath + "/wehe_trace_server", dataPath + "/");
@@ -219,8 +196,8 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
     /*** Create Background Traffic ***/
     TraceReplayClientServer *replayClientServerBack = new TraceReplayClientServer();
-    replayClientServerBack->SetClient(srcNodes.Get(nbPaths-1));
-    replayClientServerBack->SetServer(dstNodes.Get(nbPaths-1));
+    replayClientServerBack->SetClient(srcNodes.Get(2));
+    replayClientServerBack->SetServer(dstNode);
     replayClientServerBack->SetProtocol("ns3::TcpSocketFactory");
     replayClientServerBack->SetTrafficsTos(0, 0);
     replayClientServerBack->SetTracesPath(dataPath + "/ppb_back", dataPath + "/");
@@ -235,16 +212,16 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
     uint32_t srcIds[nbSrcs]; for(int i = 0; i < nbSrcs; i++) { srcIds[i] = srcNodes.Get(i)->GetId(); }
     uint32_t routersIds[2] = {routers.Get(0)->GetId(), routers.Get(1)->GetId()};
-    uint32_t dstIds[nbDsts]; for(int i = 0; i < nbDsts; i++) { dstIds[i] = dstNodes.Get(i)->GetId(); }
+    uint32_t dstId  = dstNode->GetId();
 
 #if PACKET_MONITOR_FLAG
     PacketMonitor* bottleneckPktMonitorUp = new PacketMonitor(warmupTime, Seconds(duration), routersIds[0], routersIds[1], "bottleneckUp");
-    for(int i = 0; i < nbPaths-1; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddresses[i]);
+    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorUp->AddAppKey(srcAddresses[i], dstAddress);
 
     vector<PacketMonitor*> pathPktsMonitorsUp;
-    for(int i = 0; i < nbPaths-1; i++) {
-        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), srcIds[i], dstIds[i],  "path" + to_string(i) + "Up");
-        pathMonitor->AddAppKey(srcAddresses[i], dstAddresses[i]);
+    for(int i = 0; i < nbSrcs-1; i++) {
+        PacketMonitor* pathMonitor = new PacketMonitor(warmupTime, Seconds(duration), srcIds[i], dstId,  "path" + to_string(i) + "Up");
+        pathMonitor->AddAppKey(srcAddresses[i], dstAddress);
         pathPktsMonitorsUp.push_back(pathMonitor);
     }
 
@@ -270,7 +247,7 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
 #if PACKET_MONITOR_FLAG
     bottleneckPktMonitorUp->SaveRecordedPacketsCompact(resultsPath + "/bottleneck_packets_up.csv");
-    for(int i = 0; i < nbPaths-1; i++) {
+    for(int i = 0; i < nbSrcs-1; i++) {
         pathPktsMonitorsUp[i]->SaveRecordedPacketsCompact(resultsPath + "/path" + to_string(i) + "_packets_up.csv");
     }
 
@@ -282,4 +259,3 @@ int run_wehe_Npath_w_ppb_noise(int argc, char **argv) {
 
     return 0;
 }
-

@@ -27,12 +27,12 @@
 #include "ns3/flow-monitor-module.h"
 #include "ns3/file-helper.h"
 
-#include "../../monitors_module/PacketMonitor.h"
+#include "../../../monitors_module/PacketMonitor.h"
 
 
-#include "../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
+#include "../../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 
-#include "../../traffic_differentiation_module/CbQueueDisc.h"
+#include "../../../traffic_differentiation_module/CbQueueDisc.h"
 
 using namespace ns3;
 using namespace std;

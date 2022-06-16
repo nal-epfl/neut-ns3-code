@@ -17,13 +17,13 @@ class MultipleReplayClients {
 private:
     static uint32_t SOCKET_COUNT;
 
-    Ptr<Node> _client;
-    Ptr<Node> _server;
+    Ptr<Node> _sender;
+    Ptr<Node> _receiver;
 
-    void RunSingleTrace(string tracePath, string protocol, uint8_t tos);
+    void RunSingleTrace(const string& tracePath, const string& protocol, uint8_t tos);
 
 public:
-    MultipleReplayClients(Ptr<Node> client, Ptr<Node> server);
+    MultipleReplayClients(const Ptr<Node>& sender, const Ptr<Node>& receiver);
 
     void RunAllTraces(const string& tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t tos=0);
     void RunAllTraces(const string& tracesPath, uint8_t tos=0);

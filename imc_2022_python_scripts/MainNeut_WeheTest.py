@@ -48,12 +48,12 @@ class ExperimentParameters:
 
 
 def run_probing_experiment_with_params(params):
-    run_probing_experiment(link_rate=params.link_rate, duration=params.duration,
-                           is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
+    run_probing_experiment(link_rate=params.m_link_rate, duration=params.m_duration,
+                           is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
                            app_name=params.app_name, app_type=params.app_type, pkt_size=params.pkt_size,
                            p_lambda=params.p_lambda, replay_trace=params.replay_trace,
                            app_data_rate=params.app_data_rate,
-                           background_dir=params.background_dir, exp_batch=params.exp_batch,
+                           background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                            noncommon_links_delays=params.noncommon_links_delays,
                            noncommon_links_rates=params.noncommon_links_rates,
                            is_neutral=params.is_neutral, policing_rate=params.policing_rate,
@@ -101,10 +101,10 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
 
 
 def run_weheCS_experiment_with_params(params):
-    run_weheCS_experiment(link_rate=params.link_rate, original_traffic_duration=params.duration,
-                          is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol,
+    run_weheCS_experiment(link_rate=params.m_link_rate, original_traffic_duration=params.m_duration,
+                          is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol,
                           seed=params.seed, app_name=params.app_name,
-                          background_dir=params.background_dir, exp_batch=params.exp_batch,
+                          background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                           noncommon_links_delays=params.noncommon_links_delays,
                           noncommon_links_rates=params.noncommon_links_rates,
                           is_neutral=params.is_neutral, policing_rate=params.policing_rate,

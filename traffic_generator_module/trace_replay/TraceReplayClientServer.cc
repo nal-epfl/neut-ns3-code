@@ -69,7 +69,7 @@ void TraceReplayClientServer::Setup(ns3::Time startTime, ns3::Time endTime) {
 //    InetSocketAddress sinkAddressClient = InetSocketAddress(clientAddress, sinkPort);
 //    sinkAddressClient.SetTos(_serverTrafficTos); // This is for traffic differentiation
 //    PacketSinkHelper sinkHelperClient(_protocol, sinkAddressClient);
-//    ApplicationContainer sinkAppClient = sinkHelperClient.Install(_client);
+//    ApplicationContainer sinkAppClient = sinkHelperClient.Install(_sender);
 //    sinkAppClient.Start(startTime);
 //    sinkAppClient.Stop(endTime);
 //
@@ -77,7 +77,7 @@ void TraceReplayClientServer::Setup(ns3::Time startTime, ns3::Time endTime) {
 //    TraceReplayClientHelper replayHelperServer(sinkAddressClient);
 //    replayHelperServer.SetAttribute("Protocol", StringValue(_protocol));
 //    replayHelperServer.SetAttribute("TraceFile", StringValue(_serverTracePath));
-//    ApplicationContainer replayAppServer = replayHelperServer.Install(_server);
+//    ApplicationContainer replayAppServer = replayHelperServer.Install(_receiver);
 //    replayAppServer.Start(startTime);
 //    replayAppServer.Stop(endTime);
 

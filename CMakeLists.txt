@@ -23,7 +23,8 @@ file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES
         experiments_scenarios/*
         testing_scenarios/*
-        old_code/very_old_experiments_with_ppb_background/* )
+        old_code/before_Sep_2021/very_old_experiments_with_ppb_background/*
+        localization_experiments_scenarios/*)
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES

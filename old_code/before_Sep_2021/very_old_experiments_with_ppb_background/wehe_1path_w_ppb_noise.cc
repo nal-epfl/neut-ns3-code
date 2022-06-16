@@ -1,15 +1,15 @@
 //
-// Created by nal on 19.10.20.
+// Created by nal on 26.08.20.
 //
 // Network topology
 //
 //    s0 ---+              +--- d0
-//    s1 ---+-- r0 -- r1 --+--- d1
-//    s2 ---+              +--- d2
+//          +-- r0 -- r1 --+
+//    s1 ---+              +--- d1
 //
 // - All links are P2P
-// - Wehe data traces between s0-d0 and s1-d1
-// - Background UDP flow with Poisson Pareto Bursts between s2-d2
+// - Wehe data traces between s0-d0
+// - Background UDP flow with Poisson Pareto Bursts between s1-d1
 
 #include <iostream>
 #include <string>
@@ -26,15 +26,15 @@
 #include "ns3/flow-monitor-module.h"
 #include "ns3/file-helper.h"
 
-#include "../../monitors_module/PacketMonitor.h"
+#include "../../../monitors_module/PacketMonitor.h"
 
-#include "../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
+#include "../../../traffic_generator_module/trace_replay/TraceReplayClientServer.h"
 
 
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("Wehe2PathWithPpbNoise");
+NS_LOG_COMPONENT_DEFINE("Wehe1PathWithPpbNoise");
 
 #define APP_LOG_FLAG 0
 #define PCAP_FLAG 0
@@ -43,10 +43,22 @@ NS_LOG_COMPONENT_DEFINE("Wehe2PathWithPpbNoise");
 #define POLICING_FLAG 0
 
 /*****************************************************************************/
-int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
+ofstream pktsEnqueueOutfile;
+int enCount = 0;
+void enqueueTracing(ns3::Ptr<ns3::Packet const> packet) {
+    pktsEnqueueOutfile << enCount++ << " " << (ns3::Now().GetNanoSeconds() / 1e9) << " " << packet->ToString() << endl;
+}
 
-    LogComponentEnable ("Wehe2PathWithPpbNoise", LOG_LEVEL_INFO);
-    NS_LOG_INFO("2 Wehe traces with PPB Noise is running");
+ofstream queueOutfile;
+void trace_queue(unsigned int oldSize, unsigned int newSize) {
+    queueOutfile << oldSize << "," << newSize << "," << (Simulator::Now()).GetNanoSeconds() << endl;
+}
+
+
+int run_wehe_1path_w_ppb_noise(int argc, char **argv) {
+
+    LogComponentEnable ("Wehe1PathWithPpbNoise", LOG_LEVEL_INFO);
+    NS_LOG_INFO("Wehe traces with PPB Noise is running");
 
 #if APP_LOG_FLAG
     LogComponentEnable("UdpClient", LOG_LEVEL_INFO);
@@ -71,7 +83,7 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 
 
     /*** Topology Parameters ***/
-    int nbPaths = 3;
+    int nbPaths = 2;
     int nbDsts = nbPaths;
     int nbSrcs = nbPaths;
 
@@ -79,6 +91,8 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 
     /*** Traffic Parameters ***/
     string trafficProtocol = "ns3::UdpSocketFactory";
+//    auto *upPPBParams = new PPBSettings("0.05Mb/s", 2857, 0.3, 0.8);
+//    auto *downPPBParams = new PPBSettings("0.05Mb/s", 2857, 0.3, 0.8);
 
 
     /*** Create the dumbbell topology ***/
@@ -130,13 +144,30 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
                            "Burst", UintegerValue (burst),
                            "Mtu", UintegerValue (1500),
                            "Rate", DataRateValue (DataRate (policingRate))),
-            "PeakRate", DataRateValue (DataRate ("0bps"));
+                           "PeakRate", DataRateValue (DataRate ("0bps"));
 #else
     string queueSize = to_string(int(0.035 * (DataRate(btlkLinkRate).GetBitRate() * 0.125))) + "B"; // RTT * link_rate
     cout << "queue size: " << queueSize << endl;
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
 #endif
     tch.Install(channel_r0_r1);
+
+//    pktsEnqueueOutfile.open(resultsPath + "/btlk_down_enqueue_traces.txt");
+//    Simulator::Schedule(warmupTime, []() {
+//        Config::ConnectWithoutContext("/NodeList/3/DeviceList/3/$ns3::PointToPointNetDevice/MacTx", MakeCallback(&enqueueTracing));
+//    });
+//    Simulator::Schedule(warmupTime + Seconds(duration), []() {
+//        Config::DisconnectWithoutContext("/NodeList/3/DeviceList/3/#ns3::PointToPointNetDevice/MacTx", MakeCallback(&enqueueTracing));
+//    });
+//
+//    queueOutfile.open(resultsPath + "/btlk_down_queue_size_log.txt");
+//    Config::ConnectWithoutContext("/NodeList/3/DeviceList/3/$ns3::PointToPointNetDevice/TxQueue/BytesInQueue", MakeCallback(&trace_queue));
+//    Simulator::Schedule(Seconds(0), []() {
+//
+//    });
+//    Simulator::Schedule(simEndTime, []() {
+//        Config::DisconnectWithoutContext("/NodeList/3/DeviceList/3/#ns3::PointToPointNetDevice/TxQueue/BytesInQueue", MakeCallback(&enqueueTracing));
+//    });
 
 
     Ipv4AddressHelper ipv4;
@@ -162,19 +193,28 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
 
-    /*** Create Measurement Traffic ***/
-    string clientTraceFiles[] = {dataPath + "/", dataPath + "/", dataPath + "/"};
-    string serverTraceFiles[] = {dataPath + "/wehe_trace_server", dataPath + "/wehe_trace_server", dataPath + "/control_trace"};
-    ns3::Time appsStartTime[] = {warmupTime, warmupTime, simStartTime};
-    for(int i = 0; i < nbDsts; i++) {
-        TraceReplayClientServer *replayClientServer = new TraceReplayClientServer();
-        replayClientServer->SetClient(srcNodes.Get(i));
-        replayClientServer->SetServer(dstNodes.Get(i));
-        replayClientServer->SetProtocol(trafficProtocol);
-        replayClientServer->SetTracesPath(clientTraceFiles[i], serverTraceFiles[i]);
-        replayClientServer->Setup(appsStartTime[i], simEndTime);
-    }
 
+    /*** Create Measurement Traffic ***/
+    TraceReplayClientServer* replayClientServer = new TraceReplayClientServer();
+    replayClientServer->SetClient(srcNodes.Get(0));
+    replayClientServer->SetServer(dstNodes.Get(0));
+    replayClientServer->SetProtocol(trafficProtocol);
+    replayClientServer->SetTracesPath(dataPath + "/", dataPath + "/");
+    replayClientServer->Setup(warmupTime, simEndTime);
+
+    /*** Create Background Traffic ***/
+//    PPBBidirectional* backgroundApp = new PPBBidirectional();
+//    backgroundApp->SetUpPPBParams(upPPBParams);
+//    backgroundApp->SetDownPPBParams(downPPBParams);
+//    backgroundApp->SetHosts(srcNodes.Get(nbSrcs-1), dstNodes.Get(nbDsts-1));
+//    backgroundApp->Setup(simStartTime, simEndTime);
+
+    TraceReplayClientServer* backReplayClientServer = new TraceReplayClientServer();
+    backReplayClientServer->SetClient(srcNodes.Get(nbSrcs-1));
+    backReplayClientServer->SetServer(dstNodes.Get(nbDsts-1));
+    backReplayClientServer->SetProtocol(trafficProtocol);
+    backReplayClientServer->SetTracesPath(dataPath + "/", dataPath + "/control_trace");
+    backReplayClientServer->Setup(simStartTime, simEndTime);
 
 #if PCAP_FLAG /*** Record Pcap files for channels ***/
     AsciiTraceHelper ascii;
@@ -198,7 +238,7 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 //    }
 
     PacketMonitor* bottleneckPktMonitorDown = new PacketMonitor(warmupTime, Seconds(duration), routersIds[1], routersIds[0], "bottleneckDown");
-    for(int i = 0; i < nbSrcs; i++) bottleneckPktMonitorDown->AddAppKey(Ipv4Address(), srcAddresses[i]);
+    for(int i = 0; i < nbPaths; i++) bottleneckPktMonitorDown->AddAppKey(dstAddresses[i], srcAddresses[i]);
 
 //    vector<PacketMonitor*> pathPktsMonitorsDown;
 //    for(int i = 0; i < nbPaths; i++) {
@@ -209,7 +249,7 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 #endif
 
 #if LOSS_MONITOR_FLAG
-    //    auto* bottleneckLossMonitorUp = new LossMonitor(warmupTime, simEndTime, routersIds[0], routersIds[1], "bottleneckUp");
+//    auto* bottleneckLossMonitorUp = new LossMonitor(warmupTime, simEndTime, routersIds[0], routersIds[1], "bottleneckUp");
 //    for(int i = 0; i < nbDsts; i++) bottleneckLossMonitorUp->AddDestination(dstAddresses[i]);
 //
 //    vector<LossMonitor*> pathLossMonitorsUp;
@@ -262,7 +302,7 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
 #endif
 
 #if LOSS_MONITOR_FLAG
-    //    bottleneckLossMonitorUp->DisplayStats();
+//    bottleneckLossMonitorUp->DisplayStats();
 //    for(int i = 0; i < nbPaths; i++) { pathLossMonitorsUp[i]->DisplayStats(); }
 
     bottleneckLossMonitorDown->DisplayStats();
@@ -280,6 +320,8 @@ int run_wehe_2path_w_ppb_noise(int argc, char **argv) {
     bottleneckClass2Monitor.SaveAllStatsToCSV(resultsPath + "/bottleneck_c2_stats.csv");
 #endif
 
+    queueOutfile.close();
+    pktsEnqueueOutfile.close();
+
     return 0;
 }
-

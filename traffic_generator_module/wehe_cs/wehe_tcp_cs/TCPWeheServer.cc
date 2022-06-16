@@ -86,10 +86,6 @@ void TCPWeheServer::StopApplication() {
 }
 
 bool TCPWeheServer::Send(uint32_t payloadSize) {
-//    Ptr<Packet> p = Create<Packet> (payloadSize);
-
-//    cout << "server sends " << payloadSize << endl;
-
     SeqTsHeader seqTs;
     seqTs.SetSeq (_traceItemIdx);
     uint32_t segmentSize = payloadSize > (8+4) ? payloadSize - (8+4) : payloadSize; // 8+4 : the size of the seqTs header
@@ -109,7 +105,6 @@ bool TCPWeheServer::Send(uint32_t payloadSize) {
 void TCPWeheServer::Recv(Ptr<Socket> socket) {
     Ptr<Packet> packet = socket->Recv();
     if(packet->GetSize() == 0) {return;}
-//    cout << "server recv " << packet->GetSize() << " at time " <<  (Simulator::Now()-_startTime).GetSeconds() << endl;
 
     _rxEvents.push_back({packet->GetSize(), (Simulator::Now()-_startTime).GetSeconds()});
     CheckForNextResponse(packet->GetSize());

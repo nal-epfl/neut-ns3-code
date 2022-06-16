@@ -25,6 +25,8 @@ class HelperMethods {
         static uint32_t GetSubDirCount(const string& dirPath);
         static string ComputeQueueSize(const string& linkRate, const vector<string>& linksDelay);
         static ns3::Ipv4Address GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface);
+        static bool doesPolicerLocationMatch(const string& linkLocation, const string& expectedPolicerLocation);
+        static bool isPolicerTypePerFlowPolicer(int policerType);
 
 };
 

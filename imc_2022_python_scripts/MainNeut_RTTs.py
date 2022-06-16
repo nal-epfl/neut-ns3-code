@@ -5,6 +5,12 @@ from multiprocessing import Process
 from multiprocessing import cpu_count
 import time
 
+primes = np.array([
+    3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73,
+    79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173,
+    179, 181, 191, 193, 197, 199, 211, 223, 227, 233, 239
+])
+
 wehe_apps_names = ['Amazon_01042019', 'Amazon_12122018', 'AppleMusic_04112019', 'FacebookVideo_04112019',
                    'Hulu_04112019', 'NBCSports_01042019', 'NBCSports_12122018', 'Netflix_12122018',
                    'Skype_12122018', 'Spotify_01042019', 'Spotify_12122018', 'Twitch_04112019', 'Vimeo_12122018',
@@ -42,12 +48,12 @@ class ExperimentParameters:
 
 
 def run_probing_experiment_with_params(params):
-    run_probing_experiment(link_rate=params.link_rate, duration=params.duration,
-                           is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
+    run_probing_experiment(link_rate=params.m_link_rate, duration=params.m_duration,
+                           is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
                            app_name=params.app_name, app_type=params.app_type, pkt_size=params.pkt_size,
                            p_lambda=params.p_lambda, replay_trace=params.replay_trace,
                            app_data_rate=params.app_data_rate,
-                           background_dir=params.background_dir, exp_batch=params.exp_batch,
+                           background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                            noncommon_links_delays=params.noncommon_links_delays,
                            noncommon_links_rates=params.noncommon_links_rates,
                            is_neutral=params.is_neutral, policing_rate=params.policing_rate,
@@ -95,10 +101,10 @@ def run_probing_experiment(link_rate, duration, is_tcp, tcp_protocol='TcpCubic',
 
 
 def run_weheCS_experiment_with_params(params):
-    run_weheCS_experiment(link_rate=params.link_rate, original_traffic_duration=params.duration,
-                          is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol,
+    run_weheCS_experiment(link_rate=params.m_link_rate, original_traffic_duration=params.m_duration,
+                          is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol,
                           seed=params.seed, app_name=params.app_name,
-                          background_dir=params.background_dir, exp_batch=params.exp_batch,
+                          background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                           noncommon_links_delays=params.noncommon_links_delays,
                           noncommon_links_rates=params.noncommon_links_rates,
                           is_neutral=params.is_neutral, policing_rate=params.policing_rate,
@@ -214,80 +220,44 @@ if __name__ == '__main__':
     background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 
     exps = [
-        ('2b98k2i1qy', '10Gbps', '1Gbps,1Gbps,10Gbps', '30ms,30ms,5ms'),
-        # ('no_congestion_at_all', '10Gbps', '1Gbps,1Gbps,10Gbps', 'empty'),
+        # ('no_congestion_p12_d1ms_RTT12ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '1ms,1ms,5ms'),
+        ('no_congestion_p12_d5ms_RTT20ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,5ms,5ms'),
+        ('no_congestion_p12_d15ms_RTT40ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '15ms,15ms,5ms'),
+        ('no_congestion_p12_d35ms_RTT80ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '35ms,35ms,5ms'),
 
-        # ('no_congestion_at_all_p2_d2ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        # ('no_congestion_at_all_p2_d15ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        #
-        # ('congestion_on_noncommon_links_p12_r90Mbps', '10Gbps', '90Mbps,90Mbps,10Gbps', 'empty'),
-        # ('congestion_on_noncommon_links_p12_r100Mbps', '10Gbps', '100Mbps,100Mbps,10Gbps', 'empty'),
-        # ('congestion_on_noncommon_links_p1_r90Mbps_p2_r100Mbps', '10Gbps', '90Mbps,100Mbps,10Gbps', 'empty'),
-        #
-        # ('congestion_on_common_link', '180Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        # ('congestion_on_common_link', '200Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        # ('congestion_on_common_link', '220Mbps', '1Gbps,1Gbps,10Gbps', 'empty'),
-        #
-        # ('congestion_on_common_link_p2_d2ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        # ('congestion_on_common_link_p2_d15ms', '180Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        # ('congestion_on_all_links_p12_r95Mbps', '180Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
-        # ('congestion_on_all_links_p12_r100Mbps', '180Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
-        # ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '180Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
-        # ('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '180Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
-        #
-        # ('congestion_on_common_link_p2_d2ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,2ms,5ms'),
-        # ('congestion_on_common_link_p2_d15ms', '200Mbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
-        # ('congestion_on_all_links_p12_r95Mbps', '200Mbps', '95Mbps,95Mbps,10Gbps', 'empty'),
-        # ('congestion_on_all_links_p12_r100Mbps', '200Mbps', '100Mbps,100Mbps,100Mbps', 'empty'),
-        # ('congestion_on_all_links_p1_r100Mbps_p2_r95Mbps', '200Mbps', '100Mbps,95Mbps,10Gbps', 'empty'),
-        # ('congestion_on_all_links_p1_r95Mbps_p2_r100Mbps_d15ms', '200Mbps', '95Mbps,100Mbps,10Gbps', '5ms,15ms,5ms'),
+        # ('no_congestion_p1_RTT_20ms_p2_d1ms_RTT12ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,1ms,5ms'),
+        # ('no_congestion_p1_RTT_20ms_p2_d5ms_RTT20ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,5ms,5ms'),
+        # ('no_congestion_p1_RTT_20ms_p2_d15_RTT40ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,15ms,5ms'),
+        # ('no_congestion_p1_RTT_20ms_p2_d35_RTT80ms', '10Gbps', '1Gbps,1Gbps,10Gbps', '5ms,35ms,5ms'),
     ]
 
-    burst_length_est = 0.03
     cases_per_exp = [
         [
-            ('shared_common_policer', 1, 25, burst_length_est),
-            # ('shared_common_policer', 1, 28, burst_length_est),
-            ('shared_common_policer', 1, 30, burst_length_est),
-            ('shared_common_policer', 1, 35, burst_length_est),
-            ('shared_common_policer', 1, 40, burst_length_est),
+            ('shared_common_policer', 1, 25, 0.03),
+            ('shared_common_policer', 1, 28, 0.03),
+            ('shared_common_policer', 1, 30, 0.03),
+            ('shared_common_policer', 1, 35, 0.03),
+            ('shared_common_policer', 1, 40, 0.03),
 
-            ('shared_noncommon_policers', 3, 13, burst_length_est),
-            # ('shared_noncommon_policers', 3, 14, burst_length_est),
-            ('shared_noncommon_policers', 3, 15, burst_length_est),
-            ('shared_noncommon_policers', 3, 18, burst_length_est),
-            ('shared_noncommon_policers', 3, 20, burst_length_est),
-         ],
-     ]
+            ('shared_noncommon_policers', 3, 13, 0.03),
+            ('shared_noncommon_policers', 3, 14, 0.03),
+            ('shared_noncommon_policers', 3, 15, 0.03),
+            ('shared_noncommon_policers', 3, 18, 0.03),
+            ('shared_noncommon_policers', 3, 20, 0.03),
+        ],
+    ]
 
-    # TEST_TYPE, duration = 'neut_plus_localization', 90
-    # for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
-    #     for a_seed in [7]:
-    #         print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
-    #         for mini_cases_per_exp in cases_per_exp:
-    #             rebuild_project()
-    #             run_parallel_experiments(run_probing_experiment_with_params, [
-    #                 ExperimentParameters(
-    #                     link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
-    #                     app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
-    #                     app_data_rate='20Mbps',
-    #                     exp_batch='{}/{}_{}Mbps_{}s_30p'.format(exp_batch, p_type, policing_rate, burst_length),
-    #                     noncommon_links_delays=noncommon_link_delays, noncommon_links_rates=noncommon_link_rates,
-    #                     is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length
-    #                 ) for p_type, is_neutral, policing_rate, burst_length in mini_cases_per_exp
-    #             ])
-
-    TEST_TYPE = 'test_wehe'
-    wehe_app, is_tcp, duration = 'Twitch_04112019', 1, 45
+    TEST_TYPE, duration = 'RTT_EXP_30sec', 30
     for exp_batch, link_rate, noncommon_link_rates, noncommon_link_delays in exps:
-        for a_seed in [19, 23, 29]:
-            print('---------------- Running: {} - {} / seed: {} ----------------'.format(link_rate, exp_batch, a_seed))
+        for a_seed in [31, 29, 23, 19, 17]:# ,13, 11, 5]:
+            print('---------------- Running: {} - {} / seed {} ----------------'.format(link_rate, exp_batch, a_seed))
             for mini_cases_per_exp in cases_per_exp:
                 time.sleep(30)
-                run_parallel_experiments_safe(run_weheCS_experiment_with_params, [
+                run_parallel_experiments(run_probing_experiment_with_params, [
                     ExperimentParameters(
-                        link_rate=link_rate, duration=duration, is_tcp=is_tcp, tcp_protocol='TcpCubic', seed=a_seed,
-                        app_type=5, app_name=wehe_app, background_dir=background_dir,
+                        link_rate=link_rate, duration=duration, is_tcp=1, tcp_protocol='TcpCubic', seed=a_seed,
+                        app_type=4, app_name='Infinite_Paced_Tcp', pkt_size=1228, background_dir=background_dir,
+                        app_data_rate='20Mbps',
                         exp_batch='{}/{}_{}Mbps_{}s_30p'.format(exp_batch, p_type, policing_rate, burst_length),
                         noncommon_links_delays=noncommon_link_delays, noncommon_links_rates=noncommon_link_rates,
                         is_neutral=is_neutral, policing_rate=policing_rate, burst_length=burst_length

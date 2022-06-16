@@ -23,11 +23,11 @@ class ExperimentParameters:
 
 
 def run_probing_experiment_with_params(params):
-    run_probing_experiment(link_rate=params.link_rate, duration=params.duration,
-                           is_tcp=params.is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
+    run_probing_experiment(link_rate=params.m_link_rate, duration=params.m_duration,
+                           is_tcp=params.m_is_tcp, tcp_protocol=params.tcp_protocol, seed=params.seed,
                            app_type=params.app_type, app_name=params.app_name,
                            pkt_size=params.pkt_size, p_lambda=params.p_lambda, replay_trace=params.replay_trace,
-                           background_dir=params.background_dir, exp_batch=params.exp_batch,
+                           background_dir=params.m_background_dir, exp_batch=params.m_exp_batch,
                            noncommon_links_delays=params.noncommon_links_delays,
                            noncommon_links_rates=params.noncommon_links_rates)
 
