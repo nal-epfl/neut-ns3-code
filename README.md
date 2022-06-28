@@ -1,4 +1,4 @@
-# ns3-neut-experiments-code
+# neut-ns3-code
 
 Couple of Note to use this code:
  - The code is compatible with ns-3.36.1 release
