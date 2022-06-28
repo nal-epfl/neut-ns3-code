@@ -1,3 +1,6 @@
+# To run this script please go back to the original GitHub directory which is compatible with version <= ns3.35
+# Link: https://github.com/zeinabshmeis/neut-ns3-code.git
+
 import os
 import subprocess
 import numpy as np

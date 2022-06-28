@@ -1,11 +1,18 @@
 # This file is for experiments done after May 2022 related to neutrality-violations localization algorithm
-# It is only compatible with the files in the localization_experiments_scenarios
+# It is only compatible with the files in the localization_experiments_scenarios and ns3 versions >= ns3.36.1
 
-from project_run_env.RunConfig import *
 from data.data_preparation import *
+
+import os
+import time
 
 from enum import Enum
 from multiprocessing import Process, cpu_count
+
+__ns3_path = os.popen('locate "ns-3.36.1" | grep /ns-3.36.1$').read().splitlines()[0]
+
+
+def get_ns3_path(): return __ns3_path
 
 
 class WeheApp(Enum):
@@ -106,7 +113,7 @@ def run_experiment(exp_type, network_setup, app_setup, background_dir, neutralit
     )
     os.system('mkdir -p {}/scratch/wehe_p_tomography/results/{}'.format(get_ns3_path(), result_folder_name))
     os.system(
-        '{}/waf --run "wehe_p_tomography" --command-template="%s'.format(get_ns3_path()) +
+        '{}/ns3 run \'wehe_p_tomography '.format(get_ns3_path()) +
         ' --RngSeed={}'.format(seed) +
         ' --RngRun=1' +
         ' --commonLinkRate={}'.format(network_setup.common_link_rate) +
@@ -129,7 +136,7 @@ def run_experiment(exp_type, network_setup, app_setup, background_dir, neutralit
         ' --policerLocation={}'.format(neutrality_setup.policer_location.value) +
         ' --policerType={}'.format(neutrality_setup.policer_type.value) +
         ' --backThrottledPct={}'.format(neutrality_setup.pct_of_throttled_background) +
-        '"'
+        '\''
     )
 
 
@@ -146,7 +153,7 @@ def get_weheCS_app_setup(wehe_app, transport_protocol, tcp_protocol='TcpCubic', 
 
 
 def rebuild_project():
-    os.system('{}/waf build'.format(get_ns3_path()))
+    os.system('{}/ns3 build'.format(get_ns3_path()))
 
 
 def run_parallel_experiments(func, experiments, nb_threads=1):

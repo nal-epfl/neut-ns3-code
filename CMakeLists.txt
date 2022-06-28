@@ -1,30 +1,33 @@
 cmake_minimum_required(VERSION 3.16)
-project(wehe_p_tomography)
-
 set(CMAKE_CXX_STANDARD 17)
 
-# Add boost library for the hash functions
-find_package(Boost QUIET REQUIRED COMPONENTS program_options)
+##################### Part here is to help compile within the ns3 project  #####################
+set(target_name wehe_p_tomography)
+set(output_directory ${CMAKE_OUTPUT_DIRECTORY}/scratch/wehe_p_tomography/)
+set(target_prefix scratch_wehe_p_tomography_)
+
+project(${target_prefix}${target_name})
+################################################################################################
+
+find_package(Boost QUIET REQUIRED COMPONENTS program_options) # use boost for hash functions
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Boost Not found")
 endif()
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
-##########################################
 
 add_definitions(-DNS3_LOG_ENABLE)
-include_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
-link_directories(~/Desktop/experiments/ns-allinone-3.35/ns-3.35/build)
+include_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
+link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
 
-
-set(SOURCE_FILES main.cc)
-set(PROJECT_ENV_FILES project_run_env/RunConfig.py)
+file(GLOB SOURCE_FILES main.cc)
+file(GLOB PROJECT_ENV_FILES project_run_env/RunConfig.py)
 file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES
+        localization_experiments_scenarios/*
         experiments_scenarios/*
         testing_scenarios/*
-        old_code/before_Sep_2021/very_old_experiments_with_ppb_background/*
-        localization_experiments_scenarios/*)
+        old_code/before_Sep_2021/very_old_experiments_with_ppb_background/*)
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES
@@ -35,7 +38,9 @@ file(GLOB TRAFFIC_GENERATOR_FILES
         traffic_generator_module/ppb/*
         traffic_generator_module/trace_replay/*
         traffic_generator_module/utility/*
-        traffic_generator_module/wehe_cs/*)
+        traffic_generator_module/wehe_cs/*
+        traffic_generator_module/wehe_cs/wehe_udp_cs/*
+        traffic_generator_module/wehe_cs/wehe_tcp_cs/*)
 
 add_executable(${PROJECT_NAME}
         ${SOURCE_FILES}
@@ -49,15 +54,23 @@ add_executable(${PROJECT_NAME}
 
 set(NS3_EMU ON)
 target_link_libraries(${PROJECT_NAME}
-        libns3.35-core-debug
-        ns3.35-wave-debug
-        ns3.35-wifi-debug
-        ns3.35-netanim-debug
-        ns3.35-network-debug
-        ns3.35-internet-debug
-        ns3.35-mobility-debug
-        ns3.35-visualizer-debug
-        ns3.35-applications-debug
-        ns3.35-applications-debug
-        ns3.35-point-to-point-debug
+        libcore
+        libwave
+        libnetanim
+        libwifi
+        libnetwork
+        libinternet
+        libapplications
+        libpoint-to-point
         Boost::program_options)
+
+##################### Part here is to help compile within the ns3 project  #####################
+set(ns3-exec-outputname ns${NS3_VER}-${target_name}${build_profile_suffix})
+set(ns3-execs "${output_directory}${ns3-exec-outputname};${ns3-execs}" CACHE INTERNAL "list of c++ executables")
+
+set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${output_directory}
+                   RUNTIME_OUTPUT_NAME ${ns3-exec-outputname}
+)
+################################################################################################

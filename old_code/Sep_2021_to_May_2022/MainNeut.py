@@ -1,4 +1,6 @@
 # This file is for experiments done between Sep 2021 - May 2022 related to tomography inference based on loss
+# To run this script please go back to the original GitHub directory which is compatible with version <= ns3.35
+# Link: https://github.com/zeinabshmeis/neut-ns3-code.git
 from project_run_env.RunConfig import *
 from data.data_preparation import *
 from multiprocessing import Process
