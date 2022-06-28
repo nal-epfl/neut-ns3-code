@@ -48,11 +48,6 @@ class PolicerType(Enum):
     PER_FLOW = 1
 
 
-# This is to specify how I am performing the test
-TEST_DATE = '6_2022'
-TEST_TYPE = 'neut_with_loss'
-
-
 class NetworkSetup:
     def __init__(self, common_link_rate, noncommon_links_delays='empty', noncommon_links_rates='empty'):
         self.common_link_rate = common_link_rate
@@ -88,7 +83,8 @@ class NeutralitySetup:
 
 
 class ExperimentParameters:
-    def __init__(self, network_setup, measurement_app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
+    def __init__(self, exp_type, network_setup, measurement_app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
+        self.exp_type = exp_type
         self.network_setup = network_setup
         self.measurement_app_setup = measurement_app_setup
         self.background_dir = background_dir
@@ -98,14 +94,14 @@ class ExperimentParameters:
 
 
 def run_experiment_with_params(params):
-    run_experiment(network_setup=params.network_setup, app_setup=params.measurement_app_setup,
+    run_experiment(exp_type=params.exp_type, network_setup=params.network_setup, app_setup=params.measurement_app_setup,
                    background_dir=params.background_dir, neutrality_setup=params.neutrality_setup,
                    exp_batch=params.exp_batch, seed=params.seed)
 
 
-def run_experiment(network_setup, app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
-    result_folder_name = '{}/{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
-        TEST_DATE, TEST_TYPE, app_setup.app_name, network_setup.common_link_rate, background_dir, exp_batch, seed,
+def run_experiment(exp_type, network_setup, app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
+    result_folder_name = '{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
+        exp_type, app_setup.app_name, network_setup.common_link_rate, background_dir, exp_batch, seed,
         app_setup.tcp_protocol if app_setup.transport_protocol == TransportProtocol.TCP else 'udp'
     )
     os.system('mkdir -p {}/scratch/wehe_p_tomography/results/{}'.format(get_ns3_path(), result_folder_name))

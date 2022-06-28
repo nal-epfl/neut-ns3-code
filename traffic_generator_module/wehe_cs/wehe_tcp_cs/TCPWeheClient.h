@@ -20,7 +20,7 @@ class TCPWeheClient : public WeheClient {
 
 private:
 
-    void Send(uint32_t payloadSize);
+    bool Send(const WeheTraceItem& item);
     void Recv(Ptr<Socket> socket);
     void ScheduleNextSendingEvents();
 
@@ -31,27 +31,31 @@ private:
     Ptr<Socket> _socket;
 
     vector<WeheTraceItem> _traceItems;
-    uint32_t _traceItemIdx, _nbBytesRx;
+    uint32_t _traceItemIdx = 0, _nbBytesRx = 0;
     void DecideOnNextSend(uint32_t nbBytesRx);
 
     ns3::Time _startTime;
 
     bool _enableCwndMonitor = false;
-    CwndMonitor* _cwndMonitor;
+    CwndMonitor* _cwndMonitor{};
     vector<RxEvent> _rxEvents;
-    string _resultsFolder = "";
+    string _resultsFolder;
+
+    // To handle proper application stop
+    EventId _sendEvent;
+    bool appStopped = false;
 
 public:
 
     TCPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress);
 
-    void LoadTrace(vector<WeheTraceItem> &traceItems);
-    void SetResultsFolder(string resultsFolder);
-    void SetTos(int tos);
-    void EnableCwndMonitor();
+    void LoadTrace(vector<WeheTraceItem> &traceItems) override;
+    void SetResultsFolder(string resultsFolder) override;
+    void SetTos(int tos) override;
+    void EnableCwndMonitor() override;
 
-    void StartApplication();
-    void StopApplication();
+    void StartApplication() override;
+    void StopApplication() override;
 
 };
 

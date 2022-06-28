@@ -24,7 +24,7 @@ private:
     void SetupConnection(Ptr<Socket> socket);
     void HandleTCPAccept (Ptr<Socket> socket, const Address& from);
 
-    bool Send(uint32_t payloadSize);
+    bool Send(const WeheTraceItem& item);
     void Recv(Ptr<Socket> socket);
     void ScheduleNextResponse();
     void ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace);
@@ -36,30 +36,34 @@ private:
     Ptr<Socket> _lSocket, _socket;
 
     vector<WeheTraceItem> _traceItems;
-    uint32_t _traceItemIdx, _nbBytesRx;
+    uint32_t _traceItemIdx = 0, _nbBytesRx = 0;
     void CheckForNextResponse(uint32_t nbBytesRx);
 
     ns3::Time _startTime;
 
     bool _enableCwndMonitor = false;
-    CwndMonitor* _cwndMonitor;
+    CwndMonitor* _cwndMonitor{};
     vector<RxEvent> _rxEvents;
-    string _resultsFolder = "";
+    string _resultsFolder;
 
     // This part is to control how much data is sent to the socket
     bool sendingResponse = false;
 
+    // This to handle proper application stop
+    EventId _sendEvent;
+    bool appStopped = false;
+
 public:
 
-    TCPWeheServer(uint32_t appId, Ptr<Node> server, InetSocketAddress serverAddress);
+    TCPWeheServer(uint32_t appId, const Ptr<Node>& server, InetSocketAddress serverAddress);
 
-    void LoadTrace(vector<WeheTraceItem> &traceItems);
-    void SetResultsFolder(string resultsFolder);
-    void SetTos(int tos);
-    void EnableCwndMonitor();
+    void LoadTrace(vector<WeheTraceItem> &traceItems) override;
+    void SetResultsFolder(string resultsFolder) override;
+    void SetTos(int tos) override;
+    void EnableCwndMonitor() override;
 
-    void StartApplication();
-    void StopApplication();
+    void StartApplication() override;
+    void StopApplication() override;
 
 };
 

@@ -5,7 +5,7 @@
 #ifndef WEHE_P_TOMOGRAPHY_INFINITETCPCLIENT_H
 #define WEHE_P_TOMOGRAPHY_INFINITETCPCLIENT_H
 
-#include <stdlib.h>     //for using the function sleep
+#include <cstdlib>     //for using the function sleep
 
 #include "ns3/core-module.h"
 #include "ns3/applications-module.h"
@@ -19,11 +19,11 @@ using namespace std;
 class InfiniteTCPClient : public Application {
 
 private:
-    virtual void StartApplication(void);
-    virtual void StopApplication(void);
+    void StartApplication() override;
+    void StopApplication() override;
 
-    void SchedualeSend(void);
-    bool Send(void);
+    void ScheduleSend();
+    bool Send();
     void ResumeApp(Ptr<Socket> localSocket, uint32_t txSpace);
 
     static uint32_t APPS_COUNT;
@@ -34,27 +34,25 @@ private:
 
     Ptr<Socket> _socket;
     string _tcpProtocol;
-    Address _peerAddress;
-    uint16_t _peerPort;
+    Address _address;
+    uint16_t _port;
 
     bool _appPaused;
     EventId _sendEvent;
 
-    bool _enableCwndMonitor;
-    CwndMonitor* _cwndMonitor;
-    string _resultsFolder = "";
+    bool _enableCwndMonitor = false;
+    CwndMonitor* _cwndMonitor{};
+    string _resultsFolder;
 
 
 protected:
-    virtual void DoDispose(void);
+    void DoDispose() override;
 
 public:
-    static TypeId GetTypeId(void);
+    static TypeId GetTypeId();
 
     InfiniteTCPClient();
-    virtual ~InfiniteTCPClient();
-
-    void SetRemote(Address ip, uint16_t port);
+    ~InfiniteTCPClient() override;
 };
 
 

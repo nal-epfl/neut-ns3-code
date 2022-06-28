@@ -8,11 +8,12 @@
 
 TCPWeheClient::TCPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress) :
         _appId(appId), _client(client), _serverAddress(serverAddress) {
+    _sendEvent = EventId ();
 }
 
 void TCPWeheClient::LoadTrace(vector<WeheTraceItem> &traceItems) {
     uint32_t preBytesRx = 0;
-    for(auto item : traceItems) {
+    for(const auto& item : traceItems) {
         if(item.appSide == CLIENT) {
             _traceItems.push_back({item.frameNb, item.timestamp, item.payloadSize, CLIENT, preBytesRx});
             preBytesRx = 0;
@@ -62,42 +63,46 @@ void TCPWeheClient::StartApplication() {
 }
 
 void TCPWeheClient::StopApplication() {
+    if (appStopped) { return; }
+    appStopped = true;
+
+    // make sure all objects are freed
     _socket->Dispose();
+    Simulator::Cancel (_sendEvent);
 
     // part for monitoring the congestion window
-    if (_enableCwndMonitor) {
+    if (_cwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
         _cwndMonitor->SaveRtoChanges();
         _cwndMonitor->SaveRttChanges();
         _cwndMonitor->SaveCongStateChanges();
     }
 
+    // save recorded receive events
     ofstream outfile;
     outfile.open(_resultsFolder + "/client_app" + to_string(_appId) + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }
 
-void TCPWeheClient::Send(uint32_t payloadSize) {
-    Ptr<Packet> p = Create<Packet> (payloadSize);
+bool TCPWeheClient::Send(const WeheTraceItem& item) {
+    Ptr<Packet> p = Create<Packet> (item.payloadSize);
 
     if ((_socket->Send (p)) < 0) {
-        cout << "Error while sending " << payloadSize << " bytes to " << _serverAddress
-             << " at time " << ns3::Now() << endl;
+//        cout << "Error while sending " << item.payloadSize << " bytes to " << _serverAddress
+//             << " at time " << ns3::Now() << endl;
+        return false;
     }
 
-//    cout << "client sends data " << seqNb << " with payload size " << payloadSize << endl;
-
-    if(payloadSize == 0) {StopApplication();}
+    if(item.payloadSize == 0) {StopApplication();}
+    return true;
 }
 
 void TCPWeheClient::Recv(Ptr<Socket> socket) {
     Ptr<Packet> packet = socket->Recv();
     if(packet->GetSize() == 0) {return;}
 
-//    cout << "client recv " << packet->GetSize() << " at time " <<  (Simulator::Now()-_startTime).GetSeconds() << endl;
-
-    _rxEvents.push_back({packet->GetSize(), (Simulator::Now()-_startTime).GetSeconds()});
+    _rxEvents.push_back({packet->GetSize(), (Simulator::Now()).GetSeconds()});
     DecideOnNextSend(packet->GetSize());
 }
 
@@ -106,7 +111,8 @@ void TCPWeheClient::DecideOnNextSend(uint32_t nbBytesRx) {
 
     // TCP case: I received all the previous required bytes
     if(_nbBytesRx >= _traceItems[_traceItemIdx].preBytesRx) {
-        ScheduleNextSendingEvents();
+        _nbBytesRx = 0;
+        _sendEvent = Simulator::Schedule(Seconds(0.0), &TCPWeheClient::ScheduleNextSendingEvents, this);
     }
 }
 
@@ -117,10 +123,11 @@ void TCPWeheClient::ScheduleNextSendingEvents() {
 
         // keep this time pacing on the client requests side
         ns3::Time relativeTime = Simulator::Now() - _startTime;
-        ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
-        Simulator::Schedule(remainingTime, &TCPWeheClient::Send, this, item.payloadSize);
-
-//        Send(item.payloadSize);
+        if (item.timestamp > relativeTime) {
+            _sendEvent = Simulator::Schedule(item.timestamp - relativeTime, &TCPWeheClient::ScheduleNextSendingEvents, this);
+            return;
+        }
+        if(!Send(item)) { return; }
 
         _traceItemIdx++;
     } while(_traceItemIdx < _traceItems.size() && _traceItems[_traceItemIdx].preBytesRx == 0);
