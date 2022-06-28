@@ -1,7 +1,7 @@
 # This file is for experiments done after May 2022 related to neutrality-violations localization algorithm
 # It is only compatible with the files in the localization_experiments_scenarios and ns3 versions >= ns3.36.1
 
-from data.data_preparation import *
+from data.wehe_traces_processing import *
 
 import os
 import time

@@ -19,15 +19,14 @@ link_directories(${Boost_LIBRARY_DIRS})
 add_definitions(-DNS3_LOG_ENABLE)
 include_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
 link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
+include_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build)
+link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build)
 
 file(GLOB SOURCE_FILES main.cc)
-file(GLOB PROJECT_ENV_FILES project_run_env/RunConfig.py)
 file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES
         localization_experiments_scenarios/*
-        experiments_scenarios/*
-        testing_scenarios/*
-        old_code/before_Sep_2021/very_old_experiments_with_ppb_background/*)
+        "experiments_scenarios [deprecate]/*")
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES
