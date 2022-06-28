@@ -125,7 +125,7 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(1));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue(MilliSeconds(200)));
     Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue(TcpClassicRecovery::GetTypeId()));
-    Config::SetDefault ("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
+    Config::SetDefault("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
 
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
 
@@ -321,7 +321,7 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
 
     /*** Run simulation ***/
     cout << "Start Simulation" << endl;
-    Simulator::Stop(testsEndTime[suspectedTestId] + warmupTime);
+    Simulator::Stop(testsEndTime[suspectedTestId] + Seconds(2.0));
     Simulator::Run();
     Simulator::Destroy();
 

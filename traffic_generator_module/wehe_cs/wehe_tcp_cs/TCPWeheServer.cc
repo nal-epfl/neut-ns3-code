@@ -4,13 +4,14 @@
 
 #include "TCPWeheServer.h"
 
-TCPWeheServer::TCPWeheServer(uint32_t appId, Ptr<Node> server, InetSocketAddress serverAddress) :
+TCPWeheServer::TCPWeheServer(uint32_t appId, const Ptr<Node>& server, InetSocketAddress serverAddress) :
         _appId(appId), _server(server), _serverAddress(serverAddress){
+    _sendEvent = EventId ();
 }
 
 void TCPWeheServer::LoadTrace(vector<WeheTraceItem> &traceItems) {
     uint32_t preBytesRx = 0;
-    for(auto item : traceItems) {
+    for(const auto& item : traceItems) {
         if(item.appSide == SERVER) {
             _traceItems.push_back({item.frameNb, item.timestamp, item.payloadSize, SERVER, preBytesRx});
             preBytesRx = 0;
@@ -33,7 +34,7 @@ void TCPWeheServer::EnableCwndMonitor() {
     _enableCwndMonitor = true;
 }
 
-void TCPWeheServer::StartApplication(void) {
+void TCPWeheServer::StartApplication() {
 
     if(!_lSocket) {
         _lSocket = Socket::CreateSocket (_server, TypeId::LookupByName ("ns3::TcpSocketFactory" ));
@@ -59,6 +60,8 @@ void TCPWeheServer::SetupConnection(Ptr<Socket> socket) {
     _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
     _socket->SetAttribute("SndBufSize", UintegerValue(131072));
     _socket->SetRecvCallback (MakeCallback (&TCPWeheServer::Recv, this));
+
+    // This is added to avoid socket overflow
     _socket->SetSendCallback (MakeCallback (&TCPWeheServer::ResumeResponse, this));
 
     // part for monitoring the congestion window
@@ -71,26 +74,35 @@ void TCPWeheServer::SetupConnection(Ptr<Socket> socket) {
 }
 
 void TCPWeheServer::StopApplication() {
+    if (appStopped) { return; }
+    appStopped = true;
+
+    // make sure all objects are freed
+    _socket->Dispose();
+    _lSocket->Dispose();
+    Simulator::Cancel (_sendEvent);
+
     // part for monitoring the congestion window
-    if (_enableCwndMonitor) {
+    if (_cwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
         _cwndMonitor->SaveRtoChanges();
         _cwndMonitor->SaveRttChanges();
         _cwndMonitor->SaveCongStateChanges();
     }
 
+    // save recorded receive events
     ofstream outfile;
     outfile.open(_resultsFolder + "/server_app" + to_string(_appId) + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }
 
-bool TCPWeheServer::Send(uint32_t payloadSize) {
+bool TCPWeheServer::Send(const WeheTraceItem& item) {
     SeqTsHeader seqTs;
-    seqTs.SetSeq (_traceItemIdx);
-    uint32_t segmentSize = payloadSize > (8+4) ? payloadSize - (8+4) : payloadSize; // 8+4 : the size of the seqTs header
+    seqTs.SetSeq (item.frameNb);
+    uint32_t segmentSize = item.payloadSize > (8 + 4) ? item.payloadSize - (8 + 4) : item.payloadSize; // 8+4 : the size of the seqTs header
     Ptr<Packet> p = Create<Packet>(segmentSize);
-    if(payloadSize > (8+4)) { p->AddHeader(seqTs); }
+    if(item.payloadSize > (8 + 4)) { p->AddHeader(seqTs); }
 
     if ((_socket->Send (p)) < 0) {
 //        cout << "Error while sending " << payloadSize << " bytes to " << _socket->GetErrno()
@@ -98,7 +110,7 @@ bool TCPWeheServer::Send(uint32_t payloadSize) {
         return false;
     }
 
-    if(payloadSize == 0) {StopApplication();}
+    if(item.payloadSize == 0) { StopApplication(); }
     return true;
 }
 
@@ -106,7 +118,7 @@ void TCPWeheServer::Recv(Ptr<Socket> socket) {
     Ptr<Packet> packet = socket->Recv();
     if(packet->GetSize() == 0) {return;}
 
-    _rxEvents.push_back({packet->GetSize(), (Simulator::Now()-_startTime).GetSeconds()});
+    _rxEvents.push_back({packet->GetSize(), (Simulator::Now()).GetSeconds()});
     CheckForNextResponse(packet->GetSize());
 }
 
@@ -117,7 +129,7 @@ void TCPWeheServer::CheckForNextResponse(uint32_t nbBytesRx) {
     if(_nbBytesRx >= _traceItems[_traceItemIdx].preBytesRx) {
         sendingResponse = true;
         _nbBytesRx = 0;
-        ScheduleNextResponse();
+        _sendEvent = Simulator::Schedule(Seconds(0.0), &TCPWeheServer::ScheduleNextResponse, this);
     }
 
 }
@@ -129,15 +141,14 @@ void TCPWeheServer::ScheduleNextResponse() {
     do {
         WeheTraceItem item = _traceItems[_traceItemIdx];
 
-        // The server should have no time pacing and should send as the network conditions allow
+        // comment this if the server should have no time pacing and should send as the network conditions allow
         ns3::Time relativeTime = Simulator::Now() - _startTime;
         if (item.timestamp > relativeTime) {
-            Simulator::Schedule(item.timestamp - relativeTime, &TCPWeheServer::ScheduleNextResponse, this);
+            _sendEvent = Simulator::Schedule(item.timestamp - relativeTime, &TCPWeheServer::ScheduleNextResponse, this);
             return;
         }
 
-        bool isSend = Send(item.payloadSize);
-        if(!isSend) { return; }
+        if(!Send(item)) { return; }
 
         _traceItemIdx++;
     } while(_traceItemIdx < _traceItems.size() && _traceItems[_traceItemIdx].preBytesRx == 0);
@@ -146,7 +157,7 @@ void TCPWeheServer::ScheduleNextResponse() {
 
 // This is just a wrap-up function
 void TCPWeheServer::ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace) {
-    ScheduleNextResponse();
+    _sendEvent = Simulator::Schedule(Seconds(0.0), &TCPWeheServer::ScheduleNextResponse, this);
 }
 
 void TCPWeheServer::SetTos(int tos) { }

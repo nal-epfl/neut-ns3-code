@@ -17,11 +17,11 @@ TypeId InfiniteTCPClient::GetTypeId(void) {
             .AddAttribute ("RemoteAddress",
                            "The destination Address of the outbound packets",
                            AddressValue (),
-                           MakeAddressAccessor (&InfiniteTCPClient::_peerAddress),
+                           MakeAddressAccessor (&InfiniteTCPClient::_address),
                            MakeAddressChecker ())
             .AddAttribute ("RemotePort", "The destination port of the outbound packets",
                            UintegerValue (100),
-                           MakeUintegerAccessor (&InfiniteTCPClient::_peerPort),
+                           MakeUintegerAccessor (&InfiniteTCPClient::_port),
                            MakeUintegerChecker<uint16_t> ())
             .AddAttribute ("TcpProtocol", "The congestion control algorithm",
                            StringValue (""),
@@ -52,22 +52,19 @@ uint32_t InfiniteTCPClient::APPS_COUNT = 0;
 
 InfiniteTCPClient::InfiniteTCPClient() {
     NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
     _appId = ++APPS_COUNT;
     _nbSentPkts = 0;
-    _socket = 0;
+    _socket = nullptr;
     _appPaused = false;
     _sendEvent = EventId ();
+    _pktSize = 1024;
     _maxSendingRate = DataRate("20Mbps");
+    _port = 0;
 }
 
 InfiniteTCPClient::~InfiniteTCPClient() {
     NS_LOG_FUNCTION (this);
-}
-
-void InfiniteTCPClient::SetRemote(Address ip, uint16_t port) {
-    NS_LOG_FUNCTION (this << ip << port);
-    _peerAddress = ip;
-    _peerPort = port;
 }
 
 void InfiniteTCPClient::DoDispose(void) {
@@ -78,37 +75,36 @@ void InfiniteTCPClient::DoDispose(void) {
 void InfiniteTCPClient::StartApplication(void) {
     NS_LOG_FUNCTION (this);
 
-    if (_socket == 0)     {
+    if (_socket == nullptr)     {
         Ptr<TcpL4Protocol> tcpProtocol = GetNode()->GetObject<TcpL4Protocol> ();
         _socket = tcpProtocol->CreateSocket(ns3::TypeId::LookupByName(_tcpProtocol));
 
-        if (Ipv4Address::IsMatchingType (_peerAddress) == true) {
+        if (Ipv4Address::IsMatchingType(_address)) {
             if (_socket->Bind () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
-            _socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(_peerAddress), _peerPort));
+            _socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(_address), _port));
         }
-        else if (Ipv6Address::IsMatchingType (_peerAddress) == true) {
+        else if (Ipv6Address::IsMatchingType(_address)) {
             if (_socket->Bind6 () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
-            _socket->Connect (Inet6SocketAddress (Ipv6Address::ConvertFrom(_peerAddress), _peerPort));
+            _socket->Connect (Inet6SocketAddress (Ipv6Address::ConvertFrom(_address), _port));
         }
-        else if (InetSocketAddress::IsMatchingType (_peerAddress) == true) {
+        else if (InetSocketAddress::IsMatchingType(_address)) {
             if (_socket->Bind () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
-            _socket->Connect (_peerAddress);
+            _socket->Connect (_address);
         }
-        else if (Inet6SocketAddress::IsMatchingType (_peerAddress) == true) {
+        else if (Inet6SocketAddress::IsMatchingType(_address)) {
             if (_socket->Bind6 () == -1) {
                 NS_FATAL_ERROR ("Failed to bind socket");
             }
-            _socket->Connect (_peerAddress);
+            _socket->Connect (_address);
         }
-        else
-        {
-            NS_ASSERT_MSG (false, "Incompatible address type: " << _peerAddress);
+        else {
+            NS_ASSERT_MSG (false, "Incompatible address type: " << _address);
         }
     }
 
@@ -132,14 +128,16 @@ void InfiniteTCPClient::StartApplication(void) {
         _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 
-    _sendEvent = Simulator::Schedule (Seconds (0.0), &InfiniteTCPClient::SchedualeSend, this);
+    _sendEvent = Simulator::Schedule (Seconds (0.0), &InfiniteTCPClient::ScheduleSend, this);
 }
 
 void InfiniteTCPClient::StopApplication(void) {
     NS_LOG_FUNCTION (this);
+
     _socket->Dispose();
     Simulator::Cancel (_sendEvent);
-    if (_enableCwndMonitor) {
+
+    if (_cwndMonitor) {
         _cwndMonitor->SaveCwndChanges();
         _cwndMonitor->SaveRtoChanges();
         _cwndMonitor->SaveRttChanges();
@@ -147,7 +145,7 @@ void InfiniteTCPClient::StopApplication(void) {
     }
 }
 
-bool InfiniteTCPClient::Send(void) {
+bool InfiniteTCPClient::Send() {
     NS_LOG_FUNCTION (this);
     NS_ASSERT (_sendEvent.IsExpired ());
 
@@ -156,42 +154,34 @@ bool InfiniteTCPClient::Send(void) {
     Ptr<Packet> p = Create<Packet> (_pktSize - (8 + 4)); // 8+4 : the size of the seqTs header
     p->AddHeader (seqTs);
 
-    std::stringstream peerAddressStringStream;
-    if (Ipv4Address::IsMatchingType (_peerAddress)) {
-        peerAddressStringStream << Ipv4Address::ConvertFrom (_peerAddress);
-    }
-    else if (Ipv6Address::IsMatchingType (_peerAddress)) {
-        peerAddressStringStream << Ipv6Address::ConvertFrom (_peerAddress);
-    }
-
     if ((_socket->GetTxAvailable () > 0) && ((_socket->Send (p)) >= 0)) {
         ++_nbSentPkts;
         NS_LOG_INFO ("TraceDelay TX " << _pktSize << " bytes to "
-                                      << peerAddressStringStream.str () << " Uid: "
+                                      << _address << " Uid: "
                                       << p->GetUid () << " Time: "
                                       << (Simulator::Now ()).GetSeconds ());
         return true;
     }
 
-    NS_LOG_INFO ("Error while sending " << _pktSize << " bytes to " << peerAddressStringStream.str ());
+    NS_LOG_INFO ("Error while sending " << _pktSize << " bytes to " << _address);
     return false;
 }
 
 
-void InfiniteTCPClient::SchedualeSend(void) {
+void InfiniteTCPClient::ScheduleSend() {
     NS_LOG_FUNCTION(this);
     if (!Send()) {
         _appPaused = true;
         return;
     }
     Time nextTime (Seconds ((_pktSize * 8) / static_cast<double>(_maxSendingRate.GetBitRate ()))); // Time till next packet
-    _sendEvent = Simulator::Schedule (nextTime, &InfiniteTCPClient::SchedualeSend, this);
+    _sendEvent = Simulator::Schedule (nextTime, &InfiniteTCPClient::ScheduleSend, this);
 }
 
 // This is just a wrap-up function
 void InfiniteTCPClient::ResumeApp(Ptr<Socket> localSocket, uint32_t txSpace) {
     if (_appPaused) {
         _appPaused = false;
-        SchedualeSend();
+        _sendEvent = Simulator::Schedule(Seconds(0.0), &InfiniteTCPClient::ScheduleSend, this);
     }
 }
