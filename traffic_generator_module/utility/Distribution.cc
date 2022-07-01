@@ -24,7 +24,7 @@ void Distribution::LoadFromFile(string filename) {
     ifstream file(filename);
     string line;
     while(getline(file, line)) {
-        vector<string> attributes = HelperMethods::SplitStr(line, ',');
+        vector<string> attributes = helper_methods::SplitStr(line, ',');
         hist.emplace_back(stoi(attributes[0]), stod(attributes[2]), stod(attributes[3]));
     }
     file.close();

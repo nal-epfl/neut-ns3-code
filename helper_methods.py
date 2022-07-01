@@ -101,9 +101,11 @@ class ExperimentParameters:
 
 
 def run_experiment_with_params(params):
-    run_experiment(exp_type=params.exp_type, network_setup=params.network_setup, app_setup=params.measurement_app_setup,
-                   background_dir=params.background_dir, neutrality_setup=params.neutrality_setup,
-                   exp_batch=params.exp_batch, seed=params.seed)
+    run_experiment(
+        exp_type=params.exp_type, network_setup=params.network_setup, app_setup=params.measurement_app_setup,
+        background_dir=params.background_dir, neutrality_setup=params.neutrality_setup,
+        exp_batch=params.exp_batch, seed=params.seed
+    )
 
 
 def run_experiment(exp_type, network_setup, app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
@@ -136,7 +138,7 @@ def run_experiment(exp_type, network_setup, app_setup, background_dir, neutralit
         ' --policerLocation={}'.format(neutrality_setup.policer_location.value) +
         ' --policerType={}'.format(neutrality_setup.policer_type.value) +
         ' --backThrottledPct={}'.format(neutrality_setup.pct_of_throttled_background) +
-        '\''
+        '\' --no-build'
     )
 
 

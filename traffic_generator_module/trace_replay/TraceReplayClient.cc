@@ -179,13 +179,13 @@ void TraceReplayClient::ScheduleSendEvents() {
 
     // prepare the sockets based on the trace starting time
     getline(traceInput, line);
-    vector<string> pkt_attributes = HelperMethods::SplitStr(line, ',');
+    vector<string> pkt_attributes = helper_methods::SplitStr(line, ',');
     double startTIme = floor(stod(pkt_attributes[1]));
     Simulator::Schedule(Seconds(startTIme), &TraceReplayClient::PrepareSocket, this);
 
     // Schedule sending the actual packets
      do {
-        pkt_attributes = HelperMethods::SplitStr(line, ',');
+        pkt_attributes = helper_methods::SplitStr(line, ',');
         ns3::Time timestamp = Time(pkt_attributes[1] + std::string("s"));// + NanoSeconds(rand() % 100000);
         uint32_t payload_size = stoi(pkt_attributes[2]);
         Simulator::Schedule(timestamp, &TraceReplayClient::Send, this, payload_size);

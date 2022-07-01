@@ -149,7 +149,7 @@ void MeasurReplayClient::LoadTrace() {
     string line;
     ns3::Time finalTimestamp;
     while(getline(traceInput, line)) {
-        vector<string> pkt_attributes = HelperMethods::SplitStr(line, ',');
+        vector<string> pkt_attributes = helper_methods::SplitStr(line, ',');
 
         uint32_t frameNb = stoi(pkt_attributes[0]);
         ns3::Time timestamp = Seconds(stod(pkt_attributes[1]));

@@ -27,8 +27,8 @@ void MultipleReplayClients::RunAllTraces(const string& tracesPath, uint32_t nbTC
 }
 
 void MultipleReplayClients::RunAllTraces(const string& tracesPath, uint8_t tos) {
-    uint32_t nbTCPFlows = HelperMethods::GetSubDirCount(tracesPath + "/TCP");
-    uint32_t nbUDPFlows = HelperMethods::GetSubDirCount(tracesPath + "/UDP");
+    uint32_t nbTCPFlows = helper_methods::GetSubDirCount(tracesPath + "/TCP");
+    uint32_t nbUDPFlows = helper_methods::GetSubDirCount(tracesPath + "/UDP");
     this->RunAllTraces(tracesPath, nbTCPFlows, nbUDPFlows, tos);
 }
 
@@ -42,7 +42,7 @@ void MultipleReplayClients::RunSpecificTraces(const vector<string>& tcpTracesPat
 }
 
 void MultipleReplayClients::RunTracesWithRandomThrottledTCPFlows(const string& tracesPath, double throttledProb, uint8_t thottledTos) {
-    uint32_t nbTCPFlows = HelperMethods::GetSubDirCount(tracesPath + "/TCP");
+    uint32_t nbTCPFlows = helper_methods::GetSubDirCount(tracesPath + "/TCP");
     vector<string> tcpTracesPathNeutral, tcpTracesPathThrottled;
 
     random_device rd;
@@ -65,7 +65,7 @@ void MultipleReplayClients::RunTracesWithRandomThrottledTCPFlows(const string& t
 }
 
 void MultipleReplayClients::RunTracesWithRandomThrottledUDPFlows(const string& tracesPath, double throttledProb, uint8_t thottledTos) {
-    uint32_t nbTCPFlows = HelperMethods::GetSubDirCount(tracesPath + "/TCP");
+    uint32_t nbTCPFlows = helper_methods::GetSubDirCount(tracesPath + "/TCP");
     vector<string> tcpTracesPathNeutral, udpTracesPathThrottled;
 
     random_device rd;

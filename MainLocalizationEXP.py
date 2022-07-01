@@ -10,7 +10,7 @@ TEST_TYPE = 'Wehe_Test_Cases_DRY_RUN'
 
 
 if __name__ == '__main__':
-    # rebuild_project()
+    rebuild_project()
 
     # -------------------------------------- START TESTS -------------------------------------- #
     m_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'

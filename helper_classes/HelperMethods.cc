@@ -4,60 +4,61 @@
 
 #include "HelperMethods.h"
 
-vector<string> HelperMethods::SplitStr (const string &s, char delim) {
-    vector<string> result;
-    stringstream ss (s);
-    string item;
+namespace helper_methods {
+    vector<string> SplitStr(const string &s, char delim) {
+        vector<string> result;
+        stringstream ss(s);
+        string item;
 
-    while (getline (ss, item, delim)) {
-        result.push_back (item);
+        while (getline(ss, item, delim)) {
+            result.push_back(item);
+        }
+
+        return result;
     }
 
-    return result;
-}
+    template<class T>
+    string VectorToString(vector<T> vector, string separator) {
+        if (vector.empty()) return "";
 
-template <class T>
-string HelperMethods::VectorToString(vector<T> vector, string separator) {
-    if (vector.empty()) return "";
+        stringstream ss;
+        ss << vector[0];
+        auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
+        for_each(vector.begin() + 1, vector.end(), aggregate);
 
-    stringstream ss;
-    ss << vector[0];
-    auto aggregate = [&ss, &separator](const T &s) { ss << separator << s; };
-    for_each(vector.begin() + 1, vector.end(), aggregate);
-
-    return ss.str();
-}
-
-uint32_t HelperMethods::GetSubDirCount(const string& dirPath) {
-    auto dirIter = std::filesystem::directory_iterator(dirPath);
-    return count_if(
-            begin(dirIter),
-            end(dirIter),
-            [](auto& entry) { return entry.is_regular_file(); }
-    );
-}
-
-string HelperMethods::ComputeQueueSize(const string& linkRate, const vector<string>& linksDelay) { // RTT * link_rate
-    regex reg("([0-9]*)ms");
-    double minRTT = 0.005; // in sec
-    for(const string& delay : linksDelay) {
-        minRTT += 2 * stoi(regex_replace(delay, reg, "$1")) * 1e-3;
+        return ss.str();
     }
-    return to_string(minRTT * (ns3::DataRate(linkRate).GetBitRate() * 0.125)) + "B";
-}
 
-ns3::Ipv4Address HelperMethods::GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface) {
-    return node->GetObject<ns3::Ipv4>()->GetAddress(interface, 0).GetLocal();
-}
+    uint32_t GetSubDirCount(const string &dirPath) {
+        auto dirIter = std::filesystem::directory_iterator(dirPath);
+        return count_if(
+                begin(dirIter),
+                end(dirIter),
+                [](auto &entry) { return entry.is_regular_file(); }
+        );
+    }
 
-bool HelperMethods::doesPolicerLocationMatch(const string& linkLocation, const string& expectedPolicerLocation) {
-    if (expectedPolicerLocation == linkLocation) return true;
-    if (expectedPolicerLocation == "nc" && linkLocation.find("nc") != std::string::npos) return true;
-    return false;
-}
+    string ComputeQueueSize(const string &linkRate, const vector<string> &linksDelay) { // RTT * link_rate
+        regex reg("([0-9]*)ms");
+        double minRTT = 0.005; // in sec
+        for (const string &delay: linksDelay) {
+            minRTT += 2 * stoi(regex_replace(delay, reg, "$1")) * 1e-3;
+        }
+        return to_string(minRTT * (ns3::DataRate(linkRate).GetBitRate() * 0.125)) + "B";
+    }
 
-bool HelperMethods::isPolicerTypePerFlowPolicer(int policerType) {
-    return policerType == 1;
-}
+    ns3::Ipv4Address GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface) {
+        return node->GetObject<ns3::Ipv4>()->GetAddress(interface, 0).GetLocal();
+    }
 
+    bool DoesPolicerLocationMatch(const string &linkLocation, const string &expectedPolicerLocation) {
+        if (expectedPolicerLocation == linkLocation) return true;
+        if (expectedPolicerLocation == "nc" && linkLocation.find("nc") != std::string::npos) return true;
+        return false;
+    }
+
+    bool IsPolicerTypePerFlowPolicer(int policerType) {
+        return policerType == 1;
+    }
+}
 
