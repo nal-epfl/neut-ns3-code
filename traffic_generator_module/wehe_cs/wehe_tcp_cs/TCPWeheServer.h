@@ -29,7 +29,7 @@ private:
     void ScheduleNextResponse();
     void ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace);
 
-    uint32_t _appId;
+    string _appTag;
     Ptr<Node> _server;
 
     InetSocketAddress _serverAddress;
@@ -55,11 +55,11 @@ private:
 
 public:
 
-    TCPWeheServer(uint32_t appId, const Ptr<Node>& server, InetSocketAddress serverAddress);
+    TCPWeheServer(string appTag, const Ptr<Node>& server, InetSocketAddress serverAddress);
 
     void LoadTrace(vector<WeheTraceItem> &traceItems) override;
     void SetResultsFolder(string resultsFolder) override;
-    void SetTos(int tos) override;
+    void SetDscp(int tos) override;
     void EnableCwndMonitor() override;
 
     void StartApplication() override;

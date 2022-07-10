@@ -24,7 +24,7 @@ private:
     void Recv(Ptr<Socket> socket);
     void ScheduleNextSendingEvents();
 
-    uint32_t _appId;
+    string _appTag;
     Ptr<Node> _client;
 
     InetSocketAddress _serverAddress;
@@ -47,11 +47,11 @@ private:
 
 public:
 
-    TCPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress);
+    TCPWeheClient(string appTag, Ptr<Node> &client, InetSocketAddress &serverAddress);
 
     void LoadTrace(vector<WeheTraceItem> &traceItems) override;
     void SetResultsFolder(string resultsFolder) override;
-    void SetTos(int tos) override;
+    void SetDscp(int tos) override;
     void EnableCwndMonitor() override;
 
     void StartApplication() override;

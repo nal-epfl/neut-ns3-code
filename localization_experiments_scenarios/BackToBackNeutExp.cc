@@ -116,7 +116,6 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
     uint32_t nbServers = nbApps/2;
 
     /*** Traffic Parameters ***/
-    string appProtocol = (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
     uint32_t rcvBufSize = 131072, sndBufSize = 131072;
     uint32_t mss = 1228, mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpCubic"));
@@ -170,7 +169,7 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
         if (DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, {0, 4, 8}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, {0, 1, 2}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
             tch.Uninstall(netDevice);
@@ -193,7 +192,7 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
     tch.Install(channel_r0_r1);
     if (DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                queueSize, {0, 4, 8}, policingRate, burstLength, resultsPath + "/common_link");
+                queueSize, {0, 1, 2}, policingRate, burstLength, resultsPath + "/common_link");
 
         const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
         tch.Uninstall(netDevice);
@@ -218,28 +217,28 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
     // Some parameters to define the architecture
     Ptr<Node> routerR = routers.Get(1), client = routers.Get(0);
     Ipv4Address clientIP = GetNodeIP(client, 1);
-    uint32_t appsPath[nbApps];
     Ptr<Node> appsServer[nbApps];
+    string appsTag[nbApps];
     vector<AppKey> appsKey;
 
-    int trafficClass[nbApps];
-    string appsTag[nbApps];
+    int trafficDscp[nbApps];
     uint32_t testId[nbApps];
     for (uint32_t i = 0; i < nbApps; i++) {
         testId[i] = (i < nbApps/2) ? controlTestId : suspectedTestId; // first half of the applications is control; the rest is policed
-        trafficClass[i] = (testId[i] == controlTestId) ? 0 : 4;
-        appsTag[i] = (testId[i] == controlTestId) ? "control" : "suspected";
+        trafficDscp[i] = (testId[i] == controlTestId) ? 0 : 1;
     }
-    if (IsPolicerTypePerFlowPolicer(policerType)) { trafficClass[nbApps - 1] = 8; }
+    if (IsPolicerTypePerFlowPolicer(policerType)) { trafficDscp[nbApps - 1] = 2; }
 
     /*** Create Application Traffic ***/
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsPath[i] = i % 2;
-        appsServer[i] = serverNodes.Get(appsPath[i]);
+        uint32_t appPath = i % 2;
+        appsTag[i] = ((testId[i] == controlTestId) ? "control_app" : "suspected_app") + to_string(appPath);
+        appsServer[i] = serverNodes.Get(appPath);
 
         // only in case of WeheCS both client and server are created by the application.
         if (appType == 5) {
-            WeheCS* weheCS = WeheCS::CreateWeheCS(client, appsServer[i], dataPath + "/" + replayTrace, isTCP, trafficClass[i], resultsPath);
+            WeheCS* weheCS = WeheCS::CreateWeheCS(appsTag[i], client, appsServer[i], dataPath + "/" + replayTrace,
+                                                  isTCP, trafficDscp[i], resultsPath);
             weheCS->StartApplication(testsStartTime[testId[i]]);
             weheCS->StopApplication(testsEndTime[testId[i]]);
             appsKey.emplace_back(GetNodeIP(appsServer[i], 1), clientIP, weheCS->GetPort(), 0);
@@ -249,14 +248,14 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
         appsKey.emplace_back(GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // create the application at destination
-        PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
+        PacketSinkHelper sinkAppHelper(GetSocketFactory(isTCP), InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(client);
         sinkApp.Start(testsStartTime[testId[i]]);
         sinkApp.Stop(testsEndTime[testId[i]]);
 
         // create the client sending traffic
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());
-        sinkAddress.SetTos(trafficClass[i]); // used for policing to set the traffic type
+        sinkAddress.SetTos(Dscp2Tos(trafficDscp[i])); // used for policing to set the traffic type
         ApplicationContainer app;
         if (appType == 1) {
             app = PoissonClientHelper::CreateConstantProbeApplication(
@@ -306,25 +305,24 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
 //    p2pRouters.EnablePcap(resultsPath + "/router-link", 0, 1);
 #endif
 
-    /*** Attach a Packet Monitor ***/
-    auto *commonLinkMonitor = new PacketMonitor(
-            testsStartTime[controlTestId], testsEndTime[suspectedTestId], routerR->GetId(), client->GetId(), "commonLink"
-    );
-    vector<PacketMonitor *> appsMonitors, nonCommonLinksMonitors;
+    /*** Attach Packet Monitors ***/
+    vector<PacketMonitor *> appsMonitors, commonLinkMonitors, nonCommonLinksMonitors;
     for (uint32_t i = 0; i < nbApps; i++) {
-        commonLinkMonitor->AddAppKey(appsKey[i]);
-
-        auto *appMonitor = new PacketMonitor(
+        auto *pathMonitor = new PacketMonitor(
                 testsStartTime[testId[i]], testsEndTime[testId[i]],
-                appsServer[i]->GetId(), client->GetId(),
-                appsTag[i] + "_app" + to_string(appsPath[i]));
-        appMonitor->AddAppKey(appsKey[i]);
-        appsMonitors.push_back(appMonitor);
+                appsServer[i]->GetId(), client->GetId(),"path_" + appsTag[i]);
+        pathMonitor->AddAppKey(appsKey[i]);
+        appsMonitors.push_back(pathMonitor);
+
+        auto *commonLinkMonitor = new PacketMonitor(
+                testsStartTime[testId[i]], testsEndTime[testId[i]],
+                routerR->GetId(), client->GetId(), "commonLink_" + appsTag[i]);
+        commonLinkMonitor->AddAppKey(appsKey[i]);
+        commonLinkMonitors.push_back(commonLinkMonitor);
 
         auto *nonCommonLinkMonitor = new PacketMonitor(
                 testsStartTime[testId[i]], testsEndTime[testId[i]],
-                appsServer[i]->GetId(), routerR->GetId(),
-                "noncommonLink_" + appsTag[i] + "_app" + to_string(appsPath[i]));
+                appsServer[i]->GetId(), routerR->GetId(), "noncommonLink_" + appsTag[i]);
         nonCommonLinkMonitor->AddAppKey(appsKey[i]);
         nonCommonLinksMonitors.push_back(nonCommonLinkMonitor);
     }
@@ -335,10 +333,10 @@ int run_back_to_back_neut_exp(int argc, char **argv) {
     Simulator::Run();
     Simulator::Destroy();
 
-    commonLinkMonitor->SaveRecordedPacketsCompact(resultsPath + "/common_link_packets.csv");
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/" + appsTag[i] + "_app" + to_string(appsPath[i]) + "_packets.csv");
-        nonCommonLinksMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/noncommon_link_" + appsTag[i] + "_app" + to_string(appsPath[i]) + "_packets.csv");
+        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/path_" + appsTag[i] + "_packets.csv");
+        commonLinkMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/common_link_" + appsTag[i] + "_packets.csv");
+        nonCommonLinksMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/noncommon_link_" + appsTag[i] + "_packets.csv");
     }
 /* ############################################## RUN SIMULATION AND MONITORING (END) ############################################## */
 

@@ -60,5 +60,13 @@ namespace helper_methods {
     bool IsPolicerTypePerFlowPolicer(int policerType) {
         return policerType == 1;
     }
+
+    uint8_t Dscp2Tos(uint8_t dscp) {
+        return dscp << 2;
+    }
+
+    string GetSocketFactory(bool isTCP) {
+        return (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
+    }
 }
 

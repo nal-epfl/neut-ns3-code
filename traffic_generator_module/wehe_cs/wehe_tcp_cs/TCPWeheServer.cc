@@ -4,8 +4,10 @@
 
 #include "TCPWeheServer.h"
 
-TCPWeheServer::TCPWeheServer(uint32_t appId, const Ptr<Node>& server, InetSocketAddress serverAddress) :
-        _appId(appId), _server(server), _serverAddress(serverAddress){
+#include <utility>
+
+TCPWeheServer::TCPWeheServer(string appTag, const Ptr<Node>& server, InetSocketAddress serverAddress) :
+        _appTag(std::move(appTag)), _server(server), _serverAddress(serverAddress){
     _sendEvent = EventId ();
 }
 
@@ -66,7 +68,7 @@ void TCPWeheServer::SetupConnection(Ptr<Socket> socket) {
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
-        string outputFolder = _resultsFolder + "/cong_algo_info_" + to_string(_appId) + "/server/";
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/server/";
         _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 
@@ -92,7 +94,7 @@ void TCPWeheServer::StopApplication() {
 
     // save recorded receive events
     ofstream outfile;
-    outfile.open(_resultsFolder + "/server_app" + to_string(_appId) + "_bytes_rx.csv");
+    outfile.open(_resultsFolder + "/server_" + _appTag + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }
@@ -160,5 +162,5 @@ void TCPWeheServer::ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace) {
     _sendEvent = Simulator::Schedule(Seconds(0.0), &TCPWeheServer::ScheduleNextResponse, this);
 }
 
-void TCPWeheServer::SetTos(int tos) { }
+void TCPWeheServer::SetDscp(int tos) { }
 

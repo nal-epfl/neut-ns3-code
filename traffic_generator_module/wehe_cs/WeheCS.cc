@@ -11,16 +11,16 @@
 uint32_t WeheCS::APPS_COUNT = 0;
 
 
-WeheCS::WeheCS(Ptr<Node> client, Ptr<Node> server, string protocol) {
-    _appId = ++APPS_COUNT;
+WeheCS::WeheCS(string appTag, const Ptr<Node> &client, const Ptr<Node> &server, string protocol) {
+    _appTag = std::move(appTag);
     _clientNode = client;
     _serverNode = server;
     _protocol = std::move(protocol);
-    SetPort(3000 + _appId);
+    SetPort(3000 + (++APPS_COUNT));
 }
 
-void WeheCS::SetTos(int tos) {
-    _trafficTos = tos;
+void WeheCS::SetDscp(int dscp) {
+    _trafficDscp = dscp;
 }
 
 void WeheCS::SetResultsFolder(string resultsFolder) {
@@ -47,38 +47,38 @@ void WeheCS::LoadTrace(const string& traceFile) {
     traceInput.close();
 }
 
-void WeheCS::StartApplication(ns3::Time startTime) {
+void WeheCS::StartApplication(const ns3::Time& startTime) {
     Ipv4Address address = _serverNode->GetObject<Ipv4>()->GetAddress(1, 0).GetLocal();
     int port = GetPort();
     InetSocketAddress serverSocketAddress = InetSocketAddress(address, port);
-    serverSocketAddress.SetTos(_trafficTos);
+    serverSocketAddress.SetTos(helper_methods::Dscp2Tos(_trafficDscp));
 
     if(_protocol == "ns3::TcpSocketFactory") {
-        _serverApp = new TCPWeheServer(_appId, _serverNode, serverSocketAddress);
+        _serverApp = new TCPWeheServer(_appTag, _serverNode, serverSocketAddress);
     }
     else if(_protocol == "ns3::UdpSocketFactory"){
-        _serverApp = new UDPWeheServer(_appId, _serverNode, serverSocketAddress);
+        _serverApp = new UDPWeheServer(_appTag, _serverNode, serverSocketAddress);
     }
     _serverApp->LoadTrace(_traceItems);
     _serverApp->SetResultsFolder(_resultsFolder);
-    _serverApp->SetTos(_trafficTos);
+    _serverApp->SetDscp(_trafficDscp);
     if(_enableCwndMonitor) { _serverApp->EnableCwndMonitor(); }
     _serverApp->StartApplication();
 
 
     if(_protocol == "ns3::TcpSocketFactory") {
-        _clientApp = new TCPWeheClient(_appId, _clientNode, serverSocketAddress);
+        _clientApp = new TCPWeheClient(_appTag, _clientNode, serverSocketAddress);
     }
     else if(_protocol == "ns3::UdpSocketFactory"){
-        _clientApp = new UDPWeheClient(_appId, _clientNode, serverSocketAddress);
+        _clientApp = new UDPWeheClient(_appTag, _clientNode, serverSocketAddress);
     }
     _clientApp->LoadTrace(_traceItems);
     _clientApp->SetResultsFolder(_resultsFolder);
-    _clientApp->SetTos(_trafficTos);
+    _clientApp->SetDscp(_trafficDscp);
     Simulator::Schedule(startTime, &WeheClient::StartApplication, _clientApp);
 }
 
-void WeheCS::StopApplication(ns3::Time endTime) {
+void WeheCS::StopApplication(const ns3::Time& endTime) {
     Simulator::Schedule(endTime, &WeheClient::StopApplication, _clientApp);
     Simulator::Schedule(endTime, &WeheServer::StopApplication, _serverApp);
 }
@@ -91,9 +91,11 @@ void WeheCS::SetPort(uint16_t port) {
     _serverPort = port;
 }
 
-WeheCS* WeheCS::CreateWeheCS(Ptr<Node> client, Ptr<Node> server, const string &trace, bool isTCP, uint8_t tos, const string &resultsPath) {
-    WeheCS* weheCS = new WeheCS(client, server, ((isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory"));
-    weheCS->SetTos(tos);
+WeheCS * WeheCS::CreateWeheCS(string appTag, const Ptr<Node> &client, const Ptr<Node> &server, const string &trace,
+                              bool isTCP,
+                              uint8_t dscp, const string &resultsPath) {
+    auto* weheCS = new WeheCS(std::move(appTag), client, server, helper_methods::GetSocketFactory(isTCP));
+    weheCS->SetDscp(dscp);
     weheCS->SetResultsFolder(resultsPath);
     weheCS->LoadTrace(trace);
     if(isTCP == 1) weheCS->EnableCwndMonitor();

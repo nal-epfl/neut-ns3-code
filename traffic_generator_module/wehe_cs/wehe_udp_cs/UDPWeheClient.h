@@ -24,7 +24,7 @@ private:
     void Recv(Ptr<Socket> socket);
     void ScheduleNextSendingEvents();
 
-    uint32_t _appId;
+    string _appTag;
     Ptr<Node> _client;
 
     InetSocketAddress _serverAddress;
@@ -36,21 +36,21 @@ private:
     ns3::Time _startTime;
 
     vector<RxEvent> _rxEvents;
-    string _resultsFolder = "";
+    string _resultsFolder;
 
     int _trafficTos = 0;
 
 public:
 
-    UDPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress);
+    UDPWeheClient(string appTag, Ptr<Node> &client, InetSocketAddress &serverAddress);
 
-    void LoadTrace(vector<WeheTraceItem> &traceItems);
-    void SetResultsFolder(string resultsFolder);
-    void SetTos(int tos);
-    void EnableCwndMonitor();
+    void LoadTrace(vector<WeheTraceItem> &traceItems) override;
+    void SetResultsFolder(string resultsFolder) override;
+    void SetDscp(int tos) override;
+    void EnableCwndMonitor() override;
 
-    void StartApplication();
-    void StopApplication();
+    void StartApplication() override;
+    void StopApplication() override;
 
 };
 

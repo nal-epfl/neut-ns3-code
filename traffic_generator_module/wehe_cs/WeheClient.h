@@ -21,7 +21,7 @@ public:
 
     virtual void LoadTrace(vector<WeheTraceItem> &traceItems) = 0;
     virtual void SetResultsFolder(string resultsFolder) = 0;
-    virtual void SetTos(int tos) = 0;
+    virtual void SetDscp(int dscp) = 0;
     virtual void EnableCwndMonitor() = 0;
 
     virtual void StartApplication() = 0;

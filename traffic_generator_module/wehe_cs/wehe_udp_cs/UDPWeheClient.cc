@@ -4,8 +4,10 @@
 
 #include "UDPWeheClient.h"
 
-UDPWeheClient::UDPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress) :
-                                _appId(appId), _client(client), _serverAddress(serverAddress){
+#include <utility>
+
+UDPWeheClient::UDPWeheClient(string appTag, Ptr<Node> &client, InetSocketAddress &serverAddress) :
+        _appTag(std::move(appTag)), _client(client), _serverAddress(serverAddress){
 
 }
 
@@ -25,7 +27,7 @@ void UDPWeheClient::SetResultsFolder(string resultsFolder) {
     _resultsFolder = resultsFolder;
 }
 
-void UDPWeheClient::SetTos(int tos) {
+void UDPWeheClient::SetDscp(int tos) {
     _trafficTos = tos;
 }
 
@@ -53,7 +55,7 @@ void UDPWeheClient::StopApplication() {
     _socket->Dispose();
 
     ofstream outfile;
-    outfile.open(_resultsFolder + "/client_app" + to_string(_appId) + "_bytes_rx.csv");
+    outfile.open(_resultsFolder + "/client_" + _appTag + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }

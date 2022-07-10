@@ -9,18 +9,18 @@ NS_LOG_COMPONENT_DEFINE("CbQueueDisc");
 
 NS_OBJECT_ENSURE_REGISTERED(CbQueueDisc);
 
-ATTRIBUTE_HELPER_CPP (TosMap);
+ATTRIBUTE_HELPER_CPP (DscpMap);
 
-std::ostream &operator << (std::ostream &os, const TosMap &tosMap) {
-    std::copy (tosMap.begin (), tosMap.end () - 1, std::ostream_iterator<uint8_t>(os, " "));
-    os << tosMap.back ();
+std::ostream &operator << (std::ostream &os, const DscpMap &dscpMap) {
+    std::copy (dscpMap.begin (), dscpMap.end () - 1, std::ostream_iterator<uint8_t>(os, " "));
+    os << dscpMap.back ();
     return os;
 }
 
-std::istream &operator >> (std::istream &is, TosMap &tosMap) {
+std::istream &operator >> (std::istream &is, DscpMap &dscpMap) {
     uint8_t val;
     while (is >> val) {
-        tosMap.push_back(val);
+        dscpMap.push_back(val);
     }
     return is;
 }
@@ -36,11 +36,11 @@ TypeId CbQueueDisc::GetTypeId (void) {
                            MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
                                                   &QueueDisc::GetMaxSize),
                            MakeQueueSizeChecker ())
-            .AddAttribute ("TosMap",
+            .AddAttribute ("DscpMap",
                            "The different type service to classify based on",
-                           TosMapValue(TosMap{0}),
-                           MakeTosMapAccessor(&CbQueueDisc::SetTosMap),
-                           MakeTosMapChecker())
+                           DscpMapValue(DscpMap{0}),
+                           MakeDscpMapAccessor(&CbQueueDisc::SetDscpMap),
+                           MakeDscpMapChecker())
     ;
     return tid;
 }
@@ -54,30 +54,30 @@ CbQueueDisc::~CbQueueDisc() {
     NS_LOG_FUNCTION (this);
 }
 
-void CbQueueDisc::DoDispose(void) {
+void CbQueueDisc::DoDispose() {
     NS_LOG_FUNCTION (this);
     QueueDisc::DoDispose ();
 }
 
-void CbQueueDisc::SetTosMap(TosMap tosMap) {
-    NS_LOG_FUNCTION(this << tosMap);
-    for(int i = 0; i < tosMap.size(); i++) {
-        _tos2band[tosMap[i]] = i;
+void CbQueueDisc::SetDscpMap(DscpMap dscpMap) {
+    NS_LOG_FUNCTION(this << dscpMap);
+    for(int i = 0; i < dscpMap.size(); i++) {
+        _dscp2band[dscpMap[i]] = i;
     }
-    _nbBands = tosMap.size();
+    _nbBands = dscpMap.size();
 }
 
 uint16_t CbQueueDisc::Classify(Ptr<QueueDiscItem> item) {
     // check what type of service corresponding to this packet
     Ptr<const Ipv4QueueDiscItem> ipItem = DynamicCast<const Ipv4QueueDiscItem>(item);
     Ipv4Header ipHeader = ipItem->GetHeader();
-    uint8_t tos = ipHeader.GetTos();
+    uint8_t dscp = ipHeader.GetDscp();
 
-    if(_tos2band.find(tos) == _tos2band.end()) { // this tos is not defined in the map
+    if(_dscp2band.find(dscp) == _dscp2band.end()) { // this dscp is not defined in the map
         return 0;
     }
 
-    return _tos2band[tos];
+    return _dscp2band[dscp];
 }
 
 bool CbQueueDisc::DoEnqueue(Ptr<QueueDiscItem> item) {
@@ -121,7 +121,7 @@ Ptr<QueueDiscItem> CbQueueDisc::DoDequeue() {
     return item;
 }
 
-Ptr<const QueueDiscItem> CbQueueDisc::DoPeek(void) {
+Ptr<const QueueDiscItem> CbQueueDisc::DoPeek() {
     NS_LOG_FUNCTION(this);
 
     Ptr<const QueueDiscItem> item = 0;
@@ -178,25 +178,25 @@ void CbQueueDisc::InitializeParams() {
 }
 
 TrafficControlHelper
-CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsTos,
+CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsDscp,
                                         double policingRate, double burstLength, const string& resultsPath) {
     system(("mkdir -p " + resultsPath).c_str());
 
     TrafficControlHelper policerTch;
-    uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize), "TosMap", TosMapValue(childDiscsTos));
+    uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize), "DscpMap", DscpMapValue(childDiscsDscp));
 
-    TrafficControlHelper::ClassIdList cid = policerTch.AddQueueDiscClasses (handle, childDiscsTos.size(), "ns3::QueueDiscClass");
+    TrafficControlHelper::ClassIdList cid = policerTch.AddQueueDiscClasses (handle, childDiscsDscp.size(), "ns3::QueueDiscClass");
     policerTch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
 
     int burst = floor(policingRate * burstLength * 125000);// in byte
-    for (int i = 1; i < childDiscsTos.size(); i++) {
+    for (int i = 1; i < childDiscsDscp.size(); i++) {
         policerTch.AddChildQueueDisc(handle, cid[i], "ns3::TbfQueueDiscChild",
                                      "MaxSize", StringValue(to_string(burst) + "B"),
                                      "Burst", UintegerValue(burst),
                                      "Mtu", UintegerValue (1500),
                                      "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),
                                      "PeakRate", DataRateValue(DataRate("0bps")),
-                                     "QueueTraceOutput", StringValue(resultsPath + "/enqueued_events_policer" + to_string(childDiscsTos[i]) + ".csv"));
+                                     "QueueTraceOutput", StringValue(resultsPath + "/enqueued_events_policer" + to_string(childDiscsDscp[i]) + ".csv"));
     }
 
     return policerTch;

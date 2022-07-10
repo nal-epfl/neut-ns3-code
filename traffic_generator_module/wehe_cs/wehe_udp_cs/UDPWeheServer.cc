@@ -7,8 +7,8 @@
 #include <utility>
 
 
-UDPWeheServer::UDPWeheServer(uint32_t appId, Ptr<Node> server, InetSocketAddress serverAddress) :
-        _appId(appId), _server(server), _serverAddress(serverAddress) {
+UDPWeheServer::UDPWeheServer(string appTag, const Ptr<Node>& server, InetSocketAddress serverAddress) :
+        _appTag(std::move(appTag)), _server(server), _serverAddress(serverAddress) {
 }
 
 void UDPWeheServer::LoadTrace(vector<WeheTraceItem> &traceItems) {
@@ -27,13 +27,13 @@ void UDPWeheServer::SetResultsFolder(string resultsFolder) {
     _resultsFolder = std::move(resultsFolder);
 }
 
-void UDPWeheServer::SetTos(int tos) {
-    _trafficTos = tos;
+void UDPWeheServer::SetDscp(int dscp) {
+    _trafficTos = dscp;
 }
 
 void UDPWeheServer::EnableCwndMonitor() {}
 
-void UDPWeheServer::StartApplication(void) {
+void UDPWeheServer::StartApplication() {
 
     if(!_lSocket) {
         _lSocket = Socket::CreateSocket (_server, TypeId::LookupByName ("ns3::UdpSocketFactory"));
@@ -63,7 +63,7 @@ void UDPWeheServer::SetupConnection(Ptr<Socket> socket) {
 
 void UDPWeheServer::StopApplication() {
     ofstream outfile;
-    outfile.open(_resultsFolder + "/server_app" + to_string(_appId) + "_bytes_rx.csv");
+    outfile.open(_resultsFolder + "/server_" + _appTag + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }

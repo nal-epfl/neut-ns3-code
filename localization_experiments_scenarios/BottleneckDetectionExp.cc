@@ -10,7 +10,7 @@
 //
 // - All links are P2P
 // - Measurement applications runs along d0->s0, d1->s0 (only the suspected traffic)
-// - App 1 and 3 along path d0->s0   &&   App 2 and 4 along path d1->s0
+// - App 1 along path d0->s0   &&   App 2 along path d1->s0
 // - Background is CAIDA traces
 //
 
@@ -111,7 +111,6 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     uint32_t nbServers = nbApps;
 
     /*** Traffic Parameters ***/
-    string appProtocol = (isTCP == 1) ? "ns3::TcpSocketFactory" : "ns3::UdpSocketFactory";
     uint32_t rcvBufSize = 131072, sndBufSize = 131072;
     uint32_t mss = 1228, mtu = 1500;
     Config::SetDefault("ns3::TcpL4Protocol::SocketType", StringValue("ns3::TcpCubic"));
@@ -165,7 +164,7 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
         if (DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, {0, 4, 8}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, {0, 1, 2}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
             tch.Uninstall(netDevice);
@@ -188,7 +187,7 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     tch.Install(channel_r0_r1);
     if (DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                queueSize, {0, 4, 8}, policingRate, burstLength, resultsPath + "/common_link");
+                queueSize, {0, 1, 2}, policingRate, burstLength, resultsPath + "/common_link");
 
         const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
         tch.Uninstall(netDevice);
@@ -214,21 +213,23 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     Ptr<Node> routerR = routers.Get(1), client = routers.Get(0);
     Ipv4Address clientIP = GetNodeIP(client, 1);
     Ptr<Node> appsServer[nbApps];
-    uint32_t appsPath[nbApps];
+    string appsTag[nbApps];
     vector<AppKey> appsKey;
 
-    int trafficClass[nbApps];
-    for (uint32_t i = 0; i < nbApps; i++) { trafficClass[i] = 4; }
-    if (IsPolicerTypePerFlowPolicer(policerType)) { trafficClass[nbApps - 1] = 8; }
+    int trafficDscp[nbApps];
+    for (uint32_t i = 0; i < nbApps; i++) { trafficDscp[i] = 1; }
+    if (IsPolicerTypePerFlowPolicer(policerType)) { trafficDscp[nbApps - 1] = 2; }
 
     /*** Create Application Traffic ***/
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsPath[i] = i % 2;
-        appsServer[i] = serverNodes.Get(appsPath[i]);
+        uint32_t appPath = i % 2;
+        appsTag[i] = "suspected_app" + to_string(appPath);
+        appsServer[i] = serverNodes.Get(appPath);
 
         // only in case of WeheCS both client and server are created by the application.
         if (appType == 5) {
-            WeheCS* weheCS = WeheCS::CreateWeheCS(client, appsServer[i], dataPath + "/" + replayTrace, isTCP, trafficClass[i], resultsPath);
+            WeheCS* weheCS = WeheCS::CreateWeheCS(appsTag[i], client, appsServer[i], dataPath + "/" + replayTrace,
+                                                  isTCP, trafficDscp[i], resultsPath);
             weheCS->StartApplication(testStartTime);
             weheCS->StopApplication(testEndTime);
             appsKey.emplace_back(GetNodeIP(appsServer[i], 1), clientIP, weheCS->GetPort(), 0);
@@ -238,14 +239,14 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
         appsKey.emplace_back(GetNodeIP(appsServer[i], 1), clientIP, 0, 3001 + i);
 
         // create the application at destination
-        PacketSinkHelper sinkAppHelper(appProtocol, InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
+        PacketSinkHelper sinkAppHelper(GetSocketFactory(isTCP), InetSocketAddress(Ipv4Address::GetAny(), appsKey[i].GetDstPort()));
         ApplicationContainer sinkApp = sinkAppHelper.Install(client);
         sinkApp.Start(testStartTime);
         sinkApp.Stop(testEndTime);
 
         // create the client sending traffic
         InetSocketAddress sinkAddress = InetSocketAddress(appsKey[i].GetDstIp(), appsKey[i].GetDstPort());
-        sinkAddress.SetTos(trafficClass[i]); // used for policing to set the traffic type
+        sinkAddress.SetTos(Dscp2Tos(trafficDscp[i])); // used for policing to set the traffic type
         ApplicationContainer app;
         if (appType == 1) {
             app = PoissonClientHelper::CreateConstantProbeApplication(
@@ -274,10 +275,10 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
             if (isTCP) {
-                back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 4);
+                back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 1);
             }
             else {
-                back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 4);
+                back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 1);
             }
         } else {
             cout << "requested Background Directory does not exist" << endl;
@@ -296,24 +297,20 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
 #endif
 
     /*** Attach Packet Monitors ***/
-    auto *commonLinkMonitor = new PacketMonitor(
-            testStartTime, testEndTime, routerR->GetId(), client->GetId(), "commonLink"
-    );
-    vector<PacketMonitor *> appsMonitors, nonCommonLinksMonitors;
+    vector<PacketMonitor *> appsMonitors, commonLinkMonitors, nonCommonLinksMonitors;
     for (uint32_t i = 0; i < nbApps; i++) {
-        commonLinkMonitor->AddAppKey(appsKey[i]);
+        auto *pathMonitor = new PacketMonitor(
+                testStartTime,  testEndTime, appsServer[i]->GetId(), client->GetId(), "path_" + appsTag[i]);
+        pathMonitor->AddAppKey(appsKey[i]);
+        appsMonitors.push_back(pathMonitor);
 
-        auto *appMonitor = new PacketMonitor(
-                testStartTime,  testEndTime,
-                appsServer[i]->GetId(), client->GetId(),
-                "suspected_app" + to_string(appsPath[i]));
-        appMonitor->AddAppKey(appsKey[i]);
-        appsMonitors.push_back(appMonitor);
+        auto *commonLinkMonitor = new PacketMonitor(
+                testStartTime, testEndTime, routerR->GetId(), client->GetId(), "commonLink_" + appsTag[i]);
+        commonLinkMonitor->AddAppKey(appsKey[i]);
+        commonLinkMonitors.push_back(commonLinkMonitor);
 
         auto *nonCommonLinkMonitor = new PacketMonitor(
-                testStartTime, testEndTime,
-                appsServer[i]->GetId(), routerR->GetId(),
-                "noncommonLink_suspected_app" + to_string(appsPath[i]));
+                testStartTime, testEndTime, appsServer[i]->GetId(), routerR->GetId(), "noncommonLink_" + appsTag[i]);
         nonCommonLinkMonitor->AddAppKey(appsKey[i]);
         nonCommonLinksMonitors.push_back(nonCommonLinkMonitor);
     }
@@ -324,10 +321,10 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     Simulator::Run();
     Simulator::Destroy();
 
-    commonLinkMonitor->SaveRecordedPacketsCompact(resultsPath + "/common_link_packets.csv");
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/suspected_app" + to_string(appsPath[i]) + "_packets.csv");
-        nonCommonLinksMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/noncommon_link_suspected_app" + to_string(appsPath[i]) + "_packets.csv");
+        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/path_" + appsTag[i] + "_packets.csv");
+        commonLinkMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/common_link_" + appsTag[i] + "_packets.csv");
+        nonCommonLinksMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/noncommon_link_" + appsTag[i] + "_packets.csv");
     }
 /* ############################################## RUN SIMULATION AND MONITORING (END) ############################################## */
 

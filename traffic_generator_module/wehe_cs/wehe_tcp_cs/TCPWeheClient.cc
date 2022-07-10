@@ -4,10 +4,12 @@
 
 #include "TCPWeheClient.h"
 
+#include <utility>
 
 
-TCPWeheClient::TCPWeheClient(uint32_t appId, Ptr<Node> &client, InetSocketAddress &serverAddress) :
-        _appId(appId), _client(client), _serverAddress(serverAddress) {
+
+TCPWeheClient::TCPWeheClient(string appTag, Ptr<Node> &client, InetSocketAddress &serverAddress) :
+        _appTag(std::move(appTag)), _client(client), _serverAddress(serverAddress) {
     _sendEvent = EventId ();
 }
 
@@ -53,7 +55,7 @@ void TCPWeheClient::StartApplication() {
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
-        string outputFolder = _resultsFolder + "/cong_algo_info_" + to_string(_appId) + "/client/";
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/client/";
         _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 
@@ -80,7 +82,7 @@ void TCPWeheClient::StopApplication() {
 
     // save recorded receive events
     ofstream outfile;
-    outfile.open(_resultsFolder + "/client_app" + to_string(_appId) + "_bytes_rx.csv");
+    outfile.open(_resultsFolder + "/client_" + _appTag + "_bytes_rx.csv");
     for (auto& event: _rxEvents) { outfile << event.bytesRx << ", " << event.rxTime << endl; }
     outfile.close();
 }
@@ -134,4 +136,4 @@ void TCPWeheClient::ScheduleNextSendingEvents() {
     _nbBytesRx = 0;
 }
 
-void TCPWeheClient::SetTos(int tos) { }
+void TCPWeheClient::SetDscp(int tos) { }

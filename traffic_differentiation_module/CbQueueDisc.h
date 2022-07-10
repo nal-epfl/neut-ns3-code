@@ -14,43 +14,43 @@
 using namespace ns3;
 using namespace std;
 
-typedef vector<uint8_t> TosMap;
+typedef vector<uint8_t> DscpMap;
 
 class CbQueueDisc : public QueueDisc {
 
     private:
-        map<uint8_t, uint16_t> _tos2band;
+        map<uint8_t, uint16_t> _dscp2band;
         uint16_t _nbBands, _nextBand;
         EventId _id;
 
-        virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
-        virtual Ptr<QueueDiscItem> DoDequeue (void);
-        virtual Ptr<const QueueDiscItem> DoPeek(void);
-        virtual bool CheckConfig (void);
-        virtual void InitializeParams (void);
+        bool DoEnqueue (Ptr<QueueDiscItem> item) override;
+        Ptr<QueueDiscItem> DoDequeue () override;
+        Ptr<const QueueDiscItem> DoPeek() override;
+        bool CheckConfig () override;
+        void InitializeParams () override;
         uint16_t Classify (Ptr<QueueDiscItem> item);
 
 
     protected:
-        virtual void DoDispose (void);
+        void DoDispose () override;
 
     public:
-        static TypeId GetTypeId (void);
+        static TypeId GetTypeId ();
         CbQueueDisc();
-        virtual ~CbQueueDisc();
+        ~CbQueueDisc() override;
 
-        void SetTosMap (TosMap tosMap);
+        void SetDscpMap (DscpMap dscpMap);
 
         static TrafficControlHelper
-        GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsTos,
+        GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsDscp,
                                    double policingRate, double burstLength, const string& resultsPath);
 
 };
 
-std::ostream &operator << (std::ostream &os, const TosMap &tosMap);
+std::ostream &operator << (std::ostream &os, const DscpMap &dscpMap);
 
-std::istream &operator >> (std::istream &is, TosMap &tosMap);
+std::istream &operator >> (std::istream &is, DscpMap &dscpMap);
 
-ATTRIBUTE_HELPER_HEADER(TosMap);
+ATTRIBUTE_HELPER_HEADER(DscpMap);
 
 #endif //NEUTRALITY_CBPOLICINGQUEUEDISC_H

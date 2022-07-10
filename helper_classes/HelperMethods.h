@@ -26,6 +26,8 @@ namespace helper_methods {
     extern ns3::Ipv4Address GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface);
     extern bool DoesPolicerLocationMatch(const string& linkLocation, const string& expectedPolicerLocation);
     extern bool IsPolicerTypePerFlowPolicer(int policerType);
+    extern uint8_t Dscp2Tos(uint8_t dscp);
+    extern string GetSocketFactory(bool isTCP);
 
 }
 

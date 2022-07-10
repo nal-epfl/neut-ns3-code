@@ -17,23 +17,8 @@ if __name__ == '__main__':
 
     m_common_link_rate, m_noncommon_link_rates = '10Gbps', '1Gbps,1Gbps,10Gbps'
     m_wehe_tests = [
-        # ('VG7er5CtV7', WeheApp.Youtube.value, 18, 124, 28),
-        ('9wz6eplwl8', 'Youtube_12122018', 40, 134, 58), #[1.19%])
-        ('0D7Y0OrR73', 'Youtube_12122018', 46, 79, 41), #[2.65%])
-        ('vxde6fi9mc', 'Youtube_12122018', 46, 67, 40), #[2.29%])
-        ('oyvlljwir1', 'Youtube_12122018', 46, 115, 27), #[6.12%])
-        ('4uoalqmrpm', 'Youtube_12122018', 46, 20, 36), #[3.75%])
-        ('y1b77sgi53', 'Youtube_12122018', 46, 59, 60), #[0.62%])
-        ('89twsgj1pb', 'Youtube_12122018', 33, 80, 35), #[4.67%])
-        ('WCkJlqTlQ2', 'Youtube_12122018', 45, 113, 35), #[4.42%])
-        ('x99AyQDr7F', 'Youtube_12122018', 45, 27, 38), #[3.36%])
-        ('S1I7FxOQWT', 'Youtube_12122018', 29, 39, 40), #[2.4%])
-        ('i40HQwwAjN', 'Youtube_12122018', 31, 50, 45), #[1.26%])
-        ('iATMBAqaf5', 'Youtube_12122018', 29, 60, 43), #[2.06%])
-        ('7AEYFCm1mg', 'Youtube_12122018', 30, 39, 59), #[0.86%])
-        ('r4thi26qhc', 'Youtube_12122018', 46, 99, 55), #[1.68%])
-        ('b1fmmqkbjw', 'Youtube_12122018', 46, 72, 60), #[0.67%])
-        ('vwjl3su6wz', 'Youtube_12122018', 46, 44, 56), #[1.51%])
+        ('VG7er5CtV7', WeheApp.Youtube.value, 18, 124, 28),
+        ('vxde6fi9mc', WeheApp.Youtube.value, 46, 67, 40), #[2.29%])
     ]
 
     #for each user I need the following information: (user, app, duration, rtt, throttling_rate)
