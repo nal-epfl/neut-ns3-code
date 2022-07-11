@@ -28,9 +28,7 @@ struct ChangeTuple {
 class CwndMonitor {
 
     private:
-        uint32_t _nodeId;
-        uint32_t _cwndId;
-        Ptr<Socket> _socket = 0;
+        Ptr<Socket> _socket;
 
         ns3::Time _startTime;
         string _outputFolderPath;
@@ -42,21 +40,18 @@ class CwndMonitor {
         vector<ChangeTuple<ns3::Time>> rtoChanges;
         vector<ChangeTuple<ns3::Time>> rttChanges;
 
-        void ConnectTraceSource();
-        void RecordCwndChange(string context, uint32_t oldval, uint32_t newval);
-        void RecordCwndInfChange(string context, uint32_t oldval, uint32_t newval);
-        void RecordPacingRate(string context, DataRate oldval, DataRate newval);
-        void RecordCongStateChange(string context, TcpSocketState::TcpCongState_t oldval, TcpSocketState::TcpCongState_t newval);
-        void RecordRTO(string context, ns3::Time t1, ns3::Time t2);
-        void RecordRTT(string context, ns3::Time t1, ns3::Time t2);
+        void ConnectTraces();
+        void RecordCwndChange(uint32_t oldVal, uint32_t newVal);
+        void RecordPacingRate(DataRate oldVal, DataRate newVal);
+        void RecordCongStateChange(TcpSocketState::TcpCongState_t oldVal, TcpSocketState::TcpCongState_t newVal);
+        void RecordRTO(Time oldVal, Time newVal);
+        void RecordRTT(Time oldVal, Time newVal);
 
-        string GetDisplayTime(const ns3::Time& time);
+        string GetDisplayTime(const Time& time);
 
     public:
-        CwndMonitor(uint32_t nodeId, uint32_t cwndId, const ns3::Time& startTime, string outputFolderPath);
-        CwndMonitor(Ptr<Socket> socket, string outputFolderPath);
+        CwndMonitor(const Ptr<Socket>& socket, string outputFolderPath);
         void SaveCwndChanges();
-        void SaveCwndInfChanges();
         void SavePacingRateChanges();
         void SaveCongStateChanges();
         void SaveRtoChanges();

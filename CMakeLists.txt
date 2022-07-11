@@ -25,18 +25,14 @@ link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/b
 file(GLOB SOURCE_FILES main.cc)
 file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES
-        localization_experiments_scenarios/*
-        "experiments_scenarios [deprecate]/*")
+        localization_experiments_scenarios/*)
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES
+        traffic_generator_module/background_replay/*
         traffic_generator_module/infinite_tcp/*
         traffic_generator_module/measurement_replay/*
-        traffic_generator_module/poisson/*
-        traffic_generator_module/poisson_bursts/*
-        traffic_generator_module/ppb/*
-        traffic_generator_module/trace_replay/*
-        traffic_generator_module/utility/*
+        traffic_generator_module/packet_probes/*
         traffic_generator_module/wehe_cs/*
         traffic_generator_module/wehe_cs/wehe_udp_cs/*
         traffic_generator_module/wehe_cs/wehe_tcp_cs/*)

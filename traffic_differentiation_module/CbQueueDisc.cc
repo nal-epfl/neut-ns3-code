@@ -25,7 +25,7 @@ std::istream &operator >> (std::istream &is, DscpMap &dscpMap) {
     return is;
 }
 
-TypeId CbQueueDisc::GetTypeId (void) {
+TypeId CbQueueDisc::GetTypeId () {
     static TypeId tid = TypeId ("ns3::CbQueueDisc")
             .SetParent<QueueDisc> ()
             .SetGroupName ("TrafficControl")
@@ -67,7 +67,7 @@ void CbQueueDisc::SetDscpMap(DscpMap dscpMap) {
     _nbBands = dscpMap.size();
 }
 
-uint16_t CbQueueDisc::Classify(Ptr<QueueDiscItem> item) {
+uint16_t CbQueueDisc::Classify(const Ptr<QueueDiscItem>& item) {
     // check what type of service corresponding to this packet
     Ptr<const Ipv4QueueDiscItem> ipItem = DynamicCast<const Ipv4QueueDiscItem>(item);
     Ipv4Header ipHeader = ipItem->GetHeader();
@@ -97,7 +97,7 @@ bool CbQueueDisc::DoEnqueue(Ptr<QueueDiscItem> item) {
 Ptr<QueueDiscItem> CbQueueDisc::DoDequeue() {
     NS_LOG_FUNCTION(this);
 
-    Ptr<QueueDiscItem> item = 0;
+    Ptr<QueueDiscItem> item = nullptr;
 
     for (uint32_t i = 0; i < _nbBands; i++) {
         Ptr<const QueueDiscItem> itemPeek = GetQueueDiscClass(_nextBand)->GetQueueDisc()->Peek();
@@ -124,11 +124,11 @@ Ptr<QueueDiscItem> CbQueueDisc::DoDequeue() {
 Ptr<const QueueDiscItem> CbQueueDisc::DoPeek() {
     NS_LOG_FUNCTION(this);
 
-    Ptr<const QueueDiscItem> item = 0;
+    Ptr<const QueueDiscItem> item = nullptr;
 
     for (uint32_t i = 0; i < _nbBands; i++) {
         uint32_t nextBand = (_nextBand + i) % _nbBands;
-        if ((item = GetQueueDiscClass (nextBand)->GetQueueDisc ()->Peek ()) != 0)
+        if ((item = GetQueueDiscClass (nextBand)->GetQueueDisc ()->Peek ()) != nullptr)
         {
             NS_LOG_LOGIC ("Peeked from band " << nextBand << ": " << item);
             NS_LOG_LOGIC ("Number packets band " << nextBand << ": " << GetQueueDiscClass (i)->GetQueueDisc ()->GetNPackets ());

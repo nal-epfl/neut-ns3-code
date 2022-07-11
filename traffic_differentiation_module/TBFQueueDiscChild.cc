@@ -204,8 +204,8 @@ TbfQueueDiscChild::DoEnqueue (Ptr<QueueDiscItem> item)
 
     bool retval = GetQueueDiscClass (0)->GetQueueDisc ()->Enqueue (item);
 
-    UdpHeader h; // works for udp and tcp
-    item->GetPacket()->PeekHeader(h);
+//    UdpHeader h; // works for udp and tcp
+//    item->GetPacket()->PeekHeader(h);
 //    _enquedEvents.push_back({h.GetSourcePort(), h.GetDestinationPort(), item->GetSize(), retval, (Simulator::Now()).GetSeconds(), queueSize});
 
   // If Queue::Enqueue fails, QueueDisc::Drop is called by the child queue

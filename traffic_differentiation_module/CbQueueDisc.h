@@ -20,7 +20,7 @@ class CbQueueDisc : public QueueDisc {
 
     private:
         map<uint8_t, uint16_t> _dscp2band;
-        uint16_t _nbBands, _nextBand;
+        uint16_t _nbBands{}, _nextBand;
         EventId _id;
 
         bool DoEnqueue (Ptr<QueueDiscItem> item) override;
@@ -28,7 +28,7 @@ class CbQueueDisc : public QueueDisc {
         Ptr<const QueueDiscItem> DoPeek() override;
         bool CheckConfig () override;
         void InitializeParams () override;
-        uint16_t Classify (Ptr<QueueDiscItem> item);
+        uint16_t Classify (const Ptr<QueueDiscItem>& item);
 
 
     protected:

@@ -1,6 +1,6 @@
 #include <ns3/network-module.h>
 
-int run_back_to_back_neut_exp(int argc, char **argv);
+[[maybe_unused]] int run_back_to_back_neut_exp(int argc, char **argv);
 int run_bottleneck_detection_exp(int argc, char **argv);
 
 int main(int argc, char **argv) {

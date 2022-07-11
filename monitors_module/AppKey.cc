@@ -83,7 +83,7 @@ bool AppKey::belongsToApp(const PacketKey &packetKey) {
 }
 
 AppKey AppKey::PacketKey2AppKey(const PacketKey &packetKey) {
-    return AppKey(packetKey.GetSrcIp(), packetKey.GetDstIp(), packetKey.GetSrcPort(), packetKey.GetDstPort());
+    return {packetKey.GetSrcIp(), packetKey.GetDstIp(), packetKey.GetSrcPort(), packetKey.GetDstPort()};
 }
 
 

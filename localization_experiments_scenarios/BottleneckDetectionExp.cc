@@ -31,10 +31,10 @@
 #include "ns3/file-helper.h"
 
 #include "../monitors_module/PacketMonitor.h"
-#include "../traffic_generator_module/trace_replay/MultipleReplayClients.h"
-#include "../traffic_generator_module/poisson/PoissonClientHelper.h"
-#include "../traffic_generator_module/measurement_replay/MeasurReplayClientHelper.h"
-#include "../traffic_generator_module/infinite_tcp/InfiniteTCPClientHelper.h"
+#include "../traffic_generator_module/background_replay/BackgroundReplay.h"
+#include "../traffic_generator_module/packet_probes/ProbesSenderHelper.h"
+#include "../traffic_generator_module/measurement_replay/MeasurementReplaySenderHelper.h"
+#include "../traffic_generator_module/infinite_tcp/InfiniteTCPSenderHelper.h"
 #include "../traffic_differentiation_module/CbQueueDisc.h"
 #include "../traffic_generator_module/wehe_cs/WeheCS.h"
 
@@ -47,7 +47,7 @@ namespace fs = std::filesystem;
 #define PCAP_FLAG 0
 
 /*****************************************************************************/
-int run_bottleneck_detection_exp(int argc, char **argv) {
+[[maybe_unused]] int run_bottleneck_detection_exp(int argc, char **argv) {
     auto start = high_resolution_clock::now();
 
 /* ################################################ READ AND PREPARE PARAMETERS (START) ################################################ */
@@ -61,7 +61,7 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     uint32_t appType = 0;                           // the measurement application type
     string appDataRate = "20Mbps";                  // in case of infinite tcp application: the rate of generating data
     uint32_t pktSize = 256;                         // the probe packets size
-    double lambda = 0.001;                          // in case of poisson/constant application: the inter-arrival time between probs
+    double lambda = 0.001;                          // in case of packet_probes/constant application: the inter-arrival time between probs
     string replayTrace = "empty";                   // in case of measurement replay application: the trace to replay
     float testDuration = 120.;                      // duration to run the measurements that may be policed
     string backgroundDir = "empty";                 // directory for the background traces to use as cross traffic
@@ -84,7 +84,7 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     cmd.AddValue("TCPProtocol", "congestion control algorithm of the TCP Measurement traffic", tcpProtocol);
     cmd.AddValue("appDataRate", "in case of infinite tcp application: the rate of generating data", appDataRate);
     cmd.AddValue("pktSize", "the probe packets size", pktSize);
-    cmd.AddValue("lambda", "in case of poisson/constant application: the inter-arrival time between probs", lambda);
+    cmd.AddValue("lambda", "in case of packet_probes/constant application: the inter-arrival time between probs", lambda);
     cmd.AddValue("replayTrace", "in case of measurement replay application: the trace to replay", replayTrace);
     cmd.AddValue("backgroundDir", "directory for the background traces to use as cross traffic", backgroundDir);
     cmd.AddValue("isNeutral", "0 to run a neutral scenario --- 1 for policing", isNeutral);
@@ -228,8 +228,8 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
 
         // only in case of WeheCS both client and server are created by the application.
         if (appType == 5) {
-            WeheCS* weheCS = WeheCS::CreateWeheCS(appsTag[i], client, appsServer[i], dataPath + "/" + replayTrace,
-                                                  isTCP, trafficDscp[i], resultsPath);
+            WeheCS* weheCS = WeheCS::CreateWeheCS(
+                    appsTag[i], client, appsServer[i], dataPath + "/" + replayTrace, isTCP, trafficDscp[i], resultsPath);
             weheCS->StartApplication(testStartTime);
             weheCS->StopApplication(testEndTime);
             appsKey.emplace_back(GetNodeIP(appsServer[i], 1), clientIP, weheCS->GetPort(), 0);
@@ -249,20 +249,20 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
         sinkAddress.SetTos(Dscp2Tos(trafficDscp[i])); // used for policing to set the traffic type
         ApplicationContainer app;
         if (appType == 1) {
-            app = PoissonClientHelper::CreateConstantProbeApplication(
-                    sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
+            app = ProbesSenderHelper::CreateConstantProbeApplication(
+                    appsTag[i], sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
         }
         else if (appType == 2) {
-            app = PoissonClientHelper::CreatePoissonApplication(
-                    sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
+            app = ProbesSenderHelper::CreatePoissonApplication(
+                    appsTag[i], sinkAddress, isTCP, lambda, pktSize, resultsPath, appsServer[i]);
         }
         else if (appType == 3) {
-            app = MeasurReplayClientHelper::CreateMeasurementReplayApplication(
-                    sinkAddress, isTCP, dataPath + replayTrace, resultsPath, appsServer[i]);
+            app = MeasurementReplaySenderHelper::CreateMeasurementReplayApplication(
+                    appsTag[i], sinkAddress, isTCP, dataPath + replayTrace, resultsPath,appsServer[i]);
         }
         else if (appType == 4) {
-            app = InfiniteTCPClientHelper::CreateInfiniteTcpApplication(
-                    sinkAddress, tcpProtocol, pktSize, resultsPath, appsServer[i], appDataRate);
+            app = InfiniteTCPSenderHelper::CreateInfiniteTcpApplication(
+                    appsTag[i], sinkAddress, tcpProtocol, pktSize, resultsPath,appsServer[i], appDataRate);
         }
         app.Start(testStartTime);
         app.Stop(testEndTime);
@@ -270,7 +270,7 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
 
     /*** Create Cross Traffic On Paths 1 & 2 ***/
     for (uint32_t i = 0; i < nbServers; i++) {
-        auto *back = new MultipleReplayClients(serverNodes.Get(i), client);
+        auto *back = new BackgroundReplay(serverNodes.Get(i), client);
         double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBack;
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
@@ -300,17 +300,17 @@ int run_bottleneck_detection_exp(int argc, char **argv) {
     vector<PacketMonitor *> appsMonitors, commonLinkMonitors, nonCommonLinksMonitors;
     for (uint32_t i = 0; i < nbApps; i++) {
         auto *pathMonitor = new PacketMonitor(
-                testStartTime,  testEndTime, appsServer[i]->GetId(), client->GetId(), "path_" + appsTag[i]);
+                testStartTime,  testEndTime, appsServer[i], client, "path_" + appsTag[i]);
         pathMonitor->AddAppKey(appsKey[i]);
         appsMonitors.push_back(pathMonitor);
 
         auto *commonLinkMonitor = new PacketMonitor(
-                testStartTime, testEndTime, routerR->GetId(), client->GetId(), "commonLink_" + appsTag[i]);
+                testStartTime, testEndTime, routerR, client, "commonLink_" + appsTag[i]);
         commonLinkMonitor->AddAppKey(appsKey[i]);
         commonLinkMonitors.push_back(commonLinkMonitor);
 
         auto *nonCommonLinkMonitor = new PacketMonitor(
-                testStartTime, testEndTime, appsServer[i]->GetId(), routerR->GetId(), "noncommonLink_" + appsTag[i]);
+                testStartTime, testEndTime, appsServer[i], routerR, "noncommonLink_" + appsTag[i]);
         nonCommonLinkMonitor->AddAppKey(appsKey[i]);
         nonCommonLinksMonitors.push_back(nonCommonLinkMonitor);
     }
