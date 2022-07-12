@@ -60,7 +60,7 @@ namespace fs = std::filesystem;
     uint32_t appType = 0;                           // the measurement application type
     string appDataRate = "20Mbps";                  // in case of infinite tcp application: the rate of generating data
     uint32_t pktSize = 256;                         // the probe packets size
-    double lambda = 0.001;                          // in case of packet_probes/constant application: the inter-arrival time between probs
+    double lambda = 0.001;                          // in case of packet_probes/constant application: the inter-arrival time includes probs
     string replayTrace = "empty";                   // in case of measurement replay application: the trace to replay
     float controlTestDuration = 120.;               // duration to run the control measurements
     float suspectedTestDuration = 120.;             // duration to run the measurements that may be policed
@@ -84,7 +84,7 @@ namespace fs = std::filesystem;
     cmd.AddValue("TCPProtocol", "congestion control algorithm of the TCP Measurement traffic", tcpProtocol);
     cmd.AddValue("appDataRate", "in case of infinite tcp application: the rate of generating data", appDataRate);
     cmd.AddValue("pktSize", "the probe packets size", pktSize);
-    cmd.AddValue("lambda", "in case of packet_probes/constant application: the inter-arrival time between probs", lambda);
+    cmd.AddValue("lambda", "in case of packet_probes/constant application: the inter-arrival time includes probs", lambda);
     cmd.AddValue("replayTrace", "in case of measurement replay application: the trace to replay", replayTrace);
     cmd.AddValue("backgroundDir", "directory for the background traces to use as cross traffic", backgroundDir);
     cmd.AddValue("isNeutral", "0 to run a neutral scenario --- 1 for policing", isNeutral);
@@ -114,6 +114,11 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 4;
     uint32_t nbServers = nbApps/2;
+
+    /*** Traffic classifiers on which to throttle packets ***/
+    TrafficClassifier dscpsClassifier = TrafficClassifier({
+        Dscps2QueueBand(0, {0}), Dscps2QueueBand(1, {1, 3}), Dscps2QueueBand(2, {2})
+    });
 
     /*** Traffic Parameters ***/
     uint32_t rcvBufSize = 131072, sndBufSize = 131072;
@@ -169,7 +174,7 @@ namespace fs = std::filesystem;
         if (DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, {0, 1, 2}, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, dscpsClassifier, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
             tch.Uninstall(netDevice);
@@ -192,7 +197,7 @@ namespace fs = std::filesystem;
     tch.Install(channel_r0_r1);
     if (DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                queueSize, {0, 1, 2}, policingRate, burstLength, resultsPath + "/common_link");
+                queueSize, dscpsClassifier, policingRate, burstLength, resultsPath + "/common_link");
 
         const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
         tch.Uninstall(netDevice);

@@ -4,28 +4,37 @@
 
 #include "CbQueueDisc.h"
 
+#include <utility>
 
 NS_LOG_COMPONENT_DEFINE("CbQueueDisc");
-
 NS_OBJECT_ENSURE_REGISTERED(CbQueueDisc);
+ATTRIBUTE_HELPER_CPP (TrafficClassifier);
 
-ATTRIBUTE_HELPER_CPP (DscpMap);
-
-std::ostream &operator << (std::ostream &os, const DscpMap &dscpMap) {
-    std::copy (dscpMap.begin (), dscpMap.end () - 1, std::ostream_iterator<uint8_t>(os, " "));
-    os << dscpMap.back ();
+ostream& operator<< (ostream& os, const TrafficClassifier &classifier) {
+    vector<Dscps2QueueBand> dscps2bands = classifier.GetDscps2Bands();
+    std::copy (dscps2bands.begin (), dscps2bands.end () - 1, std::ostream_iterator<Dscps2QueueBand>(os, " "));
+    os << dscps2bands.back ();
     return os;
 }
 
-std::istream &operator >> (std::istream &is, DscpMap &dscpMap) {
-    uint8_t val;
-    while (is >> val) {
-        dscpMap.push_back(val);
-    }
+istream& operator>> (istream& is, TrafficClassifier &classifier) {
+    Dscps2QueueBand val;
+    while (is >> val) { classifier.push_back(val); }
     return is;
 }
 
+uint16_t TrafficClassifier::ClassifyDscp(uint8_t dscp) {
+    for(auto dscps2band: _dscps2bands) {
+        if (dscps2band.CheckIfBelongsTo(dscp)) {
+            return dscps2band.GetBand();
+        }
+    }
+    return 0;
+}
+
+
 TypeId CbQueueDisc::GetTypeId () {
+
     static TypeId tid = TypeId ("ns3::CbQueueDisc")
             .SetParent<QueueDisc> ()
             .SetGroupName ("TrafficControl")
@@ -36,11 +45,11 @@ TypeId CbQueueDisc::GetTypeId () {
                            MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
                                                   &QueueDisc::GetMaxSize),
                            MakeQueueSizeChecker ())
-            .AddAttribute ("DscpMap",
+            .AddAttribute ("ChildQueuesClassifiers",
                            "The different type service to classify based on",
-                           DscpMapValue(DscpMap{0}),
-                           MakeDscpMapAccessor(&CbQueueDisc::SetDscpMap),
-                           MakeDscpMapChecker())
+                           TrafficClassifierValue(TrafficClassifier()),
+                           MakeTrafficClassifierAccessor(&CbQueueDisc::SetTrafficClassifier),
+                           MakeTrafficClassifierChecker())
     ;
     return tid;
 }
@@ -48,23 +57,21 @@ TypeId CbQueueDisc::GetTypeId () {
 CbQueueDisc::CbQueueDisc() : QueueDisc (QueueDiscSizePolicy::SINGLE_CHILD_QUEUE_DISC) {
     NS_LOG_FUNCTION (this);
     _nextBand = 0;
+    _classifier = TrafficClassifier();
 }
 
 CbQueueDisc::~CbQueueDisc() {
     NS_LOG_FUNCTION (this);
 }
 
+void CbQueueDisc::SetTrafficClassifier(TrafficClassifier classifier) {
+    _classifier = std::move(classifier);
+    _nbBands = _classifier.GetNumberOfClasses();
+}
+
 void CbQueueDisc::DoDispose() {
     NS_LOG_FUNCTION (this);
     QueueDisc::DoDispose ();
-}
-
-void CbQueueDisc::SetDscpMap(DscpMap dscpMap) {
-    NS_LOG_FUNCTION(this << dscpMap);
-    for(int i = 0; i < dscpMap.size(); i++) {
-        _dscp2band[dscpMap[i]] = i;
-    }
-    _nbBands = dscpMap.size();
 }
 
 uint16_t CbQueueDisc::Classify(const Ptr<QueueDiscItem>& item) {
@@ -73,11 +80,8 @@ uint16_t CbQueueDisc::Classify(const Ptr<QueueDiscItem>& item) {
     Ipv4Header ipHeader = ipItem->GetHeader();
     uint8_t dscp = ipHeader.GetDscp();
 
-    if(_dscp2band.find(dscp) == _dscp2band.end()) { // this dscp is not defined in the map
-        return 0;
-    }
-
-    return _dscp2band[dscp];
+    uint16_t band = _classifier.ClassifyDscp(dscp);
+    return band;
 }
 
 bool CbQueueDisc::DoEnqueue(Ptr<QueueDiscItem> item) {
@@ -174,29 +178,32 @@ bool CbQueueDisc::CheckConfig() {
 
 void CbQueueDisc::InitializeParams() {
     NS_LOG_FUNCTION (this);
-    _id = EventId ();
 }
 
 TrafficControlHelper
-CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const vector<uint8_t> &childDiscsDscp,
+CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficClassifier& dscpsClassifier,
                                         double policingRate, double burstLength, const string& resultsPath) {
     system(("mkdir -p " + resultsPath).c_str());
 
     TrafficControlHelper policerTch;
-    uint16_t handle = policerTch.SetRootQueueDisc("ns3::CbQueueDisc", "MaxSize", StringValue(queueSize), "DscpMap", DscpMapValue(childDiscsDscp));
+    uint16_t handle = policerTch.SetRootQueueDisc(
+            "ns3::CbQueueDisc",
+            "MaxSize", StringValue(queueSize),
+            "ChildQueuesClassifiers", TrafficClassifierValue(dscpsClassifier));
 
-    TrafficControlHelper::ClassIdList cid = policerTch.AddQueueDiscClasses (handle, childDiscsDscp.size(), "ns3::QueueDiscClass");
-    policerTch.AddChildQueueDisc (handle, cid[0], "ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+    policerTch.AddQueueDiscClasses (handle, dscpsClassifier.GetNumberOfClasses(), "ns3::QueueDiscClass");
+    policerTch.AddChildQueueDisc (handle, dscpsClassifier.GetDscps2Band(0).GetBand(), "ns3::FifoQueueDisc",
+                                  "MaxSize", StringValue(queueSize));
 
     int burst = floor(policingRate * burstLength * 125000);// in byte
-    for (int i = 1; i < childDiscsDscp.size(); i++) {
-        policerTch.AddChildQueueDisc(handle, cid[i], "ns3::TbfQueueDiscChild",
+    for (uint32_t i = 1; i < dscpsClassifier.GetNumberOfClasses(); i++) {
+        policerTch.AddChildQueueDisc(handle, dscpsClassifier.GetDscps2Band(i).GetBand(), "ns3::TbfQueueDiscChild",
                                      "MaxSize", StringValue(to_string(burst) + "B"),
                                      "Burst", UintegerValue(burst),
                                      "Mtu", UintegerValue (1500),
                                      "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),
                                      "PeakRate", DataRateValue(DataRate("0bps")),
-                                     "QueueTraceOutput", StringValue(resultsPath + "/enqueued_events_policer" + to_string(childDiscsDscp[i]) + ".csv"));
+                                     "QueueTraceOutput", StringValue(""));
     }
 
     return policerTch;
