@@ -17,15 +17,17 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 add_definitions(-DNS3_LOG_ENABLE)
-include_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
-link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build/include)
-include_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build)
-link_directories(/home/shmeis/Desktop/experiments/ns-allinone-3.36.1/ns-3.36.1/build)
+set(NS3_BUILD_PATH  /home/zeinab/experiments/ns-allinone-3.36.1/ns-3.36.1/build)
+include_directories(${NS3_BUILD_PATH}/include)
+link_directories(${NS3_BUILD_PATH}/include)
+include_directories(${NS3_BUILD_PATH}/build)
+link_directories(${NS3_BUILD_PATH}/build)
 
 file(GLOB SOURCE_FILES main.cc)
 file(GLOB HELPER_CLASSES helper_classes/*)
 file(GLOB SCENARIOS_FILES
-        localization_experiments_scenarios/*)
+        localization_experiments_scenarios/*
+        testing_scenarios/*)
 file(GLOB MONITOR_FILES monitors_module/*)
 file(GLOB TRAFFIC_DIFFERENTATION_FILES traffic_differentiation_module/*)
 file(GLOB TRAFFIC_GENERATOR_FILES
