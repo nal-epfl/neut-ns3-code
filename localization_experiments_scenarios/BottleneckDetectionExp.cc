@@ -173,7 +173,7 @@ namespace fs = std::filesystem;
         tch.Install(channels_r1_servers[i]);
 
         // check if you need to install a policer instead of fifo
-        if (DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
+        if (!isNeutral && DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
                     queueSize, dscpsClassifier, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
@@ -197,7 +197,7 @@ namespace fs = std::filesystem;
     string queueSize = ComputeQueueSize(commonLinkRate, {defaultNonCommonLinkDelay, defaultNonCommonLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
-    if (DoesPolicerLocationMatch("c", policerLocation)) {
+    if (!isNeutral && DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
                 queueSize, dscpsClassifier, policingRate, burstLength, resultsPath + "/common_link");
 
