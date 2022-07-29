@@ -45,6 +45,16 @@ if __name__ == '__main__':
         m_exp_params = []
 
         for m_network_setup_tag, m_network_setup in m_network_setups:
+
+            # test case with no policing
+            m_exp_params.append(ExperimentParameters(
+                exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_dir=m_background_dir,
+                exp_batch='{}/no_policing'.format(m_network_setup_tag),
+                network_setup=m_network_setup, measurement_app_setup=m_app_setup,
+                neutrality_setup=NeutralitySetup(is_neutral=0)
+            ))
+
+            # test case with different policing configurations
             for m_ptype, m_plocation, m_prate in m_policer_configs:
                 m_neutrality_setup = NeutralitySetup(
                     is_neutral=1, policing_rate=m_prate, burst_length=m_burst_period,
