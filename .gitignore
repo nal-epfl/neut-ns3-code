@@ -60,3 +60,5 @@ test/test_runner
 # Compiled Python Files
 **/__pycache__/
 
+# Log files
+**/*.log
