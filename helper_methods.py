@@ -43,6 +43,11 @@ class WeheApp(Enum):
     NbcSports = 'NBCSports_01042019'
 
 
+def get_wehe_app(app_name):
+    for app in WeheApp:
+        if app_name in app.value: return app
+
+
 class TransportProtocol(Enum):
     UDP = 0
     TCP = 1
@@ -93,13 +98,14 @@ class MeasurementAppSetup:
 
 class NeutralitySetup:
     def __init__(self, is_neutral, policing_rate=0.0, burst_length=0.0, policer_location=PolicerLocation.COMMON_LINK,
-                 policer_type=PolicerType.SHARED, pct_of_throttled_background=0.03):
+                 policer_type=PolicerType.SHARED, pct_of_throttled_background=0.03, overflowEventsTrace='empty'):
         self.is_neutral = is_neutral
         self.policing_rate = policing_rate
         self.burst_length = burst_length
         self.policer_location = policer_location
         self.policer_type = policer_type
         self.pct_of_throttled_background = pct_of_throttled_background
+        self.overflowEventsTrace = overflowEventsTrace
 
 
 class ExperimentParameters:
@@ -151,6 +157,7 @@ def run_experiment(exp_type, network_setup, app_setup, background_dir, neutralit
         ' --policerLocation={}'.format(neutrality_setup.policer_location.value) +
         ' --policerType={}'.format(neutrality_setup.policer_type.value) +
         ' --backThrottledPct={}'.format(neutrality_setup.pct_of_throttled_background) +
+        ' --overflowEventsTrace={}'.format(neutrality_setup.overflowEventsTrace) +
         '\' --no-build'
     )
 

@@ -68,6 +68,7 @@ namespace fs = std::filesystem;
     double policingRate = 4;                        // the rate of generating tokens in the token bucket
     double burstLength = 0.1;                       // the burst length parameter of the token bucket
     double throttlingPctOfBack = 0.3;               // percentage of background to throttle with the measurement traffic
+    string overflowEventsTrace = "";                // file that contains times in which policer experienced overflow events
 
     CommandLine cmd;
     cmd.AddValue("commonLinkRate", "common link bandwidth", commonLinkRate);
@@ -90,6 +91,7 @@ namespace fs = std::filesystem;
     cmd.AddValue("policerLocation", "'c' for common link --- 'nci' for noncommon link of path i --- 'nc' for all noncommon links", policerLocation);
     cmd.AddValue("policerType", "'0 for shared policer --- 1 for per-flow policer", policerType);
     cmd.AddValue("backThrottledPct", "percentage of background to throttle with the measurement traffic", throttlingPctOfBack);
+    cmd.AddValue("overflowEventsTrace", "file that contains times in which policer experienced overflow events", overflowEventsTrace);
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
 
@@ -109,7 +111,7 @@ namespace fs = std::filesystem;
 
     /*** Traffic classifiers on which to throttle packets ***/
     TrafficClassifier dscpsClassifier = TrafficClassifier({
-        new Dscps2QueueBand(0, {0}), new TimeBasedDscps2QueueBand(1, {1, 3}), new Dscps2QueueBand(2, {2})});
+        new Dscps2QueueBand(0, {0}), new Dscps2QueueBand(1, {1, 3}), new Dscps2QueueBand(2, {2})});
 
     /*** Traffic Parameters ***/
     uint32_t rcvBufSize = 131072, sndBufSize = 131072;

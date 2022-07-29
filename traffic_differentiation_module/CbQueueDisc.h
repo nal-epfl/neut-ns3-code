@@ -22,16 +22,16 @@ using namespace helper_methods;
 
 class TrafficClassifier {
 private:
-    vector<Dscps2QueueBand> _dscps2bands;
+    vector<Dscps2QueueBand*> _dscps2bands;
 
 public:
     TrafficClassifier(): _dscps2bands({}) {};
-    explicit TrafficClassifier(vector<Dscps2QueueBand> dscps2bands): _dscps2bands(std::move(dscps2bands)) {};
+    explicit TrafficClassifier(vector<Dscps2QueueBand*> dscps2bands): _dscps2bands(std::move(dscps2bands)) {};
 
-    [[nodiscard]] vector<Dscps2QueueBand> GetDscps2Bands() const { return _dscps2bands; };
-    void push_back(const Dscps2QueueBand& dscps2band) { _dscps2bands.push_back(dscps2band); };
+    [[nodiscard]] vector<Dscps2QueueBand*> GetDscps2Bands() const { return _dscps2bands; };
+    void push_back(Dscps2QueueBand* dscps2band) { _dscps2bands.push_back(dscps2band); };
     [[nodiscard]] uint32_t GetNumberOfClasses() const { return _dscps2bands.size(); };
-    [[nodiscard]] Dscps2QueueBand GetDscps2Band(uint32_t idx) const { return _dscps2bands[idx]; }
+    [[nodiscard]] Dscps2QueueBand* GetDscps2Band(uint32_t idx) const { return _dscps2bands[idx]; }
 
     uint16_t ClassifyDscp(uint8_t dscp);
 

@@ -68,7 +68,7 @@ void TCPWeheServer::SetupConnection(Ptr<Socket> socket) {
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
-        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/server/";
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/sender/";
         _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 

@@ -55,7 +55,7 @@ void TCPWeheClient::StartApplication() {
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
-        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/client/";
+        string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/receiver/";
         _cwndMonitor = new CwndMonitor(_socket, outputFolder);
     }
 

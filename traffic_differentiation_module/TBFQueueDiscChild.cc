@@ -56,7 +56,7 @@ TypeId TbfQueueDiscChild::GetTypeId (void)
     .AddConstructor<TbfQueueDiscChild> ()
     .AddAttribute ("MaxSize",
                    "The max queue size",
-                   QueueSizeValue (QueueSize ("1000p")),
+                   QueueSizeValue (QueueSize ("1500B")),
                    MakeQueueSizeAccessor (&QueueDisc::SetMaxSize,
                                           &QueueDisc::GetMaxSize),
                    MakeQueueSizeChecker ())

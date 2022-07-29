@@ -11,22 +11,22 @@ NS_OBJECT_ENSURE_REGISTERED(CbQueueDisc);
 ATTRIBUTE_HELPER_CPP (TrafficClassifier);
 
 ostream& operator<< (ostream& os, const TrafficClassifier &classifier) {
-    vector<Dscps2QueueBand> dscps2bands = classifier.GetDscps2Bands();
-    std::copy (dscps2bands.begin (), dscps2bands.end () - 1, std::ostream_iterator<Dscps2QueueBand>(os, " "));
+    vector<Dscps2QueueBand*> dscps2bands = classifier.GetDscps2Bands();
+    std::copy (dscps2bands.begin (), dscps2bands.end () - 1, std::ostream_iterator<Dscps2QueueBand*>(os, " "));
     os << dscps2bands.back ();
     return os;
 }
 
 istream& operator>> (istream& is, TrafficClassifier &classifier) {
     Dscps2QueueBand val;
-    while (is >> val) { classifier.push_back(val); }
+    while (is >> val) { classifier.push_back(&val); }
     return is;
 }
 
 uint16_t TrafficClassifier::ClassifyDscp(uint8_t dscp) {
     for(auto dscps2band: _dscps2bands) {
-        if (dscps2band.CheckIfBelongsTo(dscp)) {
-            return dscps2band.GetBand();
+        if (dscps2band->CheckIfBelongsTo(dscp)) {
+            return dscps2band->GetBand();
         }
     }
     return 0;
@@ -192,15 +192,16 @@ CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficCl
             "ChildQueuesClassifiers", TrafficClassifierValue(dscpsClassifier));
 
     policerTch.AddQueueDiscClasses (handle, dscpsClassifier.GetNumberOfClasses(), "ns3::QueueDiscClass");
-    policerTch.AddChildQueueDisc (handle, dscpsClassifier.GetDscps2Band(0).GetBand(), "ns3::FifoQueueDisc",
+    policerTch.AddChildQueueDisc (handle, dscpsClassifier.GetDscps2Band(0)->GetBand(), "ns3::FifoQueueDisc",
                                   "MaxSize", StringValue(queueSize));
 
-    int burst = floor(policingRate * burstLength * 125000);// in byte
+    int mtu = 1500;
+    int burst = max(int(policingRate * burstLength * 125000), 10 * mtu); // in byte
     for (uint32_t i = 1; i < dscpsClassifier.GetNumberOfClasses(); i++) {
-        policerTch.AddChildQueueDisc(handle, dscpsClassifier.GetDscps2Band(i).GetBand(), "ns3::TbfQueueDiscChild",
-                                     "MaxSize", StringValue(to_string(burst) + "B"),
+        policerTch.AddChildQueueDisc(handle, dscpsClassifier.GetDscps2Band(i)->GetBand(), "ns3::TbfQueueDiscChild",
+                                     "MaxSize", StringValue(to_string(mtu) + "B"),
                                      "Burst", UintegerValue(burst),
-                                     "Mtu", UintegerValue (1500),
+                                     "Mtu", UintegerValue (mtu),
                                      "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),
                                      "PeakRate", DataRateValue(DataRate("0bps")),
                                      "QueueTraceOutput", StringValue(""));
