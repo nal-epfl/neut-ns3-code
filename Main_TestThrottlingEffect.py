@@ -27,25 +27,27 @@ if __name__ == '__main__':
         m_exp_params = []
 
         for app in WeheApp:
-
-            m_app_setup = get_weheCS_app_setup(
-                wehe_app=app.value, original_traffic_duration=m_duration,
-                transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic',
-            )
-
-            # test case with different policing configurations
-            for m_ptype, m_plocation, m_prate in m_policer_configs:
-                m_neutrality_setup = NeutralitySetup(
-                    is_neutral=1, policing_rate=m_prate, burst_length=m_burst_period,
-                    policer_location=m_plocation, policer_type=PolicerType.SHARED,
-                    pct_of_throttled_background=0.3
+            try:
+                m_app_setup = get_weheCS_app_setup(
+                    wehe_app=app.value, original_traffic_duration=m_duration,
+                    transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic',
                 )
 
-                m_exp_batch = '{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period)
-                m_exp_params.append(ExperimentParameters(
-                    exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_dir=m_background_dir,
-                    exp_batch='{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period),
-                    network_setup=m_network_setup, measurement_app_setup=m_app_setup,
-                    neutrality_setup=m_neutrality_setup
-                ))
+                # test case with different policing configurations
+                for m_ptype, m_plocation, m_prate in m_policer_configs:
+                    m_neutrality_setup = NeutralitySetup(
+                        is_neutral=1, policing_rate=m_prate, burst_length=m_burst_period,
+                        policer_location=m_plocation, policer_type=PolicerType.SHARED,
+                        pct_of_throttled_background=0.3
+                    )
+
+                    m_exp_batch = '{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period)
+                    m_exp_params.append(ExperimentParameters(
+                        exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_dir=m_background_dir,
+                        exp_batch='{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period),
+                        network_setup=m_network_setup, measurement_app_setup=m_app_setup,
+                        neutrality_setup=m_neutrality_setup
+                    ))
+            except Exception as e:
+                print('app {} failed'.format(app.value))
         run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=1)
