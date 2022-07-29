@@ -12,11 +12,10 @@ TEST_TYPE = 'Localized_Eval_Mixed'
 if __name__ == '__main__':
     rebuild_project()
 
-    # -------------------------------------- START TESTS -------------------------------------- #
     m_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
+    m_duration = 90
 
     # use a continuous tcp flow as measurements
-    m_duration = 90
     m_app_setup = MeasurementAppSetup(
         app_type=MeasurementAppType.INFINITE_TCP, app_name="Infinite_Paced_TCP",
         control_test_duration=m_duration, suspected_test_duration=m_duration,
@@ -66,7 +65,7 @@ if __name__ == '__main__':
         )))
 
     # Run all different combinations of network setups and policer configurations
-    for m_seed in [3]:
+    for m_seed in PRIMES[0: 1]:
         m_exp_params = []
         for m_network_setup_tag, m_network_setup in m_network_setups:
             for m_policer_tag, m_policer_config in m_policer_configs:

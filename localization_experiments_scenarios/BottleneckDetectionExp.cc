@@ -111,6 +111,7 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 2;
     uint32_t nbServers = nbApps;
+    string commonLinkDelay = "3ms";
 
     /*** Traffic classifiers on which to throttle packets ***/
     auto* mainPolicerConfig = new Dscps2QueueBand(1, {1, 3});
@@ -145,14 +146,14 @@ namespace fs = std::filesystem;
     internetStackHelper.Install(routers);
     internetStackHelper.Install(serverNodes);
 
-    string defaultNonCommonLinkRate = "1Gbps", defaultLinkDelay = "5ms";
+    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "7ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
 
     NetDeviceContainer channels_r1_servers[nbServers];
 
-    vector<string> nonCommonLinkDelays(nbServers, defaultLinkDelay);
+    vector<string> nonCommonLinkDelays(nbServers, defaultNonCommonLinkDelay);
     if (nonCommonLinksDelaysStr != "empty") { nonCommonLinkDelays = SplitStr(nonCommonLinksDelaysStr, ','); }
 
     vector<string> nonCommonLinkRates(nbServers, defaultNonCommonLinkRate);
@@ -164,7 +165,7 @@ namespace fs = std::filesystem;
         channels_r1_servers[i] = p2p.Install(serverNodes.Get(i), routers.Get(1));
 
         string queueSize = ComputeQueueSize(
-                nonCommonLinkRates[i], {nonCommonLinkDelays[i], defaultLinkDelay});
+                nonCommonLinkRates[i], {nonCommonLinkDelays[i], defaultNonCommonLinkDelay});
 
         // set the queues to fifo queueing discipline
         TrafficControlHelper tch;
@@ -186,14 +187,14 @@ namespace fs = std::filesystem;
     // Parameters for the common channel
     PointToPointHelper p2pRouters;
     p2pRouters.SetDeviceAttribute("DataRate", StringValue(commonLinkRate));
-    p2pRouters.SetChannelAttribute("Delay", StringValue(defaultLinkDelay));
+    p2pRouters.SetChannelAttribute("Delay", StringValue(commonLinkDelay));
     p2pRouters.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2pRouters.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
     NetDeviceContainer channel_r0_r1 = p2pRouters.Install(routers.Get(0), routers.Get(1));
 
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
-    string queueSize = ComputeQueueSize(commonLinkRate, {defaultLinkDelay, defaultLinkDelay});
+    string queueSize = ComputeQueueSize(commonLinkRate, {defaultNonCommonLinkDelay, defaultNonCommonLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
     if (DoesPolicerLocationMatch("c", policerLocation)) {
