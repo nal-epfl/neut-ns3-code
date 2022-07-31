@@ -45,7 +45,7 @@ void PacketMonitor::Connect(uint32_t txNodeId, uint32_t rxNodeId) {
 }
 
 void PacketMonitor::Disconnect(uint32_t txNodeId, uint32_t rxNodeId) {
-    Config::Disconnect("/NodeList/" + to_string(txNodeId) + "/$ns3::Ipv4L3Protocol/Tx", MakeCallback(
+    Config::DisconnectWithoutContext("/NodeList/" + to_string(txNodeId) + "/$ns3::Ipv4L3Protocol/Tx", MakeCallback(
             &PacketMonitor::RecordIpv4PacketSent, this));
 
 }
