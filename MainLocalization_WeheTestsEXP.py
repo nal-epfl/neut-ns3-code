@@ -4,24 +4,17 @@ import json
 from helper_methods import *
 
 
-def approximate_throttling_rate(loss):
-    rate_ranges = [((0, 0.5), 50), ((0.5, 1), 38), ((1, 2), 35), ((2, 4), 30), ((5, 8), 25), ((8, 100), 20)]
-    for loss_range, rate in rate_ranges:
-        if (loss >= loss_range[0]) and (loss < loss_range[1]):
-            return rate
-    return -1
-
-
 def load_wehe_tests_info(tests_info_dir):
     tests_infos = []
     for test in os.listdir(tests_info_dir):
         if '.json' in test:
             with open('{}/{}'.format(tests_info_dir, test)) as f: info = json.load(f)
+            if info['est_throttling_rate'] <= 0: continue
             tests_infos.append((
                 '{}_{}'.format(info['user_id'], info['test_id']),
                 get_wehe_app(info['app'].split('-')[0]).value,
                 math.floor(info['d_o']), math.floor(info['rtt_o']*1e3),
-                approximate_throttling_rate(info['loss_o']),
+                info['est_throttling_rate'],
                 '{}/{}'.format(tests_info_dir, info['overflow_trace'])
             ))
     return tests_infos
@@ -29,18 +22,18 @@ def load_wehe_tests_info(tests_info_dir):
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Wehe_Test_Cases_DRY_RUN_2'
+TEST_TYPE = 'Wehe_Test_Cases_DRY_RUN_3'
 
 if __name__ == '__main__':
     rebuild_project()
 
     m_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
     m_common_link_delay = 3
-    m_tests_info_dir = '{}/scratch/wehe_p_tomography/data/localization_wehe_tests_exp_input'.format(get_ns3_path())
+    m_tests_info_dir = '{}/data/localization_wehe_tests_exp_input'.format(get_project_path())
     m_wehe_tests = load_wehe_tests_info(m_tests_info_dir)
     [print(info) for info in m_wehe_tests]
 
-    for m_seed in PRIMES[0: 1]:
+    for m_seed in PRIMES[0: 3]:
         m_exp_params = []
         for m_user, m_wehe_app, m_duration, m_rtt, m_throttling_rate, m_overflow_trace in m_wehe_tests:
 
@@ -54,7 +47,7 @@ if __name__ == '__main__':
                 transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic',
             )
 
-            m_burst_period = m_rtt/1e3
+            m_burst_period = 0.02 #m_rtt/1e3
             m_policing_scenarios = [
                 ('shared_common_policer', PolicerLocation.COMMON_LINK, m_throttling_rate),
                 ('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, m_throttling_rate/2),

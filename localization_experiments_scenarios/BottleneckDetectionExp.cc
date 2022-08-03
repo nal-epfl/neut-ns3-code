@@ -101,7 +101,7 @@ namespace fs = std::filesystem;
     srand(ns3::RngSeedManager::GetSeed());
 
     /*** Time Parameters ***/
-    Time testStartTime = Seconds(10);
+    Time testStartTime = Seconds(10); // keeeep the warmup time 10s
     Time testEndTime = testStartTime + Seconds(testDuration);
 
     /*** Input-Output parameters ***/

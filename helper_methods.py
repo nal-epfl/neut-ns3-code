@@ -14,6 +14,7 @@ __ns3_path = os.popen('locate "ns-3.36.1" | grep /ns-3.36.1$').read().splitlines
 
 
 def get_ns3_path(): return __ns3_path
+def get_project_path(): return '{}/scratch/wehe_p_tomography'.format(get_ns3_path())
 
 
 PRIMES = np.array([

@@ -64,13 +64,7 @@ struct TimeInterval {
 };
 class TimeBasedDscps2QueueBand: public Dscps2QueueBand {
 private:
-    vector<TimeInterval> _throttleWithBackIntervals = {
-            {Seconds(2.64), Seconds(2.88)},
-            {Seconds(3.60), Seconds(4.48)},
-            {Seconds(4.96), Seconds(5.04)},
-            {Seconds(14.48), Seconds(14.72)},
-            {Seconds(15.04), Seconds(15.44)},
-    };
+    vector<TimeInterval> _throttleWithBackIntervals;
 
 public:
     TimeBasedDscps2QueueBand(uint16_t band, vector<uint8_t> dscps, const string& throttling_times): Dscps2QueueBand(band, std::move(dscps)) {
@@ -78,8 +72,8 @@ public:
         string line;
         while(getline(traceInput, line)) {
             vector<string> times = helper_methods::SplitStr(line, ',');
-            Time interval_start = Seconds((stoi(times[0])));
-            Time interval_end = Seconds((stoi(times[1])));
+            Time interval_start = Seconds((stod(times[0])));
+            Time interval_end = Seconds((stod(times[1])));
             _throttleWithBackIntervals.push_back({interval_start, interval_end});
         }
         traceInput.close();
