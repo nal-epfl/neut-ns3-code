@@ -6,14 +6,14 @@ from helper_methods import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Localized_Eval_RTT'
+TEST_TYPE = 'Localized_Eval_Same_RTT'
 
 
 if __name__ == '__main__':
     rebuild_project()
 
     m_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
-    m_duration = 90
+    m_duration = 30
 
     # use a continuous tcp flow as measurements
     m_app_setup = MeasurementAppSetup(
@@ -27,12 +27,12 @@ if __name__ == '__main__':
 
     # for different policing rates
     m_policer_configs = []
-    for m_prate in [25, 28, 30, 35, 40]:
+    for m_prate in [25, 30, 35, 45, 55]:
         m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, m_prate))
         m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, m_prate/2))
 
     # Run experiments
-    for m_seed in PRIMES[0: 1]:
+    for m_seed in PRIMES[0: 10]:
         m_exp_params = []
 
         for m_rtt in m_rtts:
