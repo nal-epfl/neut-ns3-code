@@ -166,7 +166,7 @@ namespace fs = std::filesystem;
         channels_r1_servers[i] = p2p.Install(serverNodes.Get(i), routers.Get(1));
 
         string queueSize = ComputeQueueSize(
-                nonCommonLinkRates[i], {nonCommonLinkDelays[i], defaultNonCommonLinkDelay});
+                nonCommonLinkRates[i], {nonCommonLinkDelays[i], commonLinkDelay});
 
         // set the queues to fifo queueing discipline
         TrafficControlHelper tch;
@@ -195,7 +195,8 @@ namespace fs = std::filesystem;
 
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
-    string queueSize = ComputeQueueSize(commonLinkRate, {defaultNonCommonLinkDelay, defaultNonCommonLinkDelay});
+    string queueSize = ComputeQueueSize(commonLinkRate, {
+            *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), commonLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {

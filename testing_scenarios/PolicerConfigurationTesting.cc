@@ -185,7 +185,8 @@ namespace fs = std::filesystem;
 
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
-    string queueSize = ComputeQueueSize(commonLinkRate, {defaultLinkDelay, defaultLinkDelay});
+    string queueSize = ComputeQueueSize(commonLinkRate, {
+            *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), defaultLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {

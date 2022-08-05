@@ -44,7 +44,7 @@ namespace helper_methods {
         for (const string &delay: linksDelay) {
             minRTT += 2 * stoi(regex_replace(delay, reg, "$1")) * 1e-3;
         }
-        return to_string(minRTT * (ns3::DataRate(linkRate).GetBitRate() * 0.125)) + "B";
+        return to_string(int(minRTT * (ns3::DataRate(linkRate).GetBitRate() * 0.125))) + "B";
     }
 
     ns3::Ipv4Address GetNodeIP(ns3::Ptr<ns3::Node> node, uint32_t interface) {
