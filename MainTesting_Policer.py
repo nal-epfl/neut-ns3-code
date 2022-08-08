@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # try clean network setup
     m_rtt = 14
-    m_network_setup_tag, m_network_setup = 'no_congestion_at_all', NetworkSetup('10Gbps', '{}ms'.format((m_rtt-4)/2), '1Gbps')
+    m_network_setup_tag, m_network_setup = 'no_congestion_at_all', NetworkSetup('10Gbps', '{}ms'.format((m_rtt-3)/2), '1Gbps')
 
     # try different policer configuration
     m_policer_configs = []

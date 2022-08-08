@@ -115,7 +115,7 @@ namespace fs = std::filesystem;
 
     /*** Traffic classifiers on which to throttle packets ***/
     auto* mainPolicerConfig = new Dscps2QueueBand(1, {1, 3});
-    if (nonCommonLinksDelaysStr != "empty") {
+    if (overflowEventsTrace != "empty") {
         mainPolicerConfig = new TimeBasedDscps2QueueBand(1, {1, 3}, overflowEventsTrace);
     }
     TrafficClassifier dscpsClassifier = TrafficClassifier({
