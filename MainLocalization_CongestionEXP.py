@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
                 m_exp_batch = '{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period)
                 m_exp_params.append(ExperimentParameters(
-                    exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_dir=m_background_dir,
+                    exp_type='{}/{}'.format(TEST_DATE, m_test_type), seed=m_seed, background_dir=m_background_dir,
                     exp_batch='{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period),
                     network_setup=m_network_setup, measurement_app_setup=m_app_setup,
                     neutrality_setup=m_neutrality_setup
