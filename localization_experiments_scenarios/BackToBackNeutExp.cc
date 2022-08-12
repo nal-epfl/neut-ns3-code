@@ -116,7 +116,7 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 4;
     uint32_t nbServers = nbApps/2;
-    string commonLinkDelay = "3ms";
+    string commonLinkDelay = "3ms", intermLinksDelay = "1ms";
 
     /*** Traffic classifiers on which to throttle packets ***/
     TrafficClassifier dscpsClassifier = TrafficClassifier({
@@ -133,7 +133,7 @@ namespace fs = std::filesystem;
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(1));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue(MilliSeconds(200)));
     Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue(TcpClassicRecovery::GetTypeId()));
-    Config::SetDefault("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
+//    Config::SetDefault("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
 
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
 
@@ -141,18 +141,21 @@ namespace fs = std::filesystem;
 /* ################################################ BUILD AND CONFIGURE TOPOLOGY (START) ################################################ */
     /*** Create the topology ***/
     NodeContainer routers; routers.Create(2); // router[0] is actually the mobile client
+    NodeContainer intermNodes; intermNodes.Create(nbServers);
     NodeContainer serverNodes; serverNodes.Create(nbServers);
 
     InternetStackHelper internetStackHelper;
     internetStackHelper.Install(routers);
+    internetStackHelper.Install(intermNodes);
     internetStackHelper.Install(serverNodes);
 
-    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "7ms";
+    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "6ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
 
-    NetDeviceContainer channels_r1_servers[nbServers];
+    NetDeviceContainer channels_interm_servers[nbServers];
+    NetDeviceContainer channels_r1_interm[nbServers];
 
     vector<string> nonCommonLinkDelays(nbServers, defaultNonCommonLinkDelay);
     if (nonCommonLinksDelaysStr != "empty") { nonCommonLinkDelays = SplitStr(nonCommonLinksDelaysStr, ','); }
@@ -160,26 +163,42 @@ namespace fs = std::filesystem;
     vector<string> nonCommonLinkRates(nbServers, defaultNonCommonLinkRate);
     if (nonCommonLinksDataRatesStr != "empty") { nonCommonLinkRates = SplitStr(nonCommonLinksDataRatesStr, ','); }
 
+    // first the channel between the servers and the intermediate nodes
     for (uint32_t i = 0; i < nbServers; i++) {
-        p2p.SetDeviceAttribute("DataRate", StringValue(nonCommonLinkRates[i]));
+        p2p.SetDeviceAttribute("DataRate", StringValue(defaultNonCommonLinkRate));
         p2p.SetChannelAttribute("Delay", StringValue(nonCommonLinkDelays[i]));
-        channels_r1_servers[i] = p2p.Install(serverNodes.Get(i), routers.Get(1));
+        channels_interm_servers[i] = p2p.Install(serverNodes.Get(i), intermNodes.Get(i));
 
         string queueSize = ComputeQueueSize(
-                nonCommonLinkRates[i], {nonCommonLinkDelays[i], commonLinkDelay});
+                defaultNonCommonLinkRate, {defaultNonCommonLinkRate, intermLinksDelay, commonLinkDelay});
 
         // set the queues to fifo queueing discipline
         TrafficControlHelper tch;
         tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
-        tch.Install(channels_r1_servers[i]);
+        tch.Install(channels_interm_servers[i]);
+    }
+
+    // Seconds the channel between the intermediate nodes and the common router
+    for (uint32_t i = 0; i < nbServers; i++) {
+        p2p.SetDeviceAttribute("DataRate", StringValue(nonCommonLinkRates[i]));
+        p2p.SetChannelAttribute("Delay", StringValue(intermLinksDelay));
+        channels_r1_interm[i] = p2p.Install(intermNodes.Get(i), routers.Get(1));
+
+        string queueSize = ComputeQueueSize(
+                nonCommonLinkRates[i], {nonCommonLinkDelays[i], intermLinksDelay, commonLinkDelay});
+
+        // set the queues to fifo queueing discipline
+        TrafficControlHelper tch;
+        tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
+        tch.Install(channels_r1_interm[i]);
 
         // check if you need to install a policer instead of fifo
-        if ((isNeutral != 0) && DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
+        if ((isNeutral != 0 ) && DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
                     queueSize, dscpsClassifier, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
 
-            const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
+            const Ptr<NetDevice> &netDevice = intermNodes.Get(i)->GetDevice(2);
             tch.Uninstall(netDevice);
             policerTch.Install(netDevice);
         }
@@ -196,7 +215,7 @@ namespace fs = std::filesystem;
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
     string queueSize = ComputeQueueSize(commonLinkRate, {
-            *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), commonLinkDelay});
+            *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), intermLinksDelay, commonLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {
@@ -213,10 +232,15 @@ namespace fs = std::filesystem;
     uint16_t nbSubnets = 0;
     ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
     Ipv4InterfaceContainer addresses_r0_r1 = ipv4.Assign(channel_r0_r1);
-    Ipv4InterfaceContainer addresses_dsts_r0[nbServers];
+    Ipv4InterfaceContainer addresses_interm_servers[nbServers];
     for (uint32_t i = 0; i < nbServers; i++) {
         ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
-        addresses_dsts_r0[i] = ipv4.Assign(channels_r1_servers[i]);
+        addresses_interm_servers[i] = ipv4.Assign(channels_interm_servers[i]);
+    }
+    Ipv4InterfaceContainer addresses_r1_interm[nbServers];
+    for (uint32_t i = 0; i < nbServers; i++) {
+        ipv4.SetBase(("10.1." + to_string(++nbSubnets) + ".0").c_str(), "255.255.255.0");
+        addresses_r1_interm[i] = ipv4.Assign(channels_r1_interm[i]);
     }
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 /* ############################################### BUILD AND CONFIGURE TOPOLOGY (END) ################################################## */
@@ -286,9 +310,9 @@ namespace fs = std::filesystem;
         app.Stop(testsEndTime[testId[i]]);
     }
 
-    /*** Create Cross Traffic On Paths 1 & 2 ***/
+    /*** Create Cross Traffic On Paths 1 & 2 injected at intermediate nodes ***/
     for (uint32_t i = 0; i < nbServers; i++) {
-        auto *back = new BackgroundReplay(serverNodes.Get(i), client);
+        auto *back = new BackgroundReplay(intermNodes.Get(i), client);
         double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBack;
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {

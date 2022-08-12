@@ -32,6 +32,10 @@ TypeId MeasurementReplaySender::GetTypeId() {
                            StringValue (""),
                            MakeStringAccessor (&MeasurementReplaySender::_traceFilename),
                            MakeStringChecker())
+            .AddAttribute ("EnablePacing", "enable pacing of tcp packets",
+                           BooleanValue (true),
+                           MakeBooleanAccessor(&MeasurementReplaySender::_enablePacing),
+                           MakeBooleanChecker())
             .AddAttribute ("EnableCwndMonitor", "Enable monitoring the congestion window",
                            BooleanValue(false),
                            MakeBooleanAccessor(&MeasurementReplaySender::_enableCwndMonitor),
@@ -51,7 +55,7 @@ MeasurementReplaySender::MeasurementReplaySender() {
     _socket = nullptr;
     _appPaused = false;
     _sendEvent = EventId ();
-    _enableCwndMonitor = false;
+    _enablePacing = true;
 }
 
 MeasurementReplaySender::~MeasurementReplaySender() {
@@ -101,8 +105,8 @@ void MeasurementReplaySender::StartApplication() {
     _startTime = Simulator::Now();
 
     // adjust socket buffers
-//    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
-//    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
+    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
 
     // part to change starts from here
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
@@ -111,6 +115,12 @@ void MeasurementReplaySender::StartApplication() {
 
     // This is added to avoid socket overflow
     _socket->SetSendCallback (MakeCallback (&MeasurementReplaySender::ResumeApp, this));
+
+    // to enable/disable pacing for the measurement traffic
+    if(_protocol == "ns3::TcpSocketFactory") {
+        Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+        tcpSocket->SetPacingStatus(_enablePacing);
+    }
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {

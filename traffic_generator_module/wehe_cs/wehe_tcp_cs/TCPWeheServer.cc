@@ -63,6 +63,10 @@ void TCPWeheServer::SetupConnection(Ptr<Socket> socket) {
     _socket->SetAttribute("SndBufSize", UintegerValue(131072));
     _socket->SetRecvCallback (MakeCallback (&TCPWeheServer::Recv, this));
 
+    // to enable pacing for the measurement traffic
+    Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+    tcpSocket->SetPacingStatus(true);
+
     // This is added to avoid socket overflow
     _socket->SetSendCallback (MakeCallback (&TCPWeheServer::ResumeResponse, this));
 

@@ -6,7 +6,7 @@ from helper_methods import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Localized_Eval_Same_RTT'
+TEST_TYPE = 'Localized_Eval_Same_RTT_Without_Pacing'
 
 
 if __name__ == '__main__':
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # the rtt parameters
     m_rtts = [10, 20, 40, 80, 120]
-    m_common_link_delay = 3
+    m_common_link_delay = 4
 
     # for different policing rates
     m_policer_configs = []
@@ -32,11 +32,11 @@ if __name__ == '__main__':
         m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, m_prate/2))
 
     # Run experiments
-    for m_seed in PRIMES[0: 10]:
+    for m_seed in PRIMES[0:10]:
         m_exp_params = []
 
         for m_rtt in m_rtts:
-            m_network_setup_tag = 'no_congestion_at_all_rtt_{}ms'.format(m_rtt)
+            m_network_setup_tag = 'no_congestion_rtt_{}ms'.format(m_rtt)
             m_network_setup = NetworkSetup(
                 common_link_rate='10Gbps',
                 noncommon_links_delays='{}ms,{}ms'.format(m_rtt/2 - m_common_link_delay, m_rtt/2 - m_common_link_delay),

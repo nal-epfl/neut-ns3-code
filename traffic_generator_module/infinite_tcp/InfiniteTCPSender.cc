@@ -36,6 +36,10 @@ TypeId InfiniteTCPSender::GetTypeId() {
                            DataRateValue (DataRate("20Mbps")),
                            MakeDataRateAccessor(&InfiniteTCPSender::_maxSendingRate),
                            MakeDataRateChecker())
+            .AddAttribute ("EnablePacing", "enable pacing of tcp packets",
+                           BooleanValue (true),
+                           MakeBooleanAccessor(&InfiniteTCPSender::_enablePacing),
+                           MakeBooleanChecker())
             .AddAttribute ("EnableCwndMonitor", "enable monitoring the cwnd for TCP applications",
                            BooleanValue (false),
                            MakeBooleanAccessor(&InfiniteTCPSender::_enableCwndMonitor),
@@ -58,6 +62,7 @@ InfiniteTCPSender::InfiniteTCPSender() {
     _sendEvent = EventId ();
     _pktSize = 1024;
     _maxSendingRate = DataRate("20Mbps");
+    _enablePacing = true;
 }
 
 InfiniteTCPSender::~InfiniteTCPSender() {
@@ -86,9 +91,9 @@ void InfiniteTCPSender::StartApplication() {
     _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
     _socket->SetAttribute("SndBufSize", UintegerValue(131072));
 
-    // un-comment this code if you want to disable pacing for the measurement traffic
-    //Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
-    //tcpSocket->SetPacingStatus(false);
+    // to enable/disable pacing for the measurement traffic
+    Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+    tcpSocket->SetPacingStatus(_enablePacing);
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);

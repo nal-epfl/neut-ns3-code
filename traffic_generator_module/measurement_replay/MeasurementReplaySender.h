@@ -48,6 +48,8 @@ private:
     vector<TraceReplayItem> _traceItems;
     uint32_t _traceItemIdx;
 
+    bool _enablePacing;
+
     ns3::Time _startTime;
     bool _appPaused;
     EventId _sendEvent;

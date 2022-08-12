@@ -53,6 +53,10 @@ void TCPWeheClient::StartApplication() {
     _socket->SetRecvCallback (MakeCallback (&TCPWeheClient::Recv, this));
     _socket->SetAllowBroadcast (true);
 
+    // to enable pacing for the measurement traffic
+    Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+    tcpSocket->SetPacingStatus(true);
+
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {
         string outputFolder = _resultsFolder + "/cong_algo_info_" + _appTag + "/receiver/";

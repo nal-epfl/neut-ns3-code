@@ -204,7 +204,7 @@ CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficCl
                                      "Mtu", UintegerValue (mtu),
                                      "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),
                                      "PeakRate", DataRateValue(DataRate("0bps")),
-                                     "QueueTraceOutput", StringValue(""));
+                                     "QueueTraceOutput", StringValue(resultsPath + "/queue_events_" + to_string(i) + ".csv"));
     }
 
     return policerTch;

@@ -22,13 +22,13 @@ def load_wehe_tests_info(tests_info_dir):
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Wehe_Test_Cases_DRY_RUN_3'
+TEST_TYPE = 'Localized_Eval_Wehe_Test_Cases'
 
 if __name__ == '__main__':
     rebuild_project()
 
     m_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
-    m_common_link_delay = 3
+    m_common_link_delay = 4
     m_tests_info_dir = '{}/data/localization_wehe_tests_exp_input'.format(get_project_path())
     m_wehe_tests = load_wehe_tests_info(m_tests_info_dir)
     [print(info) for info in m_wehe_tests]

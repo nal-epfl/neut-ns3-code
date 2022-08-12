@@ -34,6 +34,7 @@ private:
 
     uint32_t _pktSize; // size of sent packets
     DataRate _maxSendingRate;
+    bool _enablePacing;
 
     uint32_t _nbSentPkts;
     bool _appPaused;

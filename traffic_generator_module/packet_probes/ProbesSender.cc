@@ -37,6 +37,10 @@ TypeId ProbesSender::GetTypeId() {
                            UintegerValue (1024),
                            MakeUintegerAccessor (&ProbesSender::_pktSize),
                            MakeUintegerChecker<uint32_t> (12,65507))
+            .AddAttribute ("EnablePacing", "enable pacing of tcp packets",
+                           BooleanValue (true),
+                           MakeBooleanAccessor(&ProbesSender::_enablePacing),
+                           MakeBooleanChecker())
             .AddAttribute ("EnableCwndMonitor", "enable monitoring the cwnd for TCP applications",
                            BooleanValue (false),
                            MakeBooleanAccessor(&ProbesSender::_enableCwndMonitor),
@@ -57,6 +61,7 @@ ProbesSender::ProbesSender() {
     _socket = nullptr;
     _appPaused = false;
     _sendEvent = EventId ();
+    _enablePacing = true;
 }
 
 ProbesSender::~ProbesSender() {
@@ -82,14 +87,20 @@ void ProbesSender::StartApplication() {
     }
 
     // adjust socket buffers
-//    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
-//    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
+    _socket->SetAttribute("RcvBufSize", UintegerValue(131072));
+    _socket->SetAttribute("SndBufSize", UintegerValue(131072));
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
 
     // This is added to avoid socket overflow
     _socket->SetSendCallback (MakeCallback (&ProbesSender::ResumeApp, this));
+
+    // to enable/disable pacing for the measurement traffic
+    if(_protocol == "ns3::TcpSocketFactory") {
+        Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+        tcpSocket->SetPacingStatus(_enablePacing);
+    }
 
     // part for monitoring the congestion window
     if (_enableCwndMonitor) {

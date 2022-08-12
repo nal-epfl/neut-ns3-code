@@ -32,6 +32,7 @@ private:
 
     uint32_t _pktSize; // size of sent packets
     Ptr<RandomVariableStream> _interval; // interval between sending two packets
+    bool _enablePacing;
 
     uint32_t _nbSentPkts;
     EventId _sendEvent;
