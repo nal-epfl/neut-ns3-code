@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # for different policing rates
     m_policer_configs, m_burst_period = [], 0.02
-    for m_prate in np.arange(24, 50, 2):
+    for m_prate in np.arange(20, 60, 2):
         m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, m_prate))
         #m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, m_prate/2))
 
