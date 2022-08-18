@@ -190,10 +190,10 @@ def run_parallel_experiments(func, experiments, nb_threads=1):
     if nb_threads >= (cpu_count()/2):
         raise Exception("ERROR!!! Number of threads more than number of physical cpus")
 
-    processes_queue = []
-    for params in experiments:
+    processes_queue, last_idx = [], len(experiments)-1
+    for params_idx, params in enumerate(experiments):
         processes_queue.append(Process(target=func, kwargs={'params': params}))
-        if len(processes_queue) >= nb_threads:
+        if (len(processes_queue) >= nb_threads) or (params_idx == last_idx):
             for process_idx, process in enumerate(processes_queue):
                 time.sleep(5)
                 os.system("taskset -p -c %d %d" % (process_idx, os.getpid()))
