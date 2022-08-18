@@ -40,6 +40,8 @@ private:
     vector<TraceReplayItem> _traceItems;
     uint32_t _traceItemIdx;
 
+    bool _enablePacing;
+
     EventId _sendEvent, _startEvent;
 
 protected:

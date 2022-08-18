@@ -89,6 +89,12 @@ void BackgroundReplay::RunTracesWithRandomThrottledUDPFlows(const string& traces
 void BackgroundReplay::RunSingleTrace(const string& tracePath, const string& protocol, uint8_t dscp = 0) {
     uint32_t traceId = ++SOCKET_COUNT;
 
+    // randomly select whether to pace this sender
+    random_device rd;
+    mt19937 mt(rd());
+    uniform_real_distribution<double> dist(0.0, 1.0);
+    bool enablePacing = dist(mt) < 0.8;
+
     InetSocketAddress receiverAddress = InetSocketAddress(GetNodeIP(_receiver, 1), 4000 + traceId);
     receiverAddress.SetTos(Dscp2Tos(dscp)); // for traffic differentiation
 
@@ -102,6 +108,7 @@ void BackgroundReplay::RunSingleTrace(const string& tracePath, const string& pro
     TraceReplaySenderHelper replayHelperClient(receiverAddress);
     replayHelperClient.SetAttribute("Protocol", StringValue(protocol));
     replayHelperClient.SetAttribute("TraceFile", StringValue(tracePath));
+    replayHelperClient.SetAttribute("EnablePacing", BooleanValue(enablePacing));
     ApplicationContainer replayAppClient = replayHelperClient.Install(_sender);
     replayAppClient.Start(Simulator::Now());
 }

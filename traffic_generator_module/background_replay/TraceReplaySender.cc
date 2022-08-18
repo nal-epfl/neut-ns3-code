@@ -26,6 +26,10 @@ TypeId TraceReplaySender::GetTypeId() {
                            StringValue (""),
                            MakeStringAccessor (&TraceReplaySender::_traceFilename),
                            MakeStringChecker())
+            .AddAttribute ("EnablePacing", "enable pacing of tcp packets",
+                           BooleanValue (true),
+                           MakeBooleanAccessor(&TraceReplaySender::_enablePacing),
+                           MakeBooleanChecker())
     ;
     return tid;
 }
@@ -36,6 +40,7 @@ TraceReplaySender::TraceReplaySender() {
     _traceItemIdx = 0;
     _socket = nullptr;
     _sendEvent = EventId ();
+    _enablePacing = true;
 }
 
 TraceReplaySender::~TraceReplaySender() {
@@ -90,6 +95,12 @@ void TraceReplaySender::PrepareSocket() {
     // part to change starts from here
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);
+
+    // to enable/disable pacing for the measurement traffic
+    if(_protocol == "ns3::TcpSocketFactory") {
+        Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
+        tcpSocket->SetPacingStatus(_enablePacing);
+    }
 
     _sendEvent = Simulator::Schedule(Seconds(0), &TraceReplaySender::ScheduleNextSend, this);
 }
