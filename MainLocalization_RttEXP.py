@@ -6,7 +6,7 @@ from helper_methods import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Localized_Eval_Same_RTT_Without_Pacing'
+TEST_TYPE = 'Localized_Eval_Same_RTT'
 
 
 if __name__ == '__main__':
