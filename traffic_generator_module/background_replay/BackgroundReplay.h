@@ -21,11 +21,13 @@ private:
 
     Ptr<Node> _sender;
     Ptr<Node> _receiver;
+    double _pctOfPacedTcp;
 
     void RunSingleTrace(const string& tracePath, const string& protocol, uint8_t dscp);
 
 public:
     BackgroundReplay(const Ptr<Node>& sender, const Ptr<Node>& receiver);
+    void SetPctOfPacedTcps(double pct);
 
     void RunAllTraces(const string& tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t dscp=0);
     void RunAllTraces(const string& tracesPath, uint8_t dscp=0);

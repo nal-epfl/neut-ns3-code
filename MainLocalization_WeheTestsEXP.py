@@ -22,7 +22,7 @@ def load_wehe_tests_info(tests_info_dir):
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '7_2022'
-TEST_TYPE = 'Localized_Eval_Wehe_Test_Cases'
+TEST_TYPE = 'Localized_Eval_Wehe_Test_Cases_DRY_RUN'
 
 if __name__ == '__main__':
     rebuild_project()
@@ -61,7 +61,8 @@ if __name__ == '__main__':
                 )
 
                 m_exp_params.append(ExperimentParameters(
-                    exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_dir=m_background_dir,
+                    exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed,
+                    background_setup=BackgroundTrafficSetup(m_background_dir),
                     exp_batch='{}/{}_{}Mbps_{}s_30p'.format(m_user, m_ptype, m_prate, m_burst_period),
                     network_setup=m_network_setup, measurement_app_setup=m_app_setup,
                     neutrality_setup=m_neutrality_setup)

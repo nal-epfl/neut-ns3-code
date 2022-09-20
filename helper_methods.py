@@ -104,6 +104,12 @@ class MeasurementAppSetup:
         self.app_data_rate = app_data_rate
 
 
+class BackgroundTrafficSetup:
+    def __init__(self, background_dir, pct_of_paced_tcp=0.8):
+        self.background_dir = background_dir
+        self.pct_of_paced_tcp = pct_of_paced_tcp
+
+
 class NeutralitySetup:
     def __init__(self, is_neutral, policing_rate=0.0, burst_length=0.0, policer_location=PolicerLocation.COMMON_LINK,
                  policer_type=PolicerType.SHARED, pct_of_throttled_background=0.03, overflow_events_trace='empty'):
@@ -117,11 +123,11 @@ class NeutralitySetup:
 
 
 class ExperimentParameters:
-    def __init__(self, exp_type, network_setup, measurement_app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
+    def __init__(self, exp_type, network_setup, measurement_app_setup, background_setup, neutrality_setup, exp_batch, seed=3):
         self.exp_type = exp_type
         self.network_setup = network_setup
         self.measurement_app_setup = measurement_app_setup
-        self.background_dir = background_dir
+        self.background_setup = background_setup
         self.neutrality_setup = neutrality_setup
         self.exp_batch = exp_batch
         self.seed = seed
@@ -130,14 +136,14 @@ class ExperimentParameters:
 def run_experiment_with_params(params):
     run_experiment(
         exp_type=params.exp_type, network_setup=params.network_setup, app_setup=params.measurement_app_setup,
-        background_dir=params.background_dir, neutrality_setup=params.neutrality_setup,
+        background_setup=params.background_setup, neutrality_setup=params.neutrality_setup,
         exp_batch=params.exp_batch, seed=params.seed
     )
 
 
-def run_experiment(exp_type, network_setup, app_setup, background_dir, neutrality_setup, exp_batch, seed=3):
+def run_experiment(exp_type, network_setup, app_setup, background_setup, neutrality_setup, exp_batch, seed=3):
     result_folder_name = '{}/{}/link_{}/{}/{}/seed_{}/{}'.format(
-        exp_type, app_setup.app_name, network_setup.common_link_rate, background_dir, exp_batch, seed,
+        exp_type, app_setup.app_name, network_setup.common_link_rate, background_setup.background_dir, exp_batch, seed,
         app_setup.tcp_protocol if app_setup.transport_protocol == TransportProtocol.TCP else 'udp'
     )
     os.system('mkdir -p {}/scratch/wehe_p_tomography/results/{}'.format(get_ns3_path(), result_folder_name))
@@ -158,7 +164,8 @@ def run_experiment(exp_type, network_setup, app_setup, background_dir, neutralit
         ' --pktSize={}'.format(app_setup.pkt_size) +
         ' --lambda={}'.format(app_setup.p_lambda) +
         ' --replayTrace={}'.format(app_setup.replay_trace) +
-        ' --backgroundDir={}'.format(background_dir) +
+        ' --backgroundDir={}'.format(background_setup.background_dir) +
+        ' --pctPacedTcpBack={}'.format(background_setup.pct_of_paced_tcp) +
         ' --isNeutral={}'.format(neutrality_setup.is_neutral) +
         ' --policingRate={}'.format(neutrality_setup.policing_rate) +
         ' --policingBurstLength={}'.format(neutrality_setup.burst_length) +

@@ -65,6 +65,7 @@ namespace fs = std::filesystem;
     float controlTestDuration = 120.;               // duration to run the control measurements
     float suspectedTestDuration = 120.;             // duration to run the measurements that may be policed
     string backgroundDir = "empty";                 // directory for the background traces to use as cross traffic
+    double pctPacedBack = 0.8;                      // the percentage of tcp flows in the background to be paced
     int isNeutral = 0;                              // 0 to run a neutral scenario --- 1 for policing
     string policerLocation = "c";                   // 'c' for common link --- 'nci' for noncommon link of path i --- 'nc' for all noncommon links
     int policerType = 0;                            // 0 for shared policer --- 1 for per-flow policer
@@ -88,6 +89,7 @@ namespace fs = std::filesystem;
     cmd.AddValue("lambda", "in case of packet_probes/constant application: the inter-arrival time includes probs", lambda);
     cmd.AddValue("replayTrace", "in case of measurement replay application: the trace to replay", replayTrace);
     cmd.AddValue("backgroundDir", "directory for the background traces to use as cross traffic", backgroundDir);
+    cmd.AddValue("pctPacedTcpBack", "the percentage of tcp flows in the background to be paced", pctPacedBack);
     cmd.AddValue("isNeutral", "0 to run a neutral scenario --- 1 for policing", isNeutral);
     cmd.AddValue("policingRate", "throttling rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "allowed burst length in case of policing (in sec)", burstLength);
@@ -313,6 +315,7 @@ namespace fs = std::filesystem;
     /*** Create Cross Traffic On Paths 1 & 2 injected at intermediate nodes ***/
     for (uint32_t i = 0; i < nbServers; i++) {
         auto *back = new BackgroundReplay(intermNodes.Get(i), client);
+        back->SetPctOfPacedTcps(pctPacedBack);
         double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBack;
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {

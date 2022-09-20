@@ -14,6 +14,10 @@ uint32_t BackgroundReplay::SOCKET_COUNT = 0;
 
 BackgroundReplay::BackgroundReplay(const Ptr<Node>& sender, const Ptr<Node>& receiver) : _sender(sender), _receiver(receiver) {}
 
+void BackgroundReplay::SetPctOfPacedTcps(double pct) {
+    _pctOfPacedTcp = pct;
+}
+
 void BackgroundReplay::RunAllTraces(const string& tracesPath, uint32_t nbTCPFlows, uint32_t nbUDPFlows, uint8_t dscp) {
     for(uint32_t i = 0; i < nbUDPFlows; i++) {
         string tracePath = tracesPath + "/UDP/trace_" + to_string(i) + ".csv";
@@ -93,7 +97,7 @@ void BackgroundReplay::RunSingleTrace(const string& tracePath, const string& pro
     random_device rd;
     mt19937 mt(rd());
     uniform_real_distribution<double> dist(0.0, 1.0);
-    bool enablePacing = dist(mt) < 0.8;
+    bool enablePacing = dist(mt) < _pctOfPacedTcp;
 
     InetSocketAddress receiverAddress = InetSocketAddress(GetNodeIP(_receiver, 1), 4000 + traceId);
     receiverAddress.SetTos(Dscp2Tos(dscp)); // for traffic differentiation

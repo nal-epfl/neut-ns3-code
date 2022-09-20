@@ -28,6 +28,7 @@ if __name__ == '__main__':
         m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, m_prate/2))
 
     # vary the location and intensity of congestion
+
     m_network_setups = []
     for m_link_rate in ['180Mbps', '190Mbps', '200Mbps', '210Mbps', '220Mbps']:
         m_network_setups.append((
@@ -50,7 +51,8 @@ if __name__ == '__main__':
 
             # test case with no policing
             m_exp_params.append(ExperimentParameters(
-                exp_type='{}/{}'.format(TEST_DATE, m_test_type), seed=m_seed, background_dir=m_background_dir,
+                exp_type='{}/{}'.format(TEST_DATE, m_test_type), seed=m_seed,
+                background_setup=BackgroundTrafficSetup(m_background_dir),
                 exp_batch='{}/no_policing'.format(m_network_setup_tag),
                 network_setup=m_network_setup, measurement_app_setup=m_app_setup,
                 neutrality_setup=NeutralitySetup(is_neutral=0)
@@ -64,9 +66,9 @@ if __name__ == '__main__':
                     pct_of_throttled_background=0.3
                 )
 
-                m_exp_batch = '{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period)
                 m_exp_params.append(ExperimentParameters(
-                    exp_type='{}/{}'.format(TEST_DATE, m_test_type), seed=m_seed, background_dir=m_background_dir,
+                    exp_type='{}/{}'.format(TEST_DATE, m_test_type), seed=m_seed,
+                    background_setup=BackgroundTrafficSetup(m_background_dir),
                     exp_batch='{}/{}_{}Mbps_{}s_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period),
                     network_setup=m_network_setup, measurement_app_setup=m_app_setup,
                     neutrality_setup=m_neutrality_setup

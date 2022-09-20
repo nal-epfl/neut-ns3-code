@@ -74,7 +74,8 @@ if __name__ == '__main__':
                 )
                 m_exp_params.append(ExperimentParameters(
                     exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE),
-                    network_setup=m_network_setup, measurement_app_setup=m_app_setup, background_dir=m_background_dir,
+                    network_setup=m_network_setup, measurement_app_setup=m_app_setup,
+                    background_setup=BackgroundTrafficSetup(m_background_dir),
                     neutrality_setup=m_policer_config, exp_batch=m_exp_batch, seed=m_seed)
                 )
         run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=1)
