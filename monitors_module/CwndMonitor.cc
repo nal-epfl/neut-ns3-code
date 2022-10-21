@@ -24,7 +24,6 @@ CwndMonitor::CwndMonitor(const Ptr<Socket>& socket, string outputFolderPath) {
 
 void CwndMonitor::ConnectTraces() {
     _socket->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&CwndMonitor::RecordCwndChange, this));
-//    _socket->TraceConnectWithoutContext("PacingRate", MakeCallback(&CwndMonitor::RecordPacingRate, this));
     _socket->TraceConnectWithoutContext("CongState", MakeCallback(&CwndMonitor::RecordCongStateChange, this));
     _socket->TraceConnectWithoutContext("RTO", MakeCallback(&CwndMonitor::RecordRTO, this));
     _socket->TraceConnectWithoutContext("RTT", MakeCallback(&CwndMonitor::RecordRTT, this));
@@ -33,10 +32,6 @@ void CwndMonitor::ConnectTraces() {
 
 void CwndMonitor::RecordCwndChange(uint32_t oldVal, uint32_t newVal) {
     cwndChanges.push_back({oldVal, newVal, Simulator::Now()});
-}
-
-void CwndMonitor::RecordPacingRate(DataRate oldVal, DataRate newVal) {
-    pacingRateChanges.push_back({oldVal, newVal, Simulator::Now()});
 }
 
 void CwndMonitor::RecordCongStateChange(TcpSocketState::TcpCongState_t oldVal, TcpSocketState::TcpCongState_t newVal) {
@@ -64,15 +59,6 @@ void CwndMonitor::SaveCwndChanges() {
     outfile.close();
 }
 
-
-void CwndMonitor::SavePacingRateChanges() {
-    ofstream outfile;
-    outfile.open(_outputFolderPath + "/pacing_rate_changes.csv");
-    for(const auto& pacingRate : pacingRateChanges) {
-        outfile << pacingRate.oldVal << "," << pacingRate.newVal << "," << GetDisplayTime(pacingRate.time) << endl;
-    }
-    outfile.close();
-}
 
 void CwndMonitor::SaveCongStateChanges() {
     ofstream outfile;

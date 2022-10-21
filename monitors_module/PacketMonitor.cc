@@ -7,23 +7,17 @@
 PacketMonitorEvent::PacketMonitorEvent(PacketKey *key) : _key(key) {}
 
 void PacketMonitorEvent::SetSent() { _sentTime = ns3::Simulator::Now(); }
-
-void PacketMonitorEvent::SetReceived() {
-    _isReceived = true;
-    _receivedTime = ns3::Simulator::Now();
-}
+void PacketMonitorEvent::SetReceived() { _receivedTime = ns3::Simulator::Now(); }
 
 PacketKey *PacketMonitorEvent::GetPacketKey() const { return _key; }
-
 Time PacketMonitorEvent::GetSentTime() const { return _sentTime; }
-
-bool PacketMonitorEvent::IsReceived() const { return _isReceived; }
-
 Time PacketMonitorEvent::GetReceivedTime() const {  return _receivedTime; }
+bool PacketMonitorEvent::IsReceived() const { return _receivedTime != Time(-1); }
 
 ostream &operator<<(ostream &os, const PacketMonitorEvent &event) {
-    os << "_key: " << *(event._key) << " _sentTime: " << event._sentTime << " _isReceived: " << event._isReceived
-       << " _receivedTime: " << event._receivedTime;
+    os << "PacketMonitorEvent: [ ";
+    os << "Key = " << *(event._key) << ", SentTime = " << event._sentTime << ", ReceiveTime = " << event._receivedTime;
+    os << "]";
     return os;
 }
 
@@ -73,49 +67,20 @@ void PacketMonitor::RecordIpv4PacketReceived(Ptr<const Packet> packet, Ptr<Ipv4>
     }
 }
 
-void PacketMonitor::SaveRecordedPacketsToCSV(const string& filename) {
+void PacketMonitor::SavePacketRecords(const string& filename) {
     ofstream outfile;
     outfile.open(filename);
-    outfile << "SourceIP,DestinationIP,Identification,SourcePort,DestinationPort,PayloadSize,PayloadHash,SentTime,IsReceived,ReceiveTime" << endl;
+    outfile << "SourcePort,DestinationPort,SequenceNb,PayloadSize,SentTime,IsReceived,ReceiveTime" << endl;
     for (auto& packetKeyEventPair: _recordedPackets) {
         PacketKey key = packetKeyEventPair.first;
         PacketMonitorEvent* event = packetKeyEventPair.second;
 
-        outfile << key.GetSrcIp() << "," << key.GetDstIp() << "," << key.GetId() << "," << key.GetSrcPort() << "," << key.GetDstPort();
-        outfile << "," << key.GetSize() << "," << key.GetPayloadHash();
-        outfile << ",";
-        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds() << "," << event->IsReceived() << "," << (event->GetReceivedTime() - _startTime).GetNanoSeconds();
-        outfile << endl;
+        outfile << key.GetSrcPort() << "," << key.GetDstPort() << "," << key.GetSeqNb() << "," << key.GetSize() << ",";
+        outfile << GetRelativeTime(event->GetSentTime()).GetNanoSeconds() << ",";
+        outfile << event->IsReceived() << "," << GetRelativeTime(event->GetReceivedTime()).GetNanoSeconds() << endl;
     }
     outfile.close();
 }
 
-void PacketMonitor::SaveRecordedPacketsCompact(const string& filename) {
-    ofstream outfile;
-    outfile.open(filename);
-    outfile << "SourcePort,DestinationPort,PayloadSize,SentTime,IsReceived,ReceiveTime" << endl;
-    for (auto& packetKeyEventPair: _recordedPackets) {
-        PacketKey key = packetKeyEventPair.first;
-        PacketMonitorEvent* event = packetKeyEventPair.second;
+ns3::Time PacketMonitor::GetRelativeTime(const Time &time){ return time - _startTime; }
 
-        outfile << key.GetSrcPort() << "," << key.GetDstPort() << "," << key.GetSize();
-        outfile << ",";
-        outfile << (event->GetSentTime() - _startTime).GetNanoSeconds();
-        outfile << ",";
-        outfile << event->IsReceived() << "," << (event->GetReceivedTime() - _startTime).GetNanoSeconds();
-        outfile << endl;
-    }
-    outfile.close();
-}
-
-void PacketMonitor::DisplayStats() {
-    cout << "Stats for " << _monitorTag << ":" << endl;
-    int nb_sent_pkts = 0; int nb_lost_pkts = 0;
-    for (auto& packetKeyEventPair: _recordedPackets) {
-        nb_sent_pkts++;
-        PacketMonitorEvent* event = packetKeyEventPair.second;
-        if(event->IsReceived() == 0) { nb_lost_pkts++; }
-    }
-    cout << "nb_sent_pkts = " << nb_sent_pkts << ", and nb_lost_pkts = " << nb_lost_pkts << ", ";
-    cout << "so loss ratio = " << ((nb_lost_pkts * 1.0 / nb_sent_pkts) * 100) << endl;
-}

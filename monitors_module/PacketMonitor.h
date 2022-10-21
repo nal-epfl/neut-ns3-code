@@ -22,16 +22,15 @@ struct PacketMonitorEvent {
 private:
     PacketKey* _key;
     ns3::Time _sentTime;
-    bool _isReceived = false;
-    ns3::Time _receivedTime;
+    ns3::Time _receivedTime = Time(-1);
 
 public:
     explicit PacketMonitorEvent(PacketKey *key);
 
     [[nodiscard]] PacketKey* GetPacketKey() const;
     [[nodiscard]] Time GetSentTime() const;
-    [[nodiscard]] bool IsReceived() const;
     [[nodiscard]] Time GetReceivedTime() const;
+    [[nodiscard]] bool IsReceived() const;
 
     void SetSent();
     void SetReceived();
@@ -56,14 +55,13 @@ private:
     void RecordIpv4PacketSent(Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interface);
     void RecordIpv4PacketReceived(Ptr<const Packet> packet, Ptr<Ipv4> ipv4, uint32_t interface);
 
+    ns3::Time GetRelativeTime(const Time &time);
+
 public:
     PacketMonitor(const Time &startTime, const Time &duration, const Ptr<Node> &txNode, const Ptr<Node> &rxNode, const string &monitorTag);
-
     void AddAppKey(AppKey appKey);
 
-    void SaveRecordedPacketsToCSV(const string& filename);
-    void SaveRecordedPacketsCompact(const string &filename);
-    void DisplayStats();
+    void SavePacketRecords(const string &filename);
 };
 
 #endif //NEUTRALITY_PACKETMONITOR_H

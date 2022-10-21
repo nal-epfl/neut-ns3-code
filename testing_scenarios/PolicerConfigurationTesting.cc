@@ -298,7 +298,7 @@ namespace fs = std::filesystem;
     Simulator::Destroy();
 
     for (uint32_t i = 0; i < nbApps; i++) {
-        appsMonitors[i]->SaveRecordedPacketsCompact(resultsPath + "/path_" + appsTag[i] + "_packets.csv");
+        appsMonitors[i]->SavePacketRecords(resultsPath + "/path_" + appsTag[i] + "_packets.csv");
     }
 /* ############################################## RUN SIMULATION AND MONITORING (END) ############################################## */
 

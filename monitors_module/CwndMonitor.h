@@ -35,14 +35,12 @@ class CwndMonitor {
 
         vector<ChangeTuple<uint32_t>> cwndChanges;
         vector<ChangeTuple<uint32_t>> cwndInfChanges;
-        vector<ChangeTuple<DataRate>> pacingRateChanges;
         vector<ChangeTuple<TcpSocketState::TcpCongState_t>> congStateChanges;
         vector<ChangeTuple<ns3::Time>> rtoChanges;
         vector<ChangeTuple<ns3::Time>> rttChanges;
 
         void ConnectTraces();
         void RecordCwndChange(uint32_t oldVal, uint32_t newVal);
-        void RecordPacingRate(DataRate oldVal, DataRate newVal);
         void RecordCongStateChange(TcpSocketState::TcpCongState_t oldVal, TcpSocketState::TcpCongState_t newVal);
         void RecordRTO(Time oldVal, Time newVal);
         void RecordRTT(Time oldVal, Time newVal);
@@ -52,8 +50,8 @@ class CwndMonitor {
     public:
         CwndMonitor(const Ptr<Socket>& socket, string outputFolderPath);
         void SaveCwndChanges();
-        void SavePacingRateChanges();
-        void SaveCongStateChanges();
+
+    void SaveCongStateChanges();
         void SaveRtoChanges();
         void SaveRttChanges();
 
