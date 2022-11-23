@@ -181,8 +181,9 @@ void CbQueueDisc::InitializeParams() {
 }
 
 TrafficControlHelper
-CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficClassifier& dscpsClassifier,
-                                        double policingRate, double burstLength, const string& resultsPath) {
+CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficClassifier &dscpsClassifier,
+                                        double policingRate, double burstLength, int policerQueueSize,
+                                        const string &resultsPath) {
     system(("mkdir -p " + resultsPath).c_str());
 
     TrafficControlHelper policerTch;
@@ -199,7 +200,7 @@ CbQueueDisc::GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficCl
     int burst = max(int(policingRate * burstLength * 125000), 10 * mtu); // in byte
     for (uint32_t i = 1; i < dscpsClassifier.GetNumberOfClasses(); i++) {
         policerTch.AddChildQueueDisc(handle, dscpsClassifier.GetDscps2Band(i)->GetBand(), "ns3::TbfQueueDiscChild",
-                                     "MaxSize", StringValue(to_string(mtu) + "B"),
+                                     "MaxSize", StringValue(to_string(policerQueueSize) + "B"),
                                      "Burst", UintegerValue(burst),
                                      "Mtu", UintegerValue (mtu),
                                      "Rate", DataRateValue(DataRate(to_string(policingRate) + "Mbps")),

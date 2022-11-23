@@ -71,6 +71,7 @@ namespace fs = std::filesystem;
     int policerType = 0;                            // 0 for shared policer --- 1 for per-flow policer
     double policingRate = 4;                        // the rate of generating tokens in the token bucket
     double burstLength = 0.1;                       // the burst length parameter of the token bucket
+    int policerQueueSize = 15000;                   // the size of the policer queue before packets are drained according to the token bucket
     double throttlingPctOfBack = 0.3;               // percentage of background to throttle with the measurement traffic
     string overflowEventsTrace = "empty";           // file that contains times in which policer experienced overflow events
 
@@ -93,6 +94,7 @@ namespace fs = std::filesystem;
     cmd.AddValue("isNeutral", "0 to run a neutral scenario --- 1 for policing", isNeutral);
     cmd.AddValue("policingRate", "throttling rate used in case of policing (in Mbps) ", policingRate);
     cmd.AddValue("policingBurstLength", "allowed burst length in case of policing (in sec)", burstLength);
+    cmd.AddValue("policerQueueSize", "the size of the policer queue in case of policing (in Bytes)", policerQueueSize);
     cmd.AddValue("policerLocation", "'c' for common link --- 'nci' for noncommon link of path i --- 'nc' for all noncommon links", policerLocation);
     cmd.AddValue("policerType", "'0 for shared policer --- 1 for per-flow policer", policerType);
     cmd.AddValue("backThrottledPct", "percentage of background to throttle with the measurement traffic", throttlingPctOfBack);
@@ -131,10 +133,13 @@ namespace fs = std::filesystem;
     Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(mss));
     Config::SetDefault("ns3::TcpSocket::RcvBufSize", UintegerValue(rcvBufSize));
     Config::SetDefault("ns3::TcpSocket::SndBufSize", UintegerValue(sndBufSize));
-    Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(1));
+    Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
     Config::SetDefault("ns3::TcpSocketBase::MinRto", TimeValue(MilliSeconds(200)));
+    Config::SetDefault("ns3::TcpSocketBase::Sack", BooleanValue(true));
     Config::SetDefault("ns3::TcpL4Protocol::RecoveryType", TypeIdValue(TcpClassicRecovery::GetTypeId()));
+//    Config::SetDefault("ns3::TcpSocket::TcpNoDelay", BooleanValue(false));
 //    Config::SetDefault("ns3::TcpSocketState::EnablePacing", BooleanValue (true));
+
 
 /* ################################################## READ AND PREPARE PARAMETERS (END) ################################################# */
 
@@ -197,7 +202,8 @@ namespace fs = std::filesystem;
         if ((isNeutral != 0 ) && DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, dscpsClassifier, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, dscpsClassifier, rate, burstLength, policerQueueSize,
+                    resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = intermNodes.Get(i)->GetDevice(2);
             tch.Uninstall(netDevice);
@@ -221,7 +227,7 @@ namespace fs = std::filesystem;
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                queueSize, dscpsClassifier, policingRate, burstLength, resultsPath + "/common_link");
+                queueSize, dscpsClassifier, policingRate, burstLength, policerQueueSize, resultsPath + "/common_link");
 
         const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
         tch.Uninstall(netDevice);

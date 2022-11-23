@@ -94,6 +94,7 @@ void InfiniteTCPSender::StartApplication() {
     // to enable/disable pacing for the measurement traffic
     Ptr<TcpSocketBase> tcpSocket = _socket->GetObject<TcpSocketBase>();
     tcpSocket->SetPacingStatus(_enablePacing);
+    tcpSocket->SetAttribute("TcpNoDelay", BooleanValue(false));
 
     _socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     _socket->SetAllowBroadcast (true);

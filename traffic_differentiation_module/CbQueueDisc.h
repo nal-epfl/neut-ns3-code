@@ -65,8 +65,9 @@ class CbQueueDisc : public QueueDisc {
         void SetTrafficClassifier(TrafficClassifier classifier);
 
         static TrafficControlHelper
-        GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficClassifier& dscpsClassifier,
-                                   double policingRate, double burstLength, const string& resultsPath);
+        GenerateDisc1FifoNPolicers(const string &queueSize, const TrafficClassifier &dscpsClassifier,
+                                   double policingRate, double burstLength, int policerQueueSize,
+                                   const string &resultsPath);
 
 };
 

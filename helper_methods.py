@@ -111,11 +111,13 @@ class BackgroundTrafficSetup:
 
 
 class NeutralitySetup:
-    def __init__(self, is_neutral, policing_rate=0.0, burst_length=0.0, policer_location=PolicerLocation.COMMON_LINK,
-                 policer_type=PolicerType.SHARED, pct_of_throttled_background=0.03, overflow_events_trace='empty'):
+    def __init__(self, is_neutral, policing_rate=0.0, burst_length=0.0, queue_size=15000,
+                 policer_location=PolicerLocation.COMMON_LINK, policer_type=PolicerType.SHARED,
+                 pct_of_throttled_background=0.03, overflow_events_trace='empty'):
         self.is_neutral = is_neutral
         self.policing_rate = policing_rate
         self.burst_length = burst_length
+        self.queue_size = queue_size
         self.policer_location = policer_location
         self.policer_type = policer_type
         self.pct_of_throttled_background = pct_of_throttled_background
@@ -169,6 +171,7 @@ def run_experiment(exp_type, network_setup, app_setup, background_setup, neutral
         ' --isNeutral={}'.format(neutrality_setup.is_neutral) +
         ' --policingRate={}'.format(neutrality_setup.policing_rate) +
         ' --policingBurstLength={}'.format(neutrality_setup.burst_length) +
+        ' --policerQueueSize={}'.format(neutrality_setup.queue_size) +
         ' --policerLocation={}'.format(neutrality_setup.policer_location.value) +
         ' --policerType={}'.format(neutrality_setup.policer_type.value) +
         ' --backThrottledPct={}'.format(neutrality_setup.pct_of_throttled_background) +

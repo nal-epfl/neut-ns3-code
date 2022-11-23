@@ -167,7 +167,8 @@ namespace fs = std::filesystem;
         if ((isNeutral != 0) && DoesPolicerLocationMatch("nc" + to_string(i), policerLocation)) {
             double rate = policingRate;
             TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                    queueSize, dscpsClassifier, rate, burstLength, resultsPath + "/noncommon_link_" + to_string(i));
+                    queueSize, dscpsClassifier, rate, burstLength,
+                    15000, resultsPath + "/noncommon_link_" + to_string(i));
 
             const Ptr<NetDevice> &netDevice = serverNodes.Get(i)->GetDevice(1);
             tch.Uninstall(netDevice);
@@ -191,7 +192,7 @@ namespace fs = std::filesystem;
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {
         TrafficControlHelper policerTch = CbQueueDisc::GenerateDisc1FifoNPolicers(
-                queueSize, dscpsClassifier, policingRate, burstLength, resultsPath + "/common_link");
+                queueSize, dscpsClassifier, policingRate, burstLength, 15000, resultsPath + "/common_link");
 
         const Ptr<NetDevice> &netDevice = routers.Get(1)->GetDevice(routers.Get(1)->GetNDevices() - 1);
         tch.Uninstall(netDevice);
