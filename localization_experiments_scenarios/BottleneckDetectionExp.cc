@@ -115,7 +115,7 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 2;
     uint32_t nbServers = nbApps;
-    string commonLinkDelay = "3ms", intermLinksDelay = "1ms";
+    string commonLinkDelay = "3ms", intermLinksDelay = "3ms";
 
     /*** Traffic classifiers on which to throttle packets ***/
     auto* mainPolicerConfig = new Dscps2QueueBand(1, {1, 3});
@@ -155,7 +155,7 @@ namespace fs = std::filesystem;
     internetStackHelper.Install(intermNodes);
     internetStackHelper.Install(serverNodes);
 
-    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "6ms";
+    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "11.5ms";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
