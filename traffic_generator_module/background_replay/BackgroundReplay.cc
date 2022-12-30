@@ -44,7 +44,8 @@ void BackgroundReplay::RunSpecificTraces(const vector<string>& tcpTracesPath, co
     }
 }
 
-void BackgroundReplay::RunTracesWithRandomThrottledTCPFlows(const string& tracesPath, double throttledProb, uint8_t thottledDscp) {
+vector<string>
+BackgroundReplay::RunTracesWithRandomThrottledTCPFlows(const string& tracesPath, double throttledProb, uint8_t thottledDscp) {
     uint32_t nbTCPFlows = GetSubDirCount(tracesPath + "/TCP");
     vector<string> tcpTracesPathNeutral, tcpTracesPathThrottled;
 
@@ -65,9 +66,11 @@ void BackgroundReplay::RunTracesWithRandomThrottledTCPFlows(const string& traces
     }
     this->RunSpecificTraces(tcpTracesPathNeutral, {tracesPath + "/UDP/trace_0.csv"}, 0);
     this->RunSpecificTraces(tcpTracesPathThrottled, {}, thottledDscp);
+    return tcpTracesPathThrottled;
 }
 
-void BackgroundReplay::RunTracesWithRandomThrottledUDPFlows(const string& tracesPath, double throttledProb, uint8_t thottledDscp) {
+vector<string>
+BackgroundReplay::RunTracesWithRandomThrottledUDPFlows(const string& tracesPath, double throttledProb, uint8_t thottledDscp) {
     uint32_t nbTCPFlows = GetSubDirCount(tracesPath + "/TCP");
     vector<string> tcpTracesPathNeutral, udpTracesPathThrottled;
 
@@ -88,6 +91,7 @@ void BackgroundReplay::RunTracesWithRandomThrottledUDPFlows(const string& traces
     }
     this->RunSpecificTraces(tcpTracesPathNeutral, {tracesPath + "/UDP/trace_0.csv"}, 0);
     this->RunSpecificTraces({}, udpTracesPathThrottled, thottledDscp);
+    return udpTracesPathThrottled;
 }
 
 void BackgroundReplay::RunSingleTrace(const string& tracePath, const string& protocol, uint8_t dscp = 0) {

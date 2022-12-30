@@ -115,7 +115,7 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 2;
     uint32_t nbServers = nbApps;
-    string commonLinkDelay = "3ms", intermLinksDelay = "3ms";
+    string commonLinkDelay = "3ms", intermLinksDelay = "0.5ms";
 
     /*** Traffic classifiers on which to throttle packets ***/
     auto* mainPolicerConfig = new Dscps2QueueBand(1, {1, 3});
@@ -321,10 +321,24 @@ namespace fs = std::filesystem;
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
             if (isTCP) {
-                back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 3);
+                vector<string> tcpTracesPathThrottled = back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 3);
+                // --------------------------------------------- //
+                // save the replayed traces for POC
+                ofstream outfile;
+                outfile.open(resultsPath + "/link_" + to_string(i) + "throttled_traces.txt");
+                for(const auto& trace : tcpTracesPathThrottled) { outfile << trace << endl; }
+                outfile.close();
+                // --------------------------------------------- //
             }
             else {
-                back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 3);
+                vector<string> tcpTracesPathThrottled = back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 3);
+                // --------------------------------------------- //
+                // save the replayed traces for POC
+                ofstream outfile;
+                outfile.open(resultsPath + "/link_" + to_string(i) + "throttled_traces.txt");
+                for(const auto& trace : tcpTracesPathThrottled) { outfile << trace << endl; }
+                outfile.close();
+                // --------------------------------------------- //
             }
         } else {
             cout << "requested Background Directory does not exist" << endl;

@@ -28,7 +28,7 @@ void UDPWeheServer::SetResultsFolder(string resultsFolder) {
 }
 
 void UDPWeheServer::SetDscp(int dscp) {
-    _trafficTos = dscp;
+    _trafficDscp = dscp;
 }
 
 void UDPWeheServer::EnableCwndMonitor() {}
@@ -49,7 +49,7 @@ void UDPWeheServer::StartApplication() {
 
 void UDPWeheServer::HandleUDPAccept(Ptr<Socket> socket) {
     Address from; socket->RecvFrom(from); socket->Connect(from);
-    socket->SetIpTos(_trafficTos);
+    socket->SetIpTos(helper_methods::Dscp2Tos(_trafficDscp));
     SetupConnection(socket);
     ScheduleNextSendingEvents();
 }

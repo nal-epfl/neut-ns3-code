@@ -9,6 +9,7 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 
+#include "../../../helper_classes/HelperMethods.h"
 #include "../../../monitors_module/CwndMonitor.h"
 #include "../WeheCS_Utility.h"
 #include "../WeheServer.h"
@@ -43,7 +44,8 @@ private:
     vector<RxEvent> _rxEvents;
     string _resultsFolder;
 
-    int _trafficTos = 0;
+    // traffic priority
+    int _trafficDscp = 0;
 
 public:
 

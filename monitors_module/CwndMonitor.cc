@@ -27,7 +27,7 @@ void CwndMonitor::ConnectTraces() {
     _socket->TraceConnectWithoutContext("CongState", MakeCallback(&CwndMonitor::RecordCongStateChange, this));
     _socket->TraceConnectWithoutContext("RTO", MakeCallback(&CwndMonitor::RecordRTO, this));
     _socket->TraceConnectWithoutContext("RTT", MakeCallback(&CwndMonitor::RecordRTT, this));
-
+    _socket->TraceConnectWithoutContext("PacingRate", MakeCallback(&CwndMonitor::RecordPacingRate, this));
 }
 
 void CwndMonitor::RecordCwndChange(uint32_t oldVal, uint32_t newVal) {
@@ -46,6 +46,10 @@ void CwndMonitor::RecordRTT(Time oldVal, Time newVal) {
     rttChanges.push_back({std::move(oldVal), std::move(newVal), Simulator::Now()});
 }
 
+void CwndMonitor::RecordPacingRate(DataRate oldVal, DataRate newVal) {
+    pacingfRateChanges.push_back({oldVal, newVal, Simulator::Now()});
+}
+
 string CwndMonitor::GetDisplayTime(const Time& time) {
     return to_string((time - _startTime).GetNanoSeconds() / 1e9);
 }
@@ -58,7 +62,6 @@ void CwndMonitor::SaveCwndChanges() {
     }
     outfile.close();
 }
-
 
 void CwndMonitor::SaveCongStateChanges() {
     ofstream outfile;
@@ -89,6 +92,17 @@ void CwndMonitor::SaveRttChanges() {
         outfile << to_string(rttChange.oldVal.GetNanoSeconds() / 1e9) << "," <<
                 to_string(rttChange.newVal.GetNanoSeconds() / 1e9) << "," <<
                 GetDisplayTime(rttChange.time) << endl;
+    }
+    outfile.close();
+}
+
+void CwndMonitor::SavePacingRateChanges() {
+    ofstream outfile;
+    outfile.open(_outputFolderPath + "/pacing_rate_changes.csv");
+    for(const auto& pacingRateChange : pacingfRateChanges) {
+        outfile << to_string(pacingRateChange.oldVal.GetBitRate() * 1e-9) << "," <<
+                to_string(pacingRateChange.newVal.GetBitRate() * 1e-9) << "," <<
+                GetDisplayTime(pacingRateChange.time) << endl;
     }
     outfile.close();
 }

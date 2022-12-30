@@ -51,6 +51,29 @@ class WeheApp(Enum):
     NbcSports = 'NBCSports_01042019'
 
 
+class UDPWeheApp(Enum):
+    MicrosoftTeam = 'MicrosoftTeam_04282020'
+    Zoom = 'Zoom_04282020'
+    Webex = 'Webex_04282020'
+    GoogleMeet = 'GoogleMeet_04282020'
+    Skype = 'Skype_12122018'
+    WhatsApp = 'WhatsApp_04112019'
+    # the single path version
+    SinglePathMicrosoftTeam = 'SinglePathMicrosoftTeam_04282020'
+    SinglePathZoom = 'SinglePathZoom_04282020'
+    SinglePathWebex = 'SinglePathWebex_04282020'
+    SinglePathGoogleMeet = 'SinglePathGoogleMeet_04282020'
+    SinglePathSkype = 'SinglePathSkype_12122018'
+    SinglePathWhatsApp = 'SinglePathWhatsApp_04112019'
+    # the probe version
+    ProbeMicrosoftTeam = 'ProbeMicrosoftTeam_04282020'
+    ProbeZoom = 'ProbeZoom_04282020'
+    ProbeWebex = 'ProbeWebex_04282020'
+    ProbeGoogleMeet = 'ProbeGoogleMeet_04282020'
+    ProbeSkype = 'ProbeSkype_12122018'
+    ProbeWhatsApp = 'ProbeWhatsApp_04112019'
+
+
 def get_wehe_app(app_name):
     for app in WeheApp:
         if app_name in app.value: return app

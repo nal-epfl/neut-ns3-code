@@ -27,9 +27,7 @@ void UDPWeheClient::SetResultsFolder(string resultsFolder) {
     _resultsFolder = resultsFolder;
 }
 
-void UDPWeheClient::SetDscp(int tos) {
-    _trafficTos = tos;
-}
+void UDPWeheClient::SetDscp(int dscp) { }
 
 void UDPWeheClient::EnableCwndMonitor() {}
 

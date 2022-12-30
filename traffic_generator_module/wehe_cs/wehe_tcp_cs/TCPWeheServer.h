@@ -9,6 +9,7 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 
+#include "../../../helper_classes/HelperMethods.h"
 #include "../../../monitors_module/CwndMonitor.h"
 #include "../WeheCS_Utility.h"
 #include "../WeheServer.h"
@@ -53,13 +54,16 @@ private:
     EventId _sendEvent;
     bool appStopped = false;
 
+    // traffic priority
+    int _trafficDscp = 0;
+
 public:
 
     TCPWeheServer(string appTag, const Ptr<Node>& server, InetSocketAddress serverAddress);
 
     void LoadTrace(vector<WeheTraceItem> &traceItems) override;
     void SetResultsFolder(string resultsFolder) override;
-    void SetDscp(int tos) override;
+    void SetDscp(int dscp) override;
     void EnableCwndMonitor() override;
 
     void StartApplication() override;

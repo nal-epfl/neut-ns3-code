@@ -140,4 +140,4 @@ void TCPWeheClient::ScheduleNextSendingEvents() {
     _nbBytesRx = 0;
 }
 
-void TCPWeheClient::SetDscp(int tos) { }
+void TCPWeheClient::SetDscp(int dscp) { }

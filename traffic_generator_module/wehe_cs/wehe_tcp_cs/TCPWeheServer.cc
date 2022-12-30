@@ -53,6 +53,7 @@ void TCPWeheServer::StartApplication() {
 
 void TCPWeheServer::HandleTCPAccept (Ptr<Socket> socket, const Address& from) {
     cout << "Received a connection from " << from << endl;
+    socket->SetIpTos(helper_methods::Dscp2Tos(_trafficDscp));
     SetupConnection(socket);
     CheckForNextResponse(0);
 }
@@ -166,5 +167,7 @@ void TCPWeheServer::ResumeResponse(Ptr<Socket> localSocket, uint32_t txSpace) {
     _sendEvent = Simulator::Schedule(Seconds(0.0), &TCPWeheServer::ScheduleNextResponse, this);
 }
 
-void TCPWeheServer::SetDscp(int tos) { }
+void TCPWeheServer::SetDscp(int dscp) {
+    _trafficDscp = dscp;
+}
 

@@ -2,7 +2,7 @@ from helper_methods import *
 
 # policer configuration parameters:
 rates = np.array([24, 29, 36, 48, 55])
-limits_as_ratios = np.array([0.25, 0.5, 0.57, 1, 1.5, 2])
+limits_as_ratios = np.array([0.25, 0.5, 0.75, 1, 1.5, 2])
 
 
 def get_burst(rate, burst_period):
@@ -18,7 +18,7 @@ nc_bandwidths = np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
 # RTTs
 rtts_ms = np.array([15, 25, 35, 60, 120])
 d_rtt_ms = 35
-dp_c_ms, dp_interm_ms = 3, 3
+dp_c_ms, dp_interm_ms = 3, 0.5
 
 
 def ms_2_s(t):
@@ -32,4 +32,5 @@ def get_nc_dp(rtt_ms):
 # other experiment parameters
 d_background_dir = 'chicago_2010_back_traffic_10min_control_cbp_2links'
 d_background_setup = BackgroundTrafficSetup(d_background_dir)
+empty_background_setup = BackgroundTrafficSetup('empty')
 d_duration = 30

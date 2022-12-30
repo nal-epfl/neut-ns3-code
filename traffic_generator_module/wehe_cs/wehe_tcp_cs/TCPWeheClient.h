@@ -51,7 +51,7 @@ public:
 
     void LoadTrace(vector<WeheTraceItem> &traceItems) override;
     void SetResultsFolder(string resultsFolder) override;
-    void SetDscp(int tos) override;
+    void SetDscp(int dscp) override;
     void EnableCwndMonitor() override;
 
     void StartApplication() override;

@@ -37,16 +37,14 @@ private:
 
     vector<RxEvent> _rxEvents;
     string _resultsFolder;
-
-    int _trafficTos = 0;
-
+    
 public:
 
     UDPWeheClient(string appTag, Ptr<Node> &client, InetSocketAddress &serverAddress);
 
     void LoadTrace(vector<WeheTraceItem> &traceItems) override;
     void SetResultsFolder(string resultsFolder) override;
-    void SetDscp(int tos) override;
+    void SetDscp(int dscp) override;
     void EnableCwndMonitor() override;
 
     void StartApplication() override;
