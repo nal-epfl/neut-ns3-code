@@ -69,6 +69,8 @@ class UDPWeheApp(Enum):
     ProbeMicrosoftTeam = 'ProbeMicrosoftTeam_04282020'
     ProbeZoom = 'ProbeZoom_04282020'
     ProbeWebex = 'ProbeWebex_04282020'
+    Probe2Webex = 'ProbeL0d011Webex_04282020'
+    IncProbeWebex = 'IncProbeWebex_04282020'
     ProbeGoogleMeet = 'ProbeGoogleMeet_04282020'
     ProbeSkype = 'ProbeSkype_12122018'
     ProbeWhatsApp = 'ProbeWhatsApp_04112019'
