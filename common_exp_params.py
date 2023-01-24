@@ -18,7 +18,7 @@ nc_bandwidths = np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
 # RTTs
 rtts_ms = np.array([15, 25, 35, 60, 120])
 d_rtt_ms = 35
-dp_c_ms, dp_interm_ms = 3, 0.5
+dp_c_ms, dp_interm_ms = 3, 4
 
 
 def ms_2_s(t):

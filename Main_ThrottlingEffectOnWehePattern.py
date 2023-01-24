@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '01_2023'
-TEST_TYPE = 'Test_Webex_Pattern_Effect'
+TEST_TYPE = 'UDP_Webex_Eval'
 
 
 if __name__ == '__main__':
