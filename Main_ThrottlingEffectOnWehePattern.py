@@ -45,6 +45,7 @@ if __name__ == '__main__':
                 )
 
                 # the policer configurations
+                m_policer_configs = []
                 for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
                     p_rate = int(np.round(m_app_volumes[app] / p_rate_ratio))
                     m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
@@ -62,6 +63,7 @@ if __name__ == '__main__':
                     )
 
                     # build and add experiment setup
+                    print('Exp: {}, {}, {}, {}'.format(app, p_type, p_rate, p_limit_ratio))
                     m_exp_params.append(ExperimentParameters(
                         exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_setup=d_background_setup,
                         exp_batch='{}/{}'.format(m_network_setup_tag, neutrality_tag),
