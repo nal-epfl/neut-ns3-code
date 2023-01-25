@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '01_2023'
-TEST_TYPE = 'UDP_Webex_Eval'
+TEST_TYPE = 'UDP_Wehe_Apps_Eval'
 
 
 if __name__ == '__main__':
@@ -21,17 +21,18 @@ if __name__ == '__main__':
     m_network_setup = NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)
 
     # select which applications to test
-    m_apps = [UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, UDPWeheApp.IncProbeWebex]
+    m_apps = [
+        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, UDPWeheApp.IncProbeWebex,
+        UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
+    ]
 
     # test with different policer configuration
     m_policer_configs, m_burst_period = [], 0.035
     m_app_volumes = {
         UDPWeheApp.Webex: 27, UDPWeheApp.Probe2Webex: 27, UDPWeheApp.IncProbeWebex: 27,
+        UDPWeheApp.Skype: 28, UDPWeheApp.Probe2Skype: 28, UDPWeheApp.IncProbeSkype: 28,
     }
     m_rate_ratios, m_limit_ratios = [1.3, 1.5, 2, 2.5], [0.25, 0.5, 1]
-    # for p_rate in [5, 10, 15, 20]:#rates:
-    #     for p_limit_ratio in [0.25, 0.5, 1]:#limits_as_ratios:
-    #         m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
 
     # Run experiments
     for m_seed in PRIMES[0: 5]:
