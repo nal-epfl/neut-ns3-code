@@ -141,6 +141,7 @@ void TraceReplaySender::ScheduleNextSend() {
     TraceReplayItem nextItem = _traceItems[_traceItemIdx];
     Time currTime = Simulator::Now();
     Time remainingTime = (nextItem.timestamp > currTime) ? nextItem.timestamp - currTime : Seconds(0);
+    remainingTime += MicroSeconds(helper_methods::GetRandomNumber(0, 500)); // to add randomness
     _sendEvent = Simulator::Schedule(remainingTime, &TraceReplaySender::ScheduleNextSend, this);
 }
 

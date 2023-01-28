@@ -5,8 +5,6 @@
 #include "UDPWeheServer.h"
 
 #include <utility>
-#include <random>
-
 
 UDPWeheServer::UDPWeheServer(string appTag, const Ptr<Node>& server, InetSocketAddress serverAddress) :
         _appTag(std::move(appTag)), _server(server), _serverAddress(serverAddress) {
@@ -94,12 +92,7 @@ void UDPWeheServer::ScheduleNextSendingEvents() {
 
         ns3::Time relativeTime = Simulator::Now() - _startTime;
         ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
-        // Added to create randomness
-        std::random_device rd;
-        std::mt19937 mt (rd());
-        std::uniform_int_distribution<uint32_t> dist(0, 50);
-        remainingTime += MicroSeconds(dist(mt));
-        // --------------------------
+        remainingTime += MicroSeconds(helper_methods::GetRandomNumber(0, 100)); // to add randomness
         Simulator::Schedule(remainingTime, &UDPWeheServer::Send, this, item.payloadSize, _traceItemIdx);
 
         _traceItemIdx++;

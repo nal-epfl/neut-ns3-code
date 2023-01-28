@@ -29,6 +29,13 @@ namespace helper_methods {
         return ss.str();
     }
 
+    uint32_t GetRandomNumber(uint32_t min, uint32_t max) {
+        std::random_device rd;
+        std::mt19937 mt (rd());
+        std::uniform_int_distribution<uint32_t> dist(min, max);
+        return dist(mt);
+    }
+
     uint32_t GetSubDirCount(const string &dirPath) {
         auto dirIter = std::filesystem::directory_iterator(dirPath);
         return count_if(

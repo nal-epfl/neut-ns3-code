@@ -178,6 +178,7 @@ void MeasurementReplaySender::ScheduleNextSend() {
      TraceReplayItem nextItem = _traceItems[_traceItemIdx];
      ns3::Time relativeTime = Simulator::Now() - _startTime;
      ns3::Time remainingTime = (nextItem.timestamp > relativeTime) ? nextItem.timestamp - relativeTime : Seconds(0);
+     remainingTime += MicroSeconds(helper_methods::GetRandomNumber(0, 50)); // to add randomness
      _sendEvent = Simulator::Schedule(remainingTime, &MeasurementReplaySender::ScheduleNextSend, this);
 }
 

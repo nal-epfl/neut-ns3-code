@@ -9,6 +9,7 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 
+#include "../../../helper_classes/HelperMethods.h"
 #include "../../../monitors_module/CwndMonitor.h"
 #include "../WeheCS_Utility.h"
 #include "../WeheClient.h"
