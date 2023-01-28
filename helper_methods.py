@@ -76,6 +76,8 @@ class UDPWeheApp(Enum):
     Probe2Skype = 'ProbeL0d005Skype_12122018'
     IncProbeSkype = 'IncProbeSkype_12122018'
     ProbeWhatsApp = 'ProbeWhatsApp_04112019'
+    Probe2WhatsApp = 'ProbeL0d008WhatsApp_04112019'
+    IncProbeWhatsApp = 'IncProbeWhatsApp_04112019'
 
 
 def get_wehe_app(app_name):
