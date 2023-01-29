@@ -38,8 +38,11 @@ d_duration = 30
 
 
 # Wehe application volumes
+# for some reason the POC do not send the exact volume of background (it sends 25Mbps instead of 32Mbps)
+# This leads to higher loss in simulation. For this we take more volume into account here.
+v_extra = 5
 app_volumes = {
-    UDPWeheApp.Webex: 27, UDPWeheApp.Probe2Webex: 27, UDPWeheApp.IncProbeWebex: 27,
-    UDPWeheApp.Skype: 28, UDPWeheApp.Probe2Skype: 28, UDPWeheApp.IncProbeSkype: 28,
-    UDPWeheApp.WhatsApp: 29, UDPWeheApp.Probe2WhatsApp: 29, UDPWeheApp.IncProbeWhatsApp: 29
+    UDPWeheApp.Webex: 27+v_extra, UDPWeheApp.Probe2Webex: 27+v_extra, UDPWeheApp.IncProbeWebex: 27+v_extra,
+    UDPWeheApp.Skype: 28+v_extra, UDPWeheApp.Probe2Skype: 28+v_extra, UDPWeheApp.IncProbeSkype: 28+v_extra,
+    UDPWeheApp.WhatsApp: 29+v_extra, UDPWeheApp.Probe2WhatsApp: 29+v_extra, UDPWeheApp.IncProbeWhatsApp: 29+v_extra
 }
