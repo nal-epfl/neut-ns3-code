@@ -108,10 +108,10 @@ namespace fs = std::filesystem;
     uint16_t controlTestId = 0, suspectedTestId = 1;
     Time warmupTime = Seconds(10);
     Time testsStartTime[2], testsEndTime[2];
-    testsStartTime[controlTestId] = warmupTime;
-    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(controlTestDuration);
-    testsStartTime[suspectedTestId] = warmupTime + testsEndTime[controlTestId];
+    testsStartTime[suspectedTestId] = warmupTime;
     testsEndTime[suspectedTestId] = testsStartTime[suspectedTestId] + Seconds(suspectedTestDuration);
+    testsStartTime[controlTestId] = warmupTime + testsEndTime[suspectedTestId];
+    testsEndTime[controlTestId] = testsStartTime[controlTestId] + Seconds(controlTestDuration);
 
     /*** Input-Output parameters ***/
     string resultsPath = (string) (getenv("PWD")) + "/results/" + resultsFolderName;
@@ -120,11 +120,15 @@ namespace fs = std::filesystem;
     /*** Topology Parameters ***/
     uint32_t nbApps = 4;
     uint32_t nbServers = nbApps/2;
-    string commonLinkDelay = "3ms", intermLinksDelay = "3ms";
+    string commonLinkDelay = "3ms", intermLinksDelay = "4ms", defaultNonCommonLinkDelay = "10.5ms";
 
     /*** Traffic classifiers on which to throttle packets ***/
+    auto* mainPolicerConfig = new Dscps2QueueBand(1, {1, 3});
+    if (overflowEventsTrace != "empty") {
+        mainPolicerConfig = new TimeBasedDscps2QueueBand(1, {1, 3}, overflowEventsTrace);
+    }
     TrafficClassifier dscpsClassifier = TrafficClassifier({
-        new Dscps2QueueBand(0, {0}), new Dscps2QueueBand(1, {1, 3}), new Dscps2QueueBand(2, {2})
+        new Dscps2QueueBand(0, {0}), mainPolicerConfig, new Dscps2QueueBand(2, {2})
     });
 
     /*** Traffic Parameters ***/
@@ -155,7 +159,7 @@ namespace fs = std::filesystem;
     internetStackHelper.Install(intermNodes);
     internetStackHelper.Install(serverNodes);
 
-    string defaultNonCommonLinkRate = "1Gbps", defaultNonCommonLinkDelay = "11.5ms";
+    string defaultNonCommonLinkRate = "1Gbps";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
     p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
@@ -216,13 +220,13 @@ namespace fs = std::filesystem;
     p2pRouters.SetDeviceAttribute("DataRate", StringValue(commonLinkRate));
     p2pRouters.SetChannelAttribute("Delay", StringValue(commonLinkDelay));
     p2pRouters.SetDeviceAttribute("Mtu", UintegerValue(mtu));
-    p2pRouters.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
+    p2pRouters.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("7500B"));
     NetDeviceContainer channel_r0_r1 = p2pRouters.Install(routers.Get(0), routers.Get(1));
 
     // Modify the traffic control layer module of the router 0 net device to implement policing
     TrafficControlHelper tch;
     string queueSize = ComputeQueueSize(commonLinkRate, {
-            *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), intermLinksDelay, commonLinkDelay});
+        *max_element(begin(nonCommonLinkDelays), end(nonCommonLinkDelays)), intermLinksDelay, commonLinkDelay});
     tch.SetRootQueueDisc("ns3::FifoQueueDisc", "MaxSize", StringValue(queueSize));
     tch.Install(channel_r0_r1);
     if ((isNeutral != 0) && DoesPolicerLocationMatch("c", policerLocation)) {
@@ -325,10 +329,24 @@ namespace fs = std::filesystem;
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
             if (isTCP) {
-                back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 1);
+                vector<string> tcpTracesPathThrottled = back->RunTracesWithRandomThrottledTCPFlows(tracesPath, throttledProb, 3);
+                // --------------------------------------------- //
+                // save the replayed traces for POC
+                ofstream outfile;
+                outfile.open(resultsPath + "/link_" + to_string(i) + "throttled_traces.txt");
+                for(const auto& trace : tcpTracesPathThrottled) { outfile << trace << endl; }
+                outfile.close();
+                // --------------------------------------------- //
             }
             else {
-                back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 1);
+                vector<string> tcpTracesPathThrottled = back->RunTracesWithRandomThrottledUDPFlows(tracesPath, throttledProb, 3);
+                // --------------------------------------------- //
+                // save the replayed traces for POC
+                ofstream outfile;
+                outfile.open(resultsPath + "/link_" + to_string(i) + "throttled_traces.txt");
+                for(const auto& trace : tcpTracesPathThrottled) { outfile << trace << endl; }
+                outfile.close();
+                // --------------------------------------------- //
             }
         } else {
             cout << "requested Background Directory does not exist" << endl;

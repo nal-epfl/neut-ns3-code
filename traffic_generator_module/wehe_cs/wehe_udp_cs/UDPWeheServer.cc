@@ -92,6 +92,7 @@ void UDPWeheServer::ScheduleNextSendingEvents() {
 
         ns3::Time relativeTime = Simulator::Now() - _startTime;
         ns3::Time remainingTime = (item.timestamp > relativeTime) ? item.timestamp - relativeTime : Seconds(0);
+        remainingTime += MicroSeconds(helper_methods::GetRandomNumber(0, 10)); // to add randomness
         Simulator::Schedule(remainingTime, &UDPWeheServer::Send, this, item.payloadSize, _traceItemIdx);
 
         _traceItemIdx++;
