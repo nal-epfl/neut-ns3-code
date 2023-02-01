@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_Common_Congestion_Eval'
+TEST_TYPE = 'UDP_Common_Congestion_Eval2'
 
 
 if __name__ == '__main__':
@@ -24,9 +24,9 @@ if __name__ == '__main__':
 
     # select which applications to test
     m_apps = [
-        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, UDPWeheApp.IncProbeWebex,
-        UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
-        UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
+        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, # UDPWeheApp.IncProbeWebex,
+        # UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
+        # UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
     ]
 
     # test with different policer configuration
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     m_rate_ratios, m_limit_ratios = rates_ratio, limits_as_ratios
 
     # Run experiments
-    for m_seed in PRIMES[0: 5]:
+    for back_v in [2, 3, 4, 5, 6]:
         m_exp_params = []
 
         for app in m_apps:
@@ -66,7 +66,8 @@ if __name__ == '__main__':
                         # build and add experiment setup
                         print('Exp: {}, {}, {}, {}'.format(app, p_type, p_rate, p_limit_ratio))
                         m_exp_params.append(ExperimentParameters(
-                            exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_setup=d_background_setup,
+                            exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=3,
+                            background_setup=BackgroundTrafficSetup('chicago_2010_back_traffic_5min_control_cbp_2links_v{}'.format(back_v)),
                             exp_batch='{}/{}'.format(network_setup_tag, neutrality_tag),
                             network_setup=network_setup, measurement_app_setup=app_setup,
                             neutrality_setup=neutrality_setup
