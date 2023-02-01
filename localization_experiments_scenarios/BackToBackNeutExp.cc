@@ -385,7 +385,7 @@ namespace fs = std::filesystem;
 
     /*** Run simulation ***/
     cout << "Start Simulation" << endl;
-    Simulator::Stop(testsEndTime[suspectedTestId] + Seconds(2.0));
+    Simulator::Stop(testsEndTime[controlTestId] + Seconds(2.0));
     Simulator::Run();
     Simulator::Destroy();
 
