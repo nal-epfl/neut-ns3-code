@@ -44,5 +44,7 @@ v_extra = 5
 app_volumes = {
     UDPWeheApp.Webex: 27+v_extra, UDPWeheApp.Probe2Webex: 27+v_extra, UDPWeheApp.IncProbeWebex: 27+v_extra,
     UDPWeheApp.Skype: 28+v_extra, UDPWeheApp.Probe2Skype: 28+v_extra, UDPWeheApp.IncProbeSkype: 28+v_extra,
-    UDPWeheApp.WhatsApp: 29+v_extra, UDPWeheApp.Probe2WhatsApp: 29+v_extra, UDPWeheApp.IncProbeWhatsApp: 29+v_extra
+    UDPWeheApp.WhatsApp: 29+v_extra, UDPWeheApp.Probe2WhatsApp: 29+v_extra, UDPWeheApp.IncProbeWhatsApp: 29+v_extra,
+    WeheApp.NbcSports: 50+v_extra, WeheApp.Netflix: 50+v_extra, WeheApp.FacebookVideo: 50+v_extra,
+    WeheApp.Youtube: 50+v_extra, WeheApp.Amazon: 50+v_extra
 }
