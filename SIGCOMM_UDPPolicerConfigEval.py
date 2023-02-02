@@ -15,10 +15,10 @@ if __name__ == '__main__':
     rebuild_project()
 
     # network setup for no congestion
-    m_network_setup_tag= 'no_congestion'
+    m_network_setup_tag = 'no_congestion'
     m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(d_rtt_ms), get_nc_dp(d_rtt_ms))
-    m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
-    m_network_setup = NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)
+    m_nc_bandwidths = '130Mbps,130Mbps' #'{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
+    m_network_setup = NetworkSetup('300Mbps', m_nc_dps, m_nc_bandwidths)
 
     # select which applications to test
     m_apps = [
