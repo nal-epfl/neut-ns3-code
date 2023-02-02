@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_Policer_Configs_Eval2'
+TEST_TYPE = 'UDP_Policer_Configs_Eval4'
 
 
 if __name__ == '__main__':
@@ -17,14 +17,14 @@ if __name__ == '__main__':
     # network setup for no congestion
     m_network_setup_tag = 'no_congestion'
     m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(d_rtt_ms), get_nc_dp(d_rtt_ms))
-    m_nc_bandwidths = '130Mbps,130Mbps' #'{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
-    m_network_setup = NetworkSetup('300Mbps', m_nc_dps, m_nc_bandwidths)
+    m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
+    m_network_setup = NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)
 
     # select which applications to test
     m_apps = [
         UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, # UDPWeheApp.IncProbeWebex,
         UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, # UDPWeheApp.IncProbeSkype,
-        # UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
+        UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, # UDPWeheApp.IncProbeWhatsApp,
     ]
 
     # test with different policer configuration
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 # the policer configurations
                 m_policer_configs = []
                 for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
-                    p_rate = int(np.round(app_volumes[app] / p_rate_ratio))
+                    p_rate = int(np.round(app_volumes[app_setup.app_name] / p_rate_ratio))
                     m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
                     m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, p_rate/2, p_limit_ratio))
 

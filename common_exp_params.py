@@ -42,9 +42,19 @@ d_duration = 30
 # This leads to higher loss in simulation. For this we take more volume into account here.
 v_extra = 5
 app_volumes = {
-    UDPWeheApp.Webex: 27+v_extra, UDPWeheApp.Probe2Webex: 27+v_extra, UDPWeheApp.IncProbeWebex: 27+v_extra,
-    UDPWeheApp.Skype: 28+v_extra, UDPWeheApp.Probe2Skype: 28+v_extra, UDPWeheApp.IncProbeSkype: 28+v_extra,
-    UDPWeheApp.WhatsApp: 29+v_extra, UDPWeheApp.Probe2WhatsApp: 29+v_extra, UDPWeheApp.IncProbeWhatsApp: 29+v_extra,
-    WeheApp.NbcSports: 50+v_extra, WeheApp.Netflix: 50+v_extra, WeheApp.FacebookVideo: 50+v_extra,
-    WeheApp.Youtube: 50+v_extra, WeheApp.Amazon: 50+v_extra
+    'Wehe_{}'.format(UDPWeheApp.Webex.value): 27+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.Probe2Webex.value): 27+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeWebex.value): 27+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.Skype.value): 28+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.Probe2Skype.value): 28+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeSkype.value): 28+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.WhatsApp.value): 29+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.Probe2WhatsApp.value): 29+v_extra,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeWhatsApp.value): 29+v_extra,
+    'Wehe_{}'.format(WeheApp.NbcSports.value): 50+v_extra,
+    'Wehe_{}'.format(WeheApp.Netflix.value): 50+v_extra,
+    'Wehe_{}'.format(WeheApp.FacebookVideo.value): 50+v_extra,
+    'Wehe_{}'.format(WeheApp.Youtube.value): 50+v_extra,
+    'Wehe_{}'.format(WeheApp.Amazon.value): 50+v_extra,
+    'Infinite_Paced_TCP': 50+v_extra
 }

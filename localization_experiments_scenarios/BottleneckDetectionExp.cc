@@ -314,10 +314,11 @@ namespace fs = std::filesystem;
     }
 
     /*** Create Cross Traffic On Paths 1 & 2 injected at intermediate nodes ***/
+    double throttlingPctOfBacks[2] = {throttlingPctOfBack, 0.25};
     for (uint32_t i = 0; i < nbServers; i++) {
         auto *back = new BackgroundReplay(intermNodes.Get(i), client);
         back->SetPctOfPacedTcps(pctPacedBack);
-        double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBack;
+        double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBacks[i];
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
             if (isTCP) {

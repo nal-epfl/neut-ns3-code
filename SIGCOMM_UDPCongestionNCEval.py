@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     # the policer configurations
                     m_policer_configs = []
                     for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
-                        p_rate = int(np.round(app_volumes[app] / p_rate_ratio))
+                        p_rate = int(np.round(app_volumes[app_setup.app_name] / p_rate_ratio))
                         m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
 
                     # add to experiment params
