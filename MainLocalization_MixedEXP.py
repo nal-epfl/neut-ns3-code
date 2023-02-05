@@ -56,12 +56,12 @@ if __name__ == '__main__':
     for m_prate in [25, 28, 30, 35, 40]:
         m_policer_configs.append(('shared_common_policer', NeutralitySetup(
             is_neutral=1, policing_rate=m_prate, burst_length=0.03, policer_location=PolicerLocation.COMMON_LINK,
-            policer_type=PolicerType.SHARED, pct_of_throttled_background=0.3
+            policer_type=PolicerType.SHARED, pct_of_throttled_background="0.3,0.3"
         )))
     for m_prate in [13, 14, 15, 18, 20]:
         m_policer_configs.append(('shared_noncommon_policers', NeutralitySetup(
             is_neutral=1, policing_rate=m_prate, burst_length=0.03, policer_location=PolicerLocation.BOTH_NONCOMMON_LINKS,
-            policer_type=PolicerType.SHARED, pct_of_throttled_background=0.3
+            policer_type=PolicerType.SHARED, pct_of_throttled_background="0.3,0.3"
         )))
 
     # Run all different combinations of network setups and policer configurations

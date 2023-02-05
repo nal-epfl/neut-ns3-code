@@ -42,19 +42,29 @@ d_duration = 30
 # This leads to higher loss in simulation. For this we take more volume into account here.
 v_extra = 5
 app_volumes = {
-    'Wehe_{}'.format(UDPWeheApp.Webex.value): 27+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.Probe2Webex.value): 27+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.IncProbeWebex.value): 27+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.Skype.value): 28+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.Probe2Skype.value): 28+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.IncProbeSkype.value): 28+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.WhatsApp.value): 29+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.Probe2WhatsApp.value): 29+v_extra,
-    'Wehe_{}'.format(UDPWeheApp.IncProbeWhatsApp.value): 29+v_extra,
-    'Wehe_{}'.format(WeheApp.NbcSports.value): 50+v_extra,
-    'Wehe_{}'.format(WeheApp.Netflix.value): 50+v_extra,
-    'Wehe_{}'.format(WeheApp.FacebookVideo.value): 50+v_extra,
-    'Wehe_{}'.format(WeheApp.Youtube.value): 50+v_extra,
-    'Wehe_{}'.format(WeheApp.Amazon.value): 50+v_extra,
-    'Infinite_Paced_TCP': 50+v_extra
+    'Wehe_{}'.format(UDPWeheApp.Webex.value): 2,
+    'Wehe_{}'.format(UDPWeheApp.Probe2Webex.value): 2,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeWebex.value): 2,
+    'Wehe_{}'.format(UDPWeheApp.Skype.value): 3,
+    'Wehe_{}'.format(UDPWeheApp.Probe2Skype.value): 3,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeSkype.value): 3,
+    'Wehe_{}'.format(UDPWeheApp.WhatsApp.value): 4,
+    'Wehe_{}'.format(UDPWeheApp.Probe2WhatsApp.value): 4,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeWhatsApp.value): 4,
+    'Wehe_{}'.format(WeheApp.NbcSports.value): 25,
+    'Wehe_{}'.format(WeheApp.Netflix.value): 25,
+    'Wehe_{}'.format(WeheApp.FacebookVideo.value): 25,
+    'Wehe_{}'.format(WeheApp.Youtube.value): 25,
+    'Wehe_{}'.format(WeheApp.Amazon.value): 25,
+    'Infinite_Paced_TCP': 25
 }
+back_volume_by_pct = {
+    '0.25': 30,
+    '0.5': 60,
+    '0.75': 90,
+    '1': 110
+}
+
+
+def get_traffic_volume(app_name, background_pct):
+    return app_volumes[app_name] + back_volume_by_pct[background_pct]

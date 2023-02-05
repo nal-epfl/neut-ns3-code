@@ -37,7 +37,7 @@ if __name__ == '__main__':
                 m_neutrality_setup = NeutralitySetup(
                     is_neutral=1, policing_rate=m_prate, burst_length=m_burst_period, queue_size=m_queue_size,
                     policer_location=m_plocation, policer_type=PolicerType.SHARED,
-                    pct_of_throttled_background=0.3
+                    pct_of_throttled_background="0.3,0.3"
                 )
                 m_exp_batch = '{}/{}_{}Mbps_{}s_{}B_30p'.format(m_network_setup_tag, m_ptype, m_prate, m_burst_period, m_queue_size)
 

@@ -38,7 +38,7 @@ if __name__ == '__main__':
     m_rate_ratios, m_limit_ratios = rates_ratio, limits_as_ratios
 
     # Run experiments
-    for m_seed in PRIMES[0: 5]:
+    for back_v in [2, 3, 4, 5, 6]:
         m_exp_params = []
 
         for app in m_apps:
@@ -50,28 +50,33 @@ if __name__ == '__main__':
                         wehe_app=app.value, original_traffic_duration=60, transport_protocol=TransportProtocol.UDP,
                     )
 
+                    # to allow changing the volume of throttled traffic
+                    m_back_pct, m_pct_of_throttled_background = '0.25', '0.3,0.25'
+                    m_traffic_volume = get_traffic_volume(app_setup.app_name, m_back_pct)
+
                     # the policer configurations
                     m_policer_configs = []
                     for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
-                        p_rate = int(np.round(app_volumes[app_setup.app_name] / p_rate_ratio))
+                        p_rate = int(np.round(m_traffic_volume / p_rate_ratio))
                         m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
                         m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, p_rate/2, p_limit_ratio))
 
                     # add to experiment params
                     for p_type, p_location, p_rate, p_limit_ratio in m_policer_configs:
                         # build policer configuration setup
-                        neutrality_tag = '{}_r{}Mbps_b{}s_l{}_30p'.format(p_type, p_rate, m_burst_period, p_limit_ratio)
+                        neutrality_tag = '{}_r{}Mbps_b{}s_l{}_{}p'.format(p_type, p_rate, m_burst_period, p_limit_ratio, int(m_back_pct*100))
                         limit = int(p_limit_ratio * get_burst(p_rate, m_burst_period))
                         neutrality_setup = NeutralitySetup(
                             is_neutral=1, policing_rate=p_rate, burst_length=m_burst_period, queue_size=limit,
                             policer_location=p_location, policer_type=PolicerType.SHARED,
-                            pct_of_throttled_background=0.3
+                            pct_of_throttled_background=m_pct_of_throttled_background
                         )
 
                         # build and add experiment setup
                         print('Exp: {}, {}, {}, {}'.format(app, p_type, p_rate, p_limit_ratio))
                         m_exp_params.append(ExperimentParameters(
-                            exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=m_seed, background_setup=d_background_setup,
+                            exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=3,
+                            background_setup=BackgroundTrafficSetup('chicago_2010_back_traffic_5min_control_cbp_2links_v{}'.format(back_v)),
                             exp_batch='{}/{}'.format(network_setup_tag, neutrality_tag),
                             network_setup=network_setup, measurement_app_setup=app_setup,
                             neutrality_setup=neutrality_setup

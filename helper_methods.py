@@ -142,7 +142,7 @@ class BackgroundTrafficSetup:
 class NeutralitySetup:
     def __init__(self, is_neutral, policing_rate=0.0, burst_length=0.0, queue_size=15000,
                  policer_location=PolicerLocation.COMMON_LINK, policer_type=PolicerType.SHARED,
-                 pct_of_throttled_background=0.03, overflow_events_trace='empty'):
+                 pct_of_throttled_background="0.3,0.3", overflow_events_trace='empty'):
         self.is_neutral = is_neutral
         self.policing_rate = policing_rate
         self.burst_length = burst_length

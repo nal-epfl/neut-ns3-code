@@ -72,7 +72,7 @@ namespace fs = std::filesystem;
     double policingRate = 4;                        // the rate of generating tokens in the token bucket
     double burstLength = 0.1;                       // the burst length parameter of the token bucket
     int policerQueueSize = 15000;                   // the size of the policer queue before packets are drained according to the token bucket
-    double throttlingPctOfBack = 0.3;               // percentage of background to throttle with the measurement traffic
+    string throttlingPctsOfBack = "0.3,0.3";        // percentage of background to throttle with the measurement traffic
     string overflowEventsTrace = "empty";           // file that contains times in which policer experienced overflow events
 
     CommandLine cmd;
@@ -97,7 +97,7 @@ namespace fs = std::filesystem;
     cmd.AddValue("policerQueueSize", "the size of the policer queue in case of policing (in Bytes)", policerQueueSize);
     cmd.AddValue("policerLocation", "'c' for common link --- 'nci' for noncommon link of path i --- 'nc' for all noncommon links", policerLocation);
     cmd.AddValue("policerType", "'0 for shared policer --- 1 for per-flow policer", policerType);
-    cmd.AddValue("backThrottledPct", "percentage of background to throttle with the measurement traffic", throttlingPctOfBack);
+    cmd.AddValue("backThrottledPct", "percentage of background to throttle with the measurement traffic", throttlingPctsOfBack);
     cmd.AddValue("overflowEventsTrace", "file that contains times in which policer experienced overflow events", overflowEventsTrace);
     cmd.Parse(argc, argv);
     /*** end of defining inputs ***/
@@ -314,11 +314,11 @@ namespace fs = std::filesystem;
     }
 
     /*** Create Cross Traffic On Paths 1 & 2 injected at intermediate nodes ***/
-    double throttlingPctOfBacks[2] = {throttlingPctOfBack, 0.25};
+    vector<string> throttlingPctStr = SplitStr(throttlingPctsOfBack, ',');
     for (uint32_t i = 0; i < nbServers; i++) {
         auto *back = new BackgroundReplay(intermNodes.Get(i), client);
         back->SetPctOfPacedTcps(pctPacedBack);
-        double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : throttlingPctOfBacks[i];
+        double throttledProb = IsPolicerTypePerFlowPolicer(policerType) ? 0 : stof(throttlingPctStr[i]);
         string tracesPath = dataPath + backgroundDir + "/link" + to_string(i);
         if (fs::exists(tracesPath)) {
             if (isTCP) {

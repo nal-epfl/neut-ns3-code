@@ -28,7 +28,7 @@ if __name__ == '__main__':
     for m_prate in [1, 5, 15]:
         m_policer_configs.append(('shared_common_policer_queue_1MTU_shi', NeutralitySetup(
             is_neutral=1, policing_rate=m_prate, burst_length=m_rtt/1e3, policer_location=PolicerLocation.COMMON_LINK,
-            policer_type=PolicerType.SHARED, pct_of_throttled_background=0.3
+            policer_type=PolicerType.SHARED, pct_of_throttled_background="0.3,0.3"
         )))
 
     # Run all different  policer configurations

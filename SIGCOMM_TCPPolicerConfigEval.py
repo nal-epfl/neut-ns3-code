@@ -38,8 +38,6 @@ if __name__ == '__main__':
             transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic',
         ))
 
-
-
     # test with different policer configuration
     m_policer_configs, m_burst_period = [], 0.035
     m_rate_ratios, m_limit_ratios = rates_ratio, limits_as_ratios
@@ -50,22 +48,26 @@ if __name__ == '__main__':
 
         for m_app_setup in m_app_setups:
             try:
+                # to allow changing the volume of throttled traffic
+                m_back_pct, m_pct_of_throttled_background = '0.25', '0.3,0.25'
+                m_traffic_volume = get_traffic_volume(m_app_setup.app_name, m_back_pct)
+
                 # the policer configurations
                 m_policer_configs = []
                 for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
-                    p_rate = int(np.round(app_volumes[m_app_setup.app_name] / p_rate_ratio))
+                    p_rate = int(np.round(m_traffic_volume / p_rate_ratio))
                     m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
                     m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, p_rate/2, p_limit_ratio))
 
                 # add to experiment params
                 for p_type, p_location, p_rate, p_limit_ratio in m_policer_configs:
                     # build policer configuration setup
-                    neutrality_tag = '{}_r{}Mbps_b{}s_l{}_30p'.format(p_type, p_rate, m_burst_period, p_limit_ratio)
+                    neutrality_tag = '{}_r{}Mbps_b{}s_l{}_{}p'.format(p_type, p_rate, m_burst_period, p_limit_ratio, int(m_back_pct*100))
                     limit = int(p_limit_ratio * get_burst(p_rate, m_burst_period))
                     neutrality_setup = NeutralitySetup(
                         is_neutral=1, policing_rate=p_rate, burst_length=m_burst_period, queue_size=limit,
                         policer_location=p_location, policer_type=PolicerType.SHARED,
-                        pct_of_throttled_background=0.3
+                        pct_of_throttled_background=m_pct_of_throttled_background
                     )
 
                     # build and add experiment setup

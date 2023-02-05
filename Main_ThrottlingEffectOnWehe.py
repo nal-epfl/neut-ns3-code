@@ -43,7 +43,7 @@ if __name__ == '__main__':
                     neutrality_setup = NeutralitySetup(
                         is_neutral=1, policing_rate=p_rate, burst_length=m_burst_period, queue_size=limit,
                         policer_location=p_location, policer_type=PolicerType.SHARED,
-                        pct_of_throttled_background=0.3
+                        pct_of_throttled_background="0.3,0.3"
                     )
 
                     # build and add experiment setup
