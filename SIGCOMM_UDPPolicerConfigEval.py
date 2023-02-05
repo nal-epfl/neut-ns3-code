@@ -42,8 +42,8 @@ if __name__ == '__main__':
                 )
 
                 # to allow changing the volume of throttled traffic
-                m_back_pct, m_pct_of_throttled_background = '0.25', '0.3,0.25'
-                m_traffic_volume = get_traffic_volume(app_setup.app_name, m_back_pct)
+                m_back_pct, m_pct_of_throttled_background = 0.25, '0.3,0.25'
+                m_traffic_volume = get_traffic_volume(app_setup.app_name, str(m_back_pct))
 
                 # the policer configurations
                 m_policer_configs = []
@@ -73,6 +73,6 @@ if __name__ == '__main__':
                         neutrality_setup=neutrality_setup
                     ))
             except Exception as e:
-                print('app {} failed'.format(app.value))
+                print('app {} failed'.format(app.value), e)
 
         run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=1)
