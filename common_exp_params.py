@@ -42,24 +42,41 @@ d_duration = 30
 # This leads to higher loss in simulation. For this we take more volume into account here.
 v_extra = 5
 app_volumes = {
+    'Wehe_{}'.format(UDPWeheApp.GoogleMeet.value): 1,
+    'Wehe_{}'.format(UDPWeheApp.ProbeGoogleMeet.value): 1,
+
     'Wehe_{}'.format(UDPWeheApp.Webex.value): 2,
     'Wehe_{}'.format(UDPWeheApp.Probe2Webex.value): 2,
     'Wehe_{}'.format(UDPWeheApp.IncProbeWebex.value): 2,
-    'Wehe_{}'.format(UDPWeheApp.Skype.value): 3,
-    'Wehe_{}'.format(UDPWeheApp.Probe2Skype.value): 3,
-    'Wehe_{}'.format(UDPWeheApp.IncProbeSkype.value): 3,
+
+    'Wehe_{}'.format(UDPWeheApp.Zoom.value): 2.5,
+    'Wehe_{}'.format(UDPWeheApp.ProbeZoom.value): 2.5,
+
     'Wehe_{}'.format(UDPWeheApp.WhatsApp.value): 4,
     'Wehe_{}'.format(UDPWeheApp.Probe2WhatsApp.value): 4,
     'Wehe_{}'.format(UDPWeheApp.IncProbeWhatsApp.value): 4,
-    'Wehe_{}'.format(WeheApp.NbcSports.value): 25,
-    'Wehe_{}'.format(WeheApp.Netflix.value): 25,
-    'Wehe_{}'.format(WeheApp.FacebookVideo.value): 25,
-    'Wehe_{}'.format(WeheApp.Youtube.value): 25,
-    'Wehe_{}'.format(WeheApp.Amazon.value): 25,
+
+    'Wehe_{}'.format(UDPWeheApp.MicrosoftTeam.value): 2,
+    'Wehe_{}'.format(UDPWeheApp.ProbeMicrosoftTeam.value): 2,
+
+    'Wehe_{}'.format(UDPWeheApp.Skype.value): 3,
+    'Wehe_{}'.format(UDPWeheApp.Probe2Skype.value): 3,
+    'Wehe_{}'.format(UDPWeheApp.IncProbeSkype.value): 3,
+
+    'Wehe_{}'.format(WeheApp.Youtube.value): 22,
+    'Wehe_{}'.format(WeheApp.DisneyPlus.value): 42,
+    'Wehe_{}'.format(WeheApp.Netflix.value): 15,
+    'Wehe_{}'.format(WeheApp.Amazon.value): 20,
+    'Wehe_{}'.format(WeheApp.Twitch.value): 50,
+    'Wehe_{}'.format(WeheApp.Hulu.value): 45,
+    'Wehe_{}'.format(WeheApp.FacebookVideo.value): 18,
+    'Wehe_{}'.format(WeheApp.NbcSports.value): 22,
+
     'Infinite_Paced_TCP': 25
 }
 back_volume_by_pct = {
     '0.25': 30,
+    '0.3': 30,
     '0.5': 60,
     '0.75': 90,
     '1': 110

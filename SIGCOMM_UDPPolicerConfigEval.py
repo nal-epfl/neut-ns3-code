@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_Policer_Configs_vs_Background'
+TEST_TYPE = 'UDP_Policer_Configs_Eval'
 
 
 if __name__ == '__main__':

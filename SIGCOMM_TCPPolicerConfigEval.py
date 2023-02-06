@@ -15,7 +15,7 @@ if __name__ == '__main__':
     rebuild_project()
 
     # network setup for no congestion
-    m_network_setup_tag= 'no_congestion'
+    m_network_setup_tag = 'no_congestion'
     m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(d_rtt_ms), get_nc_dp(d_rtt_ms))
     m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
     m_network_setup = NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)
@@ -49,8 +49,8 @@ if __name__ == '__main__':
         for m_app_setup in m_app_setups:
             try:
                 # to allow changing the volume of throttled traffic
-                m_back_pct, m_pct_of_throttled_background = '0.25', '0.3,0.25'
-                m_traffic_volume = get_traffic_volume(m_app_setup.app_name, m_back_pct)
+                m_back_pct, m_pct_of_throttled_background = 0.25, '0.3,0.25'
+                m_traffic_volume = get_traffic_volume(m_app_setup.app_name, str(m_back_pct))
 
                 # the policer configurations
                 m_policer_configs = []

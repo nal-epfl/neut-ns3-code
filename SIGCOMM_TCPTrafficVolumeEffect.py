@@ -8,52 +8,58 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_Common_Congestion_Eval2'
+TEST_TYPE = 'TCP_Policer_Configs_vs_Background'
 
 
 if __name__ == '__main__':
     rebuild_project()
 
-    # network setup for no congestion but different RTTs
+    # network setup for no congestion
+    m_network_setup_tag = 'no_congestion'
     m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(d_rtt_ms), get_nc_dp(d_rtt_ms))
     m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
-    m_network_setups = []
-    for m_c_bandwidth in c_bandwidths:
-        m_network_setup_tag = 'common_congestion_{}'.format(m_c_bandwidth)
-        m_network_setups.append((m_network_setup_tag, NetworkSetup(m_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
+    m_network_setup = NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)
 
     # select which applications to test
+    m_duration = 60
+    m_app_setups = [
+        MeasurementAppSetup(
+            app_type=MeasurementAppType.INFINITE_TCP, app_name="Infinite_Paced_TCP",
+            control_test_duration=m_duration, suspected_test_duration=m_duration,
+            transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic', pkt_size=1228, app_data_rate='20Mbps'
+        )]
+
     m_apps = [
-        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, # UDPWeheApp.IncProbeWebex,
-        # UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
-        # UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
+        WeheApp.Youtube, WeheApp.DisneyPlus, WeheApp.Netflix, WeheApp.Amazon, WeheApp.Twitch, WeheApp.Hulu, WeheApp.FacebookVideo
     ]
+    for m_app in m_apps:
+        m_app_setups.append(get_weheCS_app_setup(
+            wehe_app=m_app.value, original_traffic_duration=m_duration,
+            transport_protocol=TransportProtocol.TCP, tcp_protocol='TcpCubic',
+        ))
 
     # test with different policer configuration
     m_policer_configs, m_burst_period = [], 0.035
     m_rate_ratios, m_limit_ratios = rates_ratio, limits_as_ratios
 
+    # test with different back volume
+    backs_throttled_pcts = [(0.3, '0.3,0.25'), (0.5, '0.55,0.5'), (0.75, '0.8,0.75'), (1, '1,1')]
+
     # Run experiments
     for back_v in [2, 3, 4, 5, 6]:
         m_exp_params = []
 
-        for app in m_apps:
-
-            for network_setup_tag, network_setup in m_network_setups:
-
+        for m_app_setup in m_app_setups:
+            for m_back_pct, m_pct_of_throttled_background in backs_throttled_pcts:
                 try:
-                    app_setup = get_weheCS_app_setup(
-                        wehe_app=app.value, original_traffic_duration=60, transport_protocol=TransportProtocol.UDP,
-                    )
-
                     # to allow changing the volume of throttled traffic
-                    m_back_pct, m_pct_of_throttled_background = 0.25, '0.3,0.25'
-                    m_traffic_volume = get_traffic_volume(app_setup.app_name, str(m_back_pct))
+                    m_traffic_volume = get_traffic_volume(m_app_setup.app_name, str(m_back_pct))
 
                     # the policer configurations
                     m_policer_configs = []
                     for p_rate_ratio, p_limit_ratio in itertools.product(m_rate_ratios, m_limit_ratios):
                         p_rate = int(np.round(m_traffic_volume / p_rate_ratio))
+                        m_policer_configs.append(('shared_common_policer', PolicerLocation.COMMON_LINK, p_rate, p_limit_ratio))
                         m_policer_configs.append(('shared_noncommon_policers', PolicerLocation.BOTH_NONCOMMON_LINKS, p_rate/2, p_limit_ratio))
 
                     # add to experiment params
@@ -68,15 +74,15 @@ if __name__ == '__main__':
                         )
 
                         # build and add experiment setup
-                        print('Exp: {}, {}, {}, {}'.format(app, p_type, p_rate, p_limit_ratio))
+                        print('Exp: {}, {}, {}, {}'.format(m_app_setup.app_name, p_type, p_rate, p_limit_ratio))
                         m_exp_params.append(ExperimentParameters(
                             exp_type='{}/{}'.format(TEST_DATE, TEST_TYPE), seed=3,
                             background_setup=BackgroundTrafficSetup('chicago_2010_back_traffic_5min_control_cbp_2links_v{}'.format(back_v)),
-                            exp_batch='{}/{}'.format(network_setup_tag, neutrality_tag),
-                            network_setup=network_setup, measurement_app_setup=app_setup,
+                            exp_batch='{}/{}'.format(m_network_setup_tag, neutrality_tag),
+                            network_setup=m_network_setup, measurement_app_setup=m_app_setup,
                             neutrality_setup=neutrality_setup
                         ))
                 except Exception as e:
-                    print('app {} failed'.format(app.value))
+                    print('app {} failed'.format(m_app_setup.app_name))
 
         run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=1)
