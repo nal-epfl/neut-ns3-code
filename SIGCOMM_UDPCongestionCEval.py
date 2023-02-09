@@ -24,9 +24,8 @@ if __name__ == '__main__':
 
     # select which applications to test
     m_apps = [
-        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, # UDPWeheApp.IncProbeWebex,
-        # UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
-        # UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
+        UDPWeheApp.Probe2Skype, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.ProbeGoogleMeet,
+        UDPWeheApp.ProbeMicrosoftTeam, UDPWeheApp.ProbeZoom, UDPWeheApp.Probe2Webex
     ]
 
     # test with different policer configuration
@@ -47,7 +46,7 @@ if __name__ == '__main__':
                     )
 
                     # to allow changing the volume of throttled traffic
-                    m_back_pct, m_pct_of_throttled_background = 0.25, '0.3,0.25'
+                    m_back_pct, m_pct_of_throttled_background = 0.5, '0.55,0.5'
                     m_traffic_volume = get_traffic_volume(app_setup.app_name, str(m_back_pct))
 
                     # the policer configurations
