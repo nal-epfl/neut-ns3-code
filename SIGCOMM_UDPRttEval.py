@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_Rtt_Eval'
+TEST_TYPE = 'UDP_Rtt_Eval2'
 
 
 if __name__ == '__main__':
@@ -21,16 +21,15 @@ if __name__ == '__main__':
         m_network_setup_tag = 'no_congestion_p1_rtt{}_p2_rtt{}'.format(d_rtt_ms, m_rtt)
         m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(d_rtt_ms), get_nc_dp(m_rtt))
         m_network_setups.append((m_network_setup_tag, NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
-    for m_rtt in rtts_ms:
-        m_network_setup_tag = 'no_congestion_p1p2_rtt{}'.format(m_rtt)
-        m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(m_rtt), get_nc_dp(m_rtt))
-        m_network_setups.append((m_network_setup_tag, NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
+    # for m_rtt in rtts_ms:
+    #     m_network_setup_tag = 'no_congestion_p1p2_rtt{}'.format(m_rtt)
+    #     m_nc_dps = '{}ms,{}ms'.format(get_nc_dp(m_rtt), get_nc_dp(m_rtt))
+    #     m_network_setups.append((m_network_setup_tag, NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
 
     # select which applications to test
     m_apps = [
-        UDPWeheApp.Webex, UDPWeheApp.Probe2Webex, UDPWeheApp.IncProbeWebex,
-        UDPWeheApp.Skype, UDPWeheApp.Probe2Skype, UDPWeheApp.IncProbeSkype,
-        UDPWeheApp.WhatsApp, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.IncProbeWhatsApp,
+        UDPWeheApp.Probe2Skype, UDPWeheApp.Probe2WhatsApp, UDPWeheApp.ProbeGoogleMeet,
+        UDPWeheApp.ProbeMicrosoftTeam, UDPWeheApp.ProbeZoom, UDPWeheApp.Probe2Webex
     ]
 
     # test with different policer configuration
@@ -51,7 +50,7 @@ if __name__ == '__main__':
                     )
 
                     # to allow changing the volume of throttled traffic
-                    m_back_pct, m_pct_of_throttled_background = 0.25, '0.3,0.25'
+                    m_back_pct, m_pct_of_throttled_background = 0.5, '0.55,0.5'
                     m_traffic_volume = get_traffic_volume(app_setup.app_name, str(m_back_pct))
 
                     # the policer configurations
@@ -84,4 +83,4 @@ if __name__ == '__main__':
                 except Exception as e:
                     print('app {} failed'.format(app.value))
 
-        run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=1)
+        run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=22)
