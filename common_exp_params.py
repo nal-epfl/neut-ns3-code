@@ -3,7 +3,7 @@ from helper_methods import *
 # policer configuration parameters:
 rates = np.array([24, 29, 36, 48, 55])
 rates_ratio = np.array([1.3, 1.5, 2, 2.5])
-limits_as_ratios = np.array([0.25, 0.5, 1, 2])
+limits_as_ratios = np.array([0.25, 0.5, 1])
 
 
 def get_burst(rate, burst_period):
@@ -13,7 +13,8 @@ def get_burst(rate, burst_period):
 # Bandwidth
 d_c_bandwidth, d_nc_bandwidth = '10Gbps', '1Gbps'
 c_bandwidths = np.array(['150Mbps', '160Mbps', '180Mbps']) # np.array(['180Mbps', '190Mbps', '200Mbps', '210Mbps', '220Mbps'])
-nc_bandwidths = np.array(['75Mbps', '80Mbps', '90Mbps']) # np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
+nc_bandwidths = np.array(['60Mbps', '65Mbps', '70Mbps']) # np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
+c_bandwidths_ratios = [1.15, 1.2, 1.3]
 
 
 # RTTs

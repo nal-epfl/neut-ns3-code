@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'UDP_NonCommon_Congestion_Eval2'
+TEST_TYPE = 'UDP_NonCommon_Congestion_Eval6'
 
 
 if __name__ == '__main__':
@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
                 try:
                     app_setup = get_weheCS_app_setup(
-                        wehe_app=app.value, original_traffic_duration=60, transport_protocol=TransportProtocol.UDP,
+                        wehe_app=app.value, original_traffic_duration=45, transport_protocol=TransportProtocol.UDP,
                     )
 
                     # to allow changing the volume of throttled traffic
@@ -82,4 +82,4 @@ if __name__ == '__main__':
                 except Exception as e:
                     print('app {} failed'.format(app.value))
 
-        run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=22)
+        run_parallel_experiments(run_experiment_with_params, m_exp_params, nb_threads=23)

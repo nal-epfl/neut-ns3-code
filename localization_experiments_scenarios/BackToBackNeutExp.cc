@@ -162,7 +162,7 @@ namespace fs = std::filesystem;
     string defaultNonCommonLinkRate = "1Gbps";
     PointToPointHelper p2p;
     p2p.SetDeviceAttribute("Mtu", UintegerValue(mtu));
-    p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("1p"));
+    p2p.SetQueue("ns3::DropTailQueue", "MaxSize", StringValue("7500B"));
 
     NetDeviceContainer channels_interm_servers[nbServers];
     NetDeviceContainer channels_r1_interm[nbServers];
