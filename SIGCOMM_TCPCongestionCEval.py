@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'TCP_Common_Congestion_Eval6'
+TEST_TYPE = 'TCP_Common_Congestion_Eval_FINAL'
 
 
 if __name__ == '__main__':
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                 m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, d_nc_bandwidth)
                 m_network_setups = []
                 for c_ratio in c_bandwidths_ratios:
-                    m_c_bandwidth = '{}Mbps'.format(int((170-m_traffic_volume+p_rate)/c_ratio))
+                    m_c_bandwidth = '{}Mbps'.format(int((170-m_traffic_volume+2*p_rate)/c_ratio))
                     m_network_setup_tag = 'common_congestion_{}'.format(m_c_bandwidth)
                     m_network_setups.append((m_network_setup_tag, NetworkSetup(m_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
 

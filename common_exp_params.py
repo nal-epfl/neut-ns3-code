@@ -13,8 +13,8 @@ def get_burst(rate, burst_period):
 # Bandwidth
 d_c_bandwidth, d_nc_bandwidth = '10Gbps', '1Gbps'
 c_bandwidths = np.array(['150Mbps', '160Mbps', '180Mbps']) # np.array(['180Mbps', '190Mbps', '200Mbps', '210Mbps', '220Mbps'])
-nc_bandwidths = np.array(['60Mbps', '65Mbps', '70Mbps']) # np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
-c_bandwidths_ratios = [1.15, 1.2, 1.3]
+nc_bandwidths = np.array(['65Mbps', '70Mbps', '75Mbps']) # np.array(['90Mbps', '95Mbps', '100Mbps', '105Mbps', '110Mbps'])
+c_bandwidths_ratios = [1.05, 1.15, 1.2]
 
 
 # RTTs

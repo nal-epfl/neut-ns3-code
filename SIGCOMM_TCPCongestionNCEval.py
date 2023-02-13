@@ -8,7 +8,7 @@ from common_exp_params import *
 
 # This is to specify which experiments I am currently focusing on
 TEST_DATE = '02_2023'
-TEST_TYPE = 'TCP_NonCommon_Congestion_Eval6'
+TEST_TYPE = 'TCP_NonCommon_Congestion_Eval_FINAL'
 
 
 if __name__ == '__main__':
@@ -22,8 +22,8 @@ if __name__ == '__main__':
         m_nc_bandwidths = '{},{}'.format(m_nc_bandwidth, m_nc_bandwidth)
         m_network_setups.append((m_network_setup_tag, NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
     for m_nc_bandwidth in nc_bandwidths:
-        m_network_setup_tag = 'noncommon_congestion_only_p2_{}'.format(m_nc_bandwidth)
-        m_nc_bandwidths = '{},{}'.format(d_nc_bandwidth, m_nc_bandwidth)
+        m_network_setup_tag = 'noncommon_congestion_only_p1_{}'.format(m_nc_bandwidth)
+        m_nc_bandwidths = '{},{}'.format(m_nc_bandwidth, d_nc_bandwidth)
         m_network_setups.append((m_network_setup_tag, NetworkSetup(d_c_bandwidth, m_nc_dps, m_nc_bandwidths)))
 
     # select which applications to test
@@ -40,11 +40,10 @@ if __name__ == '__main__':
     m_rate_ratios, m_limit_ratios = rates_ratio, limits_as_ratios
 
     # Run experiments
-    for back_v in [2, 3, 4, 5, 6]:
+    for m_app_setup in m_app_setups:
         m_exp_params = []
 
-        for m_app_setup in m_app_setups:
-
+        for back_v in [2, 3, 4, 5, 6]:
             for network_setup_tag, network_setup in m_network_setups:
 
                 try:
